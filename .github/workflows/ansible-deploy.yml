@@ -22,9 +22,9 @@ jobs:
       - name: Set node secrets and playbook folder
         env:
           NODE: ${{ github.event.inputs.target_node }}
-          HOST: ${{ secrets[github.event.inputs.target_node + '_HOST'] }}
-          USER: ${{ secrets[github.event.inputs.target_node + '_USER'] }}
-          KEY: ${{ secrets[github.event.inputs.target_node + '_KEY'] }}
+          HOST: ${{ secrets[format('{0}_HOST', github.event.inputs.target_node)] }}
+          USER: ${{ secrets[format('{0}_USER', github.event.inputs.target_node)] }}
+          KEY: ${{ secrets[format('{0}_KEY', github.event.inputs.target_node)] }}
         run: |
           echo "TARGET_HOST=$HOST" >> $GITHUB_ENV
           echo "ANSIBLE_USER=$USER" >> $GITHUB_ENV
