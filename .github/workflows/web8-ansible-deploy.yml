@@ -21,6 +21,16 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           echo "$TARGET_HOST ansible_user=$ANSIBLE_USER ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
+      - name: Cache Ansible Galaxy requirements
+        uses: actions/cache@v4
+        with:
+          path: ~/.ansible
+          key: ansible-galaxy-${{ hashFiles('web8/ansible/requirements.yml') }}
+          restore-keys: |
+            ansible-galaxy-
+      - name: Install Ansible Galaxy requirements
+        run: |
+          ansible-galaxy install -r web8/ansible/requirements.yml
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
