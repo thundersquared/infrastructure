@@ -7,15 +7,17 @@ jobs:
     environment: web8
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
       - name: Install Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "11.8.0"
       - name: Set up inventory with secrets and SSH key
         run: |
           echo "TARGET_HOST=${{ secrets.HOST }}" >> $GITHUB_ENV
           echo "ANSIBLE_USER=${{ secrets.USER }}" >> $GITHUB_ENV
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           echo "$TARGET_HOST ansible_user=$ANSIBLE_USER ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
