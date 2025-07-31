@@ -1,15 +1,24 @@
----
+
 - name: Install Docker and apply hardening
   hosts: all
   become: true
+  vars:
+    nginx_dh_size: 4096
+    os_user_pw_ageing: false
   roles:
     - geerlingguy.docker
   collections:
     - devsec.hardening
   tasks:
+    - name: Apply OS hardening
+      include_role:
+        name: devsec.hardening.os_hardening
     - name: Apply nginx hardening
       include_role:
         name: devsec.hardening.nginx_hardening
     - name: Apply ssh hardening
       include_role:
         name: devsec.hardening.ssh_hardening
+    - name: Apply MySQL hardening
+      include_role:
+        name: devsec.hardening.mysql_hardening
