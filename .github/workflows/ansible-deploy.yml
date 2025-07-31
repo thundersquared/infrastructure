@@ -2,25 +2,13 @@ name: Deploy Infrastructure with Ansible
 on:
   workflow_dispatch:
     inputs:
-      target_host:
-        description: 'Target node IP or hostname'
+      target_node:
+        description: 'Node name (e.g., web8, node2)'
         required: true
-        type: string
-      ansible_user:
-        description: 'SSH user for Ansible'
-        required: true
-        type: string
-      ansible_ssh_private_key:
-        description: 'SSH private key (base64 encoded)'
-        required: true
-        type: string
-      playbook_folder:
-        description: 'Relative folder containing ansible/playbook.yml'
-        required: false
-        default: 'web8'
         type: choice
         options:
           - web8
+          # Add more node names as needed
 jobs:
   run-ansible:
     runs-on: ubuntu-latest
@@ -31,13 +19,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ansible
+      - name: Set node secrets and playbook folder
+        env:
+          NODE: ${{ github.event.inputs.target_node }}
+          HOST: ${{ secrets[github.event.inputs.target_node + '_HOST'] }}
+          USER: ${{ secrets[github.event.inputs.target_node + '_USER'] }}
+          KEY: ${{ secrets[github.event.inputs.target_node + '_KEY'] }}
+        run: |
+          echo "TARGET_HOST=$HOST" >> $GITHUB_ENV
+          echo "ANSIBLE_USER=$USER" >> $GITHUB_ENV
+          echo "ANSIBLE_SSH_PRIVATE_KEY=$KEY" >> $GITHUB_ENV
+          echo "PLAYBOOK_FOLDER=$NODE" >> $GITHUB_ENV
       - name: Setup SSH key
         run: |
-          echo "${{ github.event.inputs.ansible_ssh_private_key }}" | base64 --decode > ~/.ssh/id_rsa
+          echo "$ANSIBLE_SSH_PRIVATE_KEY" | base64 --decode > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
       - name: Add host to inventory
         run: |
-          echo "${{ github.event.inputs.target_host }} ansible_user=${{ github.event.inputs.ansible_user }} ansible_ssh_private_key=~/.ssh/id_rsa" > inventory
+          echo "$TARGET_HOST ansible_user=$ANSIBLE_USER ansible_ssh_private_key=~/.ssh/id_rsa" > inventory
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i inventory ${{ github.event.inputs.playbook_folder }}/ansible/playbook.yml --private-key ~/.ssh/id_rsa
+          ansible-playbook -i inventory $PLAYBOOK_FOLDER/ansible/playbook.yml --private-key ~/.ssh/id_rsa
