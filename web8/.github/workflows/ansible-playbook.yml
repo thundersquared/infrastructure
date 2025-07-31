@@ -1,0 +1,36 @@
+name: Run Ansible Playbook on Node
+on:
+  workflow_dispatch:
+    inputs:
+      target_host:
+        description: 'Target node IP or hostname'
+        required: true
+        type: string
+      ansible_user:
+        description: 'SSH user for Ansible'
+        required: true
+        type: string
+      ansible_ssh_private_key:
+        description: 'SSH private key (base64 encoded)'
+        required: true
+        type: string
+jobs:
+  run-ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+      - name: Setup SSH key
+        run: |
+          echo "${{ github.event.inputs.ansible_ssh_private_key }}" | base64 --decode > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+      - name: Add host to inventory
+        run: |
+          echo "${{ github.event.inputs.target_host }} ansible_user=${{ github.event.inputs.ansible_user }} ansible_ssh_private_key=~/.ssh/id_rsa" > inventory
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i inventory ansible/playbook.yml --private-key ~/.ssh/id_rsa

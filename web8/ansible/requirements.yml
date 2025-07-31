@@ -1,0 +1,4 @@
+collections:
+  - name: devsec.hardening
+roles:
+  - name: geerlingguy.docker

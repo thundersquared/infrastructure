@@ -1,0 +1,15 @@
+---
+- name: Install Docker and apply hardening
+  hosts: all
+  become: true
+  roles:
+    - geerlingguy.docker
+  collections:
+    - devsec.hardening
+  tasks:
+    - name: Apply nginx hardening
+      include_role:
+        name: devsec.hardening.nginx_hardening
+    - name: Apply ssh hardening
+      include_role:
+        name: devsec.hardening.ssh_hardening
