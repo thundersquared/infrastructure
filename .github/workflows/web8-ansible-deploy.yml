@@ -23,4 +23,4 @@ jobs:
           echo "$TARGET_HOST ansible_user=$ANSIBLE_USER ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i inventory /opt/infrastructure/web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
+          ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
