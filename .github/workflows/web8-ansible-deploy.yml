@@ -38,5 +38,7 @@ jobs:
         run: |
           ansible-galaxy install -r web8/ansible/requirements.yml
       - name: Run Ansible Playbook
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
         run: |
           ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519

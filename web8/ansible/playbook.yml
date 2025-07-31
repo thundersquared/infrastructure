@@ -5,6 +5,9 @@
   vars:
     nginx_dh_size: 4096
     os_user_pw_ageing: false
+    ssh_permit_root_login: "without-password"
+    ssh_permit_tunnel: "yes"
+    mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') }}"
   roles:
     - geerlingguy.docker
   collections:
