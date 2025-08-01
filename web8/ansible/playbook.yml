@@ -7,7 +7,6 @@
     os_user_pw_ageing: false
     ssh_permit_root_login: "without-password"
     ssh_permit_tunnel: "yes"
-    mysql_root_password: "{{ lookup('env', 'MYSQL_ROOT_PASSWORD') }}"
   roles:
     - geerlingguy.docker
   collections:
@@ -22,6 +21,3 @@
     - name: Apply ssh hardening
       include_role:
         name: devsec.hardening.ssh_hardening
-    - name: Apply MySQL hardening
-      include_role:
-        name: devsec.hardening.mysql_hardening
