@@ -9,6 +9,7 @@
     ssh_permit_tunnel: "yes"
   roles:
     - geerlingguy.docker
+    - system/php
   collections:
     - devsec.hardening
   tasks:
