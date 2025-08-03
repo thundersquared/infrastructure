@@ -1,24 +1,28 @@
 ---
-# Copy the containers directory to the remote node
-- name: Copy containers directory to /opt/containers/
-  copy:
-    src: "{{ playbook_dir }}/../../../../containers/"
-    dest: "/opt/containers/"
+- name: Ensure /opt/containers exists
+  file:
+    path: /opt/containers
+    state: directory
     owner: root
     group: root
     mode: '0755'
-    remote_src: no
 
-# Deploy docker-compose files from a given list
-- name: Deploy docker-compose files
-  vars:
-    compose_files:
-      - watchtower
-  block:
-    - name: Deploy docker-compose for each item
-      community.docker.docker_compose:
-        project_src: "/opt/containers/{{ item }}"
-        state: present
-      loop: "{{ compose_files }}"
-      become: true
-      tags: deploy
+- name: Copy containers directory to remote node
+  copy:
+    src: "{{ playbook_dir }}/../containers/"
+    dest: /opt/containers/
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart containers
+
+- name: Deploy docker-compose projects
+  community.docker.docker_compose_v2:
+    project_src: "/opt/containers/{{ item }}"
+    state: present
+  loop: "{{ compose_files | default(['watchtower']) }}"
+  register: compose_results
+
+- name: Show compose results
+  debug:
+    var: compose_results

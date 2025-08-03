@@ -1,4 +1,4 @@
-
+---
 - name: Install Docker and apply hardening
   hosts: all
   become: true
