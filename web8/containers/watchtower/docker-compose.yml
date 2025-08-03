@@ -1,0 +1,14 @@
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json:ro
+    command: >
+      --schedule "0 */6 * * *" \
+      --cleanup \
+      --include-restarting \
+      --run-once=false \
+      --label-enable
