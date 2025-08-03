@@ -48,4 +48,8 @@ jobs:
           ansible-galaxy install -r web8/ansible/requirements.yml
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "scheduled_run=true"
+          else
+            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
+          fi

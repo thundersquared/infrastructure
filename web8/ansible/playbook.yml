@@ -8,18 +8,22 @@
     ssh_permit_root_login: "without-password"
     ssh_permit_tunnel: "yes"
   roles:
-    - geerlingguy.docker
-    - system/php
-    - system/containers
+    - role: geerlingguy.docker
+      when: scheduled_run
+    - role: system/php
+    - role: system/containers
   collections:
     - devsec.hardening
   tasks:
     - name: Apply OS hardening
       include_role:
         name: devsec.hardening.os_hardening
+      when: scheduled_run
     - name: Apply nginx hardening
       include_role:
         name: devsec.hardening.nginx_hardening
+      when: scheduled_run
     - name: Apply ssh hardening
       include_role:
         name: devsec.hardening.ssh_hardening
+      when: scheduled_run
