@@ -13,6 +13,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
+      - name: Cache pip3
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.cache/pip
+          key: pip3-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            pip3-
+      - name: Cache Ansible Galaxy requirements
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.ansible
+          key: ansible-galaxy-${{ hashFiles('web8/ansible/requirements.yml') }}
+          restore-keys: |
+            ansible-galaxy-
       - name: Install Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
         with:
@@ -29,20 +43,6 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.HOST }}" >> ~/.ssh/known_hosts
           echo "${{ secrets.HOST }} ansible_user=${{ secrets.USER }} ansible_ssh_private_key=~/.ssh/id_ed25519 ansible_ssh_common_args='-o ServerAliveInterval=60 -o ServerAliveCountMax=20 -o ConnectTimeout=60'" > inventory
-      - name: Cache pip3
-        uses: actions/cache@v4.2.3
-        with:
-          path: ~/.cache/pip
-          key: pip3-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            pip3-
-      - name: Cache Ansible Galaxy requirements
-        uses: actions/cache@v4.2.3
-        with:
-          path: ~/.ansible
-          key: ansible-galaxy-${{ hashFiles('web8/ansible/requirements.yml') }}
-          restore-keys: |
-            ansible-galaxy-
       - name: Install Ansible Galaxy requirements
         run: |
           ansible-galaxy install -r web8/ansible/requirements.yml
