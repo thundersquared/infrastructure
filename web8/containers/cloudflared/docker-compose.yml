@@ -8,3 +8,9 @@ services:
       - .env
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - app-infra
+
+networks:
+  app-infra:
+    external: true
