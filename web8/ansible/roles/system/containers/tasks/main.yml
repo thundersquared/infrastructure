@@ -16,6 +16,9 @@
     mode: '0755'
   notify: Restart containers
 
+- name: Setup Authentik Infrastructure
+  include_tasks: authentik.yml
+
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item }}"
