@@ -17,7 +17,7 @@
   notify: Restart containers
 
 - name: Create cloudflared .env file
-  template:
+  copy:
     content: |
       TUNNEL_TOKEN={{ cloudflared_token }}
     dest: /opt/containers/cloudflared/.env
