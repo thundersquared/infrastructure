@@ -16,6 +16,11 @@
     mode: '0755'
   notify: Restart containers
 
+- name: Create shared app-infra Docker network
+  community.docker.docker_network:
+    name: app-infra
+    state: present
+
 - name: Create cloudflared .env file
   copy:
     content: |
@@ -28,11 +33,6 @@
 
 - name: Setup Authentik Infrastructure
   include_tasks: authentik.yml
-
-- name: Create shared app-infra Docker network
-  community.docker.docker_network:
-    name: app-infra
-    state: present
 
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
