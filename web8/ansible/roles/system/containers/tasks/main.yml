@@ -16,6 +16,16 @@
     mode: '0755'
   notify: Restart containers
 
+- name: Create cloudflared .env file
+  template:
+    content: |
+      TUNNEL_TOKEN={{ cloudflared_token }}
+    dest: /opt/containers/cloudflared/.env
+    owner: root
+    group: root
+    mode: '0600'
+  when: cloudflared_token is defined and cloudflared_token != ""
+
 - name: Setup Authentik Infrastructure
   include_tasks: authentik.yml
 

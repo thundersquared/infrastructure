@@ -47,9 +47,11 @@ jobs:
         run: |
           ansible-galaxy install -r web8/ansible/requirements.yml
       - name: Run Ansible Playbook
+        env:
+          CLOUDFLARED_TOKEN: ${{ secrets.CLOUDFLARED_TOKEN }}
         run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "scheduled_run=true"
+            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "scheduled_run=true" -e "cloudflared_token=$CLOUDFLARED_TOKEN"
           else
-            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
+            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "cloudflared_token=$CLOUDFLARED_TOKEN"
           fi
