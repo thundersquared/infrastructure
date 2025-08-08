@@ -3,7 +3,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate run --protocol http2
     environment:
       - TUNNEL_METRICS=localhost:60123
     env_file:
