@@ -3,7 +3,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --protocol http2
+    command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_METRICS=localhost:60123
     env_file:
@@ -18,7 +18,10 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - app-infra
+      - cloudflared
 
 networks:
   app-infra:
     external: true
+  cloudflared:
+    driver: bridge
