@@ -85,3 +85,11 @@
       mode: '0644'
     notify: Restart logrotate.timer
     become: true
+
+- name: Set system swappiness to 5
+  ansible.posix.sysctl:
+    name: vm.swappiness
+    value: '5'
+    state: present
+    reload: yes
+  become: true
