@@ -57,3 +57,29 @@
       line: 'Domain=eu.sqrd-dns.com'
     notify: Restart systemd-resolved
     become: true
+
+- name: Copy logrotate config for Docker containers
+  ansible.builtin.copy:
+    src: files/docker-logrotate
+    dest: /etc/logrotate.d/docker
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Create logrotate.timer.d directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/logrotate.timer.d
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Override logrotate.timer
+  ansible.builtin.copy:
+    src: files/logrotate.timer.d/override.conf
+    dest: /etc/systemd/system/logrotate.timer.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart logrotate.timer
+  become: true
