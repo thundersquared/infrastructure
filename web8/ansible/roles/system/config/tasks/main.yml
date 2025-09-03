@@ -92,4 +92,5 @@
     value: '5'
     state: present
     reload: yes
+    sysctl_set: yes
   become: true
