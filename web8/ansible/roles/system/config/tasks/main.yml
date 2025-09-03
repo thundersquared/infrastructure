@@ -1,0 +1,8 @@
+---
+- name: UFW | Allow incoming UDP port 7844
+  community.general.ufw:
+    rule: allow
+    proto: udp
+    from_port: 7844
+    comment: Allow incoming traffic from UDP port 7844
+  become: true

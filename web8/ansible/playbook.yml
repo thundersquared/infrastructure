@@ -14,6 +14,7 @@
       when: scheduled_run
     - role: system/apt
       when: scheduled_run
+    - role: system/config
     - role: system/php
     - role: system/containers
   collections:
