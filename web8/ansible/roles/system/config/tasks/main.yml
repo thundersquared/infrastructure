@@ -1,8 +1,59 @@
 ---
-- name: UFW | Allow incoming UDP port 7844
-  community.general.ufw:
-    rule: allow
-    proto: udp
-    from_port: 7844
-    comment: Allow incoming traffic from UDP port 7844
-  become: true
+- name: UFW
+  block:
+  - name: Allow incoming UDP port 7844
+    community.general.ufw:
+      rule: allow
+      proto: udp
+      from_port: 7844
+      comment: Allow incoming traffic from UDP port 7844
+    become: true
+
+- name: DNS
+  block:
+  - name: Ensure systemd-resolved is running
+    ansible.builtin.service:
+      name: systemd-resolved
+      state: started
+      enabled: yes
+    become: true
+
+  - name: Configure systemd-resolved for Cloudflare DNS
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?DNS='
+      line: 'DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 2606:4700:4700::1111#cloudflare-dns.com 2606:4700:4700::1001#cloudflare-dns.com'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for Fallback DNS
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?FallbackDNS='
+      line: 'FallbackDNS=9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net 2620:fe::fe#dns.quad9.net 2620:fe::9#dns.quad9.net'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for DNSOverTLS
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?DNSOverTLS='
+      line: 'DNSOverTLS=yes'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for Cache
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?Cache='
+      line: 'Cache=no-negative'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for Domain
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?Domain='
+      line: 'Domain=eu.sqrd-dns.com'
+    notify: Restart systemd-resolved
+    become: true
