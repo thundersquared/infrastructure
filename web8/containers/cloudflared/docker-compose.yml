@@ -17,11 +17,11 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     networks:
+      - cloudflared-gw
       - app-infra
-      - cloudflared
 
 networks:
+  cloudflared-gw:
+    driver: bridge
   app-infra:
     external: true
-  cloudflared:
-    driver: bridge

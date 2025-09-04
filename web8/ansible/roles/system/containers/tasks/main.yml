@@ -19,6 +19,8 @@
 - name: Create shared app-infra Docker network
   community.docker.docker_network:
     name: app-infra
+    internal: false
+    scope: "global"
     state: present
 
 - name: Create cloudflared .env file
