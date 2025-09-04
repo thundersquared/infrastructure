@@ -7,6 +7,7 @@
       proto: udp
       from_port: 7844
       comment: Allow incoming traffic from UDP port 7844
+      delete: true
     become: true
 
 - name: DNS

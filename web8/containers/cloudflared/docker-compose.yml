@@ -3,14 +3,14 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate --protocol http2 run
     environment:
       - TUNNEL_METRICS=localhost:60123
     env_file:
       - .env
     healthcheck:
       test: ["CMD", "cloudflared", "tunnel", "--metrics", "localhost:60123", "ready"]
-      start_period: 30s
+      start_period: 10s
       interval: 30s
       retries: 3
       timeout: 10s
