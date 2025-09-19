@@ -1,6 +1,12 @@
 name: Deploy web8 with Ansible
 on:
   workflow_dispatch:
+    inputs:
+      force_schedule_mode:
+        description: 'Force playbook to run in "schedule" mode'
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -50,7 +56,7 @@ jobs:
         env:
           CLOUDFLARED_TOKEN: ${{ secrets.CLOUDFLARED_TOKEN }}
         run: |
-          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event.inputs.force_schedule_mode }}" == "true" ]]; then
             ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "scheduled_run=true" -e "cloudflared_token=$CLOUDFLARED_TOKEN"
           else
             ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "cloudflared_token=$CLOUDFLARED_TOKEN"
