@@ -4,11 +4,6 @@
   become: true
   vars_files:
     - defaults/main.yml
-  vars:
-    nginx_dh_size: 4096
-    os_user_pw_ageing: false
-    ssh_permit_root_login: "without-password"
-    ssh_permit_tunnel: "yes"
   roles:
     - role: geerlingguy.docker
       when: scheduled_run
