@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v4.2.3
         with:
           path: ~/.cache/pip
-          key: pip3-${{ hashFiles('**/requirements*.txt') }}
+          key: pip3-
           restore-keys: |
             pip3-
       - name: Cache Ansible Galaxy requirements
