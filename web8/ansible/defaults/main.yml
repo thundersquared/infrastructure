@@ -2,6 +2,7 @@
 scheduled_run: false
 nginx_dh_size: 4096
 os_user_pw_ageing: false
+os_auth_pam_passwdqc_enable: false
 sftp_enabled: true
 ssh_print_last_log: true
 ssh_permit_root_login: "without-password"
