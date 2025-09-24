@@ -7,6 +7,9 @@ sftp_enabled: true
 ssh_print_last_log: true
 ssh_permit_root_login: "without-password"
 ssh_permit_tunnel: "yes"
+ssh_client_password_login: true
+ssh_server_password_login: true
+sshd_authenticationmethods: "publickey,password"
 sysctl_overwrite:
   net.ipv4.ip_forward: 1
   vm.swappiness: 5
