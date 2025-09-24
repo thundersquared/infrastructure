@@ -9,7 +9,7 @@ ssh_permit_root_login: "without-password"
 ssh_permit_tunnel: "yes"
 ssh_client_password_login: true
 ssh_server_password_login: true
-sshd_authenticationmethods: "publickey,password"
+sshd_authenticationmethods: "publickey,password publickey password"
 sysctl_overwrite:
   net.ipv4.ip_forward: 1
   vm.swappiness: 5
