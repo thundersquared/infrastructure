@@ -39,7 +39,8 @@ services:
       - meilisearch-data:/meili_data
     environment:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?master key required}
-    command: ["./meilisearch", "--no-analytics", "--env", "production"]
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: ""
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:7700/health"]
       interval: 5s
