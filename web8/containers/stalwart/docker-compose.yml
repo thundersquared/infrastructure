@@ -19,7 +19,7 @@ services:
       - .env
 
   keydb:
-    image: docker.io/library/eqalpha/keydb:latest
+    image: docker.io/eqalpha/keydb:latest
     restart: unless-stopped
     command: ["keydb-server", "/etc/keydb/keydb.conf"]
     healthcheck:
@@ -33,7 +33,7 @@ services:
       - keydb-data:/data
 
   meilisearch:
-    image: docker.io/library/getmeili/meilisearch:v1
+    image: docker.io/getmeili/meilisearch:v1
     restart: unless-stopped
     volumes:
       - meilisearch-data:/meili_data
