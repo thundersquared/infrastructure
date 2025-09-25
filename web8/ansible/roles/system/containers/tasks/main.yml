@@ -33,6 +33,17 @@
     mode: '0600'
   when: lookup('env', 'CLOUDFLARED_TOKEN')
 
+- name: Create stalwart .env file
+  copy:
+    content: |
+      PG_PASS={{ lookup('env', 'STALWART_PG_PASSWORD') }}
+      MEILI_MASTER_KEY={{ lookup('env', 'STALWART_MEILI_MASTER_KEY') }}
+    dest: /opt/containers/stalwart/.env
+    owner: root
+    group: root
+    mode: '0600'
+  when: lookup('env', 'STALWART_PG_PASSWORD') and lookup('env', 'STALWART_MEILI_MASTER_KEY')
+
 - name: Setup Authentik Infrastructure
   include_tasks: authentik.yml
 

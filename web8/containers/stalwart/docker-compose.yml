@@ -1,0 +1,84 @@
+---
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-stalwart}
+      POSTGRES_DB: ${PG_DB:-stalwart}
+    env_file:
+      - .env
+
+  keydb:
+    image: docker.io/library/eqalpha/keydb:latest
+    restart: unless-stopped
+    command: ["keydb-server", "/etc/keydb/keydb.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - ./keydb.conf:/etc/keydb/keydb.conf
+      - keydb-data:/data
+
+  meilisearch:
+    image: docker.io/library/getmeili/meilisearch:v1
+    restart: unless-stopped
+    volumes:
+      - meilisearch-data:/meili_data
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?master key required}
+    command: ["./meilisearch", "--no-analytics", "--env", "production"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 1s
+      retries: 20
+    env_file:
+      - .env
+
+  stalwart:
+    image: ghcr.io/thundersquared/stalwart:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8443:443"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - stalwart-data:/opt/stalwart
+    environment:
+      STALWART_STORE__URL: "postgres://${PG_USER:-stalwart}:${PG_PASS}@postgres:5432/${PG_DB:-stalwart}"
+      STALWART_FTS__URL: "meilisearch://meilisearch:7700?key=${MEILI_MASTER_KEY}"
+      STALWART_CACHE__URL: "redis://keydb:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keydb:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    env_file:
+      - .env
+
+volumes:
+  database:
+    driver: local
+  stalwart-data:
+    driver: local
+  keydb-data:
+    driver: local
+  meilisearch-data:
+    driver: local

@@ -59,6 +59,10 @@ jobs:
           BORG_PASSPHRASE: ${{ secrets.BORG_PASSPHRASE }}
           BORG_HEARTBEAT_URL: ${{ secrets.BORG_HEARTBEAT_URL }}
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          STALWART_PG_PASSWORD: ${{ secrets.STALWART_PG_PASSWORD }}
+          STALWART_MEILI_MASTER_KEY: ${{ secrets.STALWART_MEILI_MASTER_KEY }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           SCHEDULED_RUN: ${{ github.event_name == 'schedule' || github.event.inputs.force_schedule_mode == 'true' }}
         run: |
           ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519

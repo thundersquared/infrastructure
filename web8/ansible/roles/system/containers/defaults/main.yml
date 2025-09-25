@@ -2,3 +2,4 @@
 compose_files:
   - watchtower
   - cloudflared
+  - stalwart
