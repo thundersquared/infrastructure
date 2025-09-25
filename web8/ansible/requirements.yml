@@ -4,3 +4,5 @@ collections:
 roles:
   - name: geerlingguy.docker
     version: "7.5.5"
+  - name: borgbase.ansible_role_borgbackup
+    version: "v1.1.3"

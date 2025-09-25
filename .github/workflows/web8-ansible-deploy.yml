@@ -36,7 +36,7 @@ jobs:
       - name: Install Ansible
         uses: alex-oleshkevich/setup-ansible@v1.0.1
         with:
-          version: "11.8.0"
+          version: "11.10.0"
       - name: Set up inventory with secrets and SSH key
         run: |
           if [ -z "${{ secrets.HOST }}" ] || [ -z "${{ secrets.USER }}" ]; then
@@ -55,9 +55,10 @@ jobs:
       - name: Run Ansible Playbook
         env:
           CLOUDFLARED_TOKEN: ${{ secrets.CLOUDFLARED_TOKEN }}
+          BORG_REPOSITORY: ${{ secrets.BORG_REPOSITORY }}
+          BORG_PASSPHRASE: ${{ secrets.BORG_PASSPHRASE }}
+          BORG_HEARTBEAT_URL: ${{ secrets.BORG_HEARTBEAT_URL }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          SCHEDULED_RUN: ${{ github.event_name == 'schedule' || github.event.inputs.force_schedule_mode == 'true' }}
         run: |
-          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event.inputs.force_schedule_mode }}" == "true" ]]; then
-            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "scheduled_run=true" -e "cloudflared_token=$CLOUDFLARED_TOKEN"
-          else
-            ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519 -e "cloudflared_token=$CLOUDFLARED_TOKEN"
-          fi
+          ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519

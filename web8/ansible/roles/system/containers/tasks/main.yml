@@ -26,12 +26,12 @@
 - name: Create cloudflared .env file
   copy:
     content: |
-      TUNNEL_TOKEN={{ cloudflared_token }}
+      TUNNEL_TOKEN={{ lookup('env', 'CLOUDFLARED_TOKEN') }}
     dest: /opt/containers/cloudflared/.env
     owner: root
     group: root
     mode: '0600'
-  when: cloudflared_token is defined and cloudflared_token != ""
+  when: lookup('env', 'CLOUDFLARED_TOKEN')
 
 - name: Setup Authentik Infrastructure
   include_tasks: authentik.yml

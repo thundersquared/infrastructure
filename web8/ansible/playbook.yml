@@ -12,6 +12,7 @@
     - role: system/config
     - role: system/php
     - role: system/containers
+    - role: system/borgbackup
   collections:
     - devsec.hardening
   tasks:
