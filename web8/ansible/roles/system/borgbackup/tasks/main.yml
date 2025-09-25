@@ -20,6 +20,7 @@
           username: "{{ mysql_user }}"
           password: "{{ mysql_password }}"
           options: "--single-transaction --routines --triggers"
-      healthchecks: "{{ borg_heartbeat_url }}"
+      healthchecks:
+        ping_url: "{{ borg_heartbeat_url }}"
     borg_ssh_key_file_path: ~/.ssh/thundersquared_borg_ed25519
     borg_ssh_command: "ssh -i {{ borg_ssh_key_file_path }} -p 23"
