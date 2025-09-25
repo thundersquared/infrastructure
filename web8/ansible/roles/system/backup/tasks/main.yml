@@ -17,14 +17,14 @@
     borg_encryption_passphrase: "{{ lookup('env', 'BORG_PASSPHRASE') | default(omit) }}"
     borg_repository: "{{ lookup('env', 'BORG_REPOSITORY') | default(omit) }}"
     borg_ssh_key_file_path: ~/.ssh/thundersquared_borg_ed25519
-    borg_ssh_command: "ssh -i {{ borg_ssh_key_file_path }} -p 23"
+    borg_ssh_command: "ssh -i {{ borg_ssh_key_file_path }} -p 23 -o StrictHostKeyChecking=accept-new"
     borg_retention_policy:
       keep_hourly: 3
       keep_daily: 7
       keep_weekly: 4
       keep_monthly: 6
       keep_yearly: 1
-    borgmatic_timer: true
+    borgmatic_timer: systemd
     borgmatic_hooks:
       mariadb_databases:
         - name: all
