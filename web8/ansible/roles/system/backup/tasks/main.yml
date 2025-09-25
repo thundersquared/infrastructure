@@ -14,14 +14,8 @@
       - "*.tmp"
       - "*/.cache"
       - "*/.thumbnails"
-    borgmatic_hooks:
-      mariadb_databases:
-        - name: all
-          username: "{{ mysql_user }}"
-          password: "{{ mysql_password }}"
-          options: "--single-transaction --routines --triggers"
-      healthchecks:
-        ping_url: "{{ borg_heartbeat_url }}"
+    borg_encryption_passphrase: "{{ lookup('env', 'BORG_PASSPHRASE') | default(omit) }}"
+    borg_repository: "{{ lookup('env', 'BORG_REPOSITORY') | default(omit) }}"
     borg_ssh_key_file_path: ~/.ssh/thundersquared_borg_ed25519
     borg_ssh_command: "ssh -i {{ borg_ssh_key_file_path }} -p 23"
     borg_retention_policy:
@@ -31,8 +25,11 @@
       keep_monthly: 6
       keep_yearly: 1
     borgmatic_timer: true
-    borg_repository: "{{ lookup('env', 'BORG_REPOSITORY') | default(omit) }}"
-    borg_encryption_passphrase: "{{ lookup('env', 'BORG_PASSPHRASE') | default(omit) }}"
-    borg_heartbeat_url: "{{ lookup('env', 'BORG_HEARTBEAT_URL') | default(omit) }}"
-    mysql_user: "{{ lookup('env', 'MYSQL_USER') | default('root') }}"
-    mysql_password: "{{ lookup('env', 'MYSQL_PASSWORD') | default(omit) }}"
+    borgmatic_hooks:
+      mariadb_databases:
+        - name: all
+          username: "{{ lookup('env', 'MYSQL_USER') | default('root') }}"
+          password: "{{ lookup('env', 'MYSQL_PASSWORD') | default(omit) }}"
+          options: "--single-transaction --routines --triggers"
+      healthchecks:
+        ping_url: "{{ lookup('env', 'BORG_HEARTBEAT_URL') | default(omit) }}"
