@@ -1,8 +1,0 @@
----
-- name: Enable borgmatic.timer
-  ansible.builtin.systemd_service:
-    name: borgmatic.timer
-    state: started
-    enabled: true
-    daemon_reload: yes
-  become: true

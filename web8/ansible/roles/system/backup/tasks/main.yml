@@ -33,4 +33,11 @@
           options: "--single-transaction --routines --triggers"
       healthchecks:
         ping_url: "{{ lookup('env', 'BORG_HEARTBEAT_URL') | default(omit) }}"
-  notify: Enable borgmatic.timer
+
+- name: Enable borgmatic.timer
+  ansible.builtin.systemd_service:
+    name: borgmatic.timer
+    state: started
+    enabled: true
+    daemon_reload: yes
+  become: true
