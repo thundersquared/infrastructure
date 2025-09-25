@@ -43,6 +43,6 @@
   loop: "{{ compose_files | default(['watchtower']) }}"
   register: compose_results
 
-- name: Show compose results
-  debug:
-    var: compose_results
+# - name: Show compose results
+#   debug:
+#     var: compose_results
