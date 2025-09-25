@@ -33,3 +33,4 @@
           options: "--single-transaction --routines --triggers"
       healthchecks:
         ping_url: "{{ lookup('env', 'BORG_HEARTBEAT_URL') | default(omit) }}"
+  notify: Enable borgmatic.timer
