@@ -21,7 +21,6 @@ services:
   keydb:
     image: docker.io/eqalpha/keydb:latest
     restart: unless-stopped
-    command: ["keydb-server", "/etc/keydb/keydb.conf"]
     healthcheck:
       test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
       start_period: 20s
