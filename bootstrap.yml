@@ -82,5 +82,4 @@
         state: absent
       loop:
         - /tmp/infrastructure
-        - "{{ venv_path }}"
       ignore_errors: true
