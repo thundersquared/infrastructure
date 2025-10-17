@@ -15,7 +15,7 @@
         compose_files:
           - cloudflared
           - stalwart
-    - role: system/backup
+    - role: ../../common/ansible/roles/system/backup
   collections:
     - devsec.hardening
   tasks:
