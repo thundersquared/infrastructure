@@ -3,22 +3,29 @@
   gather_facts: false
   vars:
     node_name: "{{ lookup('env', 'NODE_NAME') }}"
+    venv_path: /tmp/ansible-venv
 
   tasks:
-    - name: Install python3-pip
+    - name: Install python3-pip and python3-venv
       become: true
       ansible.builtin.apt:
-        name: python3-pip
+        name:
+          - python3-pip
+          - python3-venv
         state: present
         update_cache: true
 
+    - name: Create a virtual environment
+      ansible.builtin.command:
+        cmd: "python3 -m venv {{ venv_path }}"
+        creates: "{{ venv_path }}/bin/pip"
+
     - name: Install ansible and jmespath
-      become: true
       ansible.builtin.pip:
         name:
           - ansible
           - jmespath
-        executable: pip3
+        executable: "{{ venv_path }}/bin/pip3"
 
     - name: Install git
       become: true
@@ -37,13 +44,13 @@
 
     - name: Install Ansible Galaxy requirements
       ansible.builtin.command:
-        cmd: ansible-galaxy install -r requirements.yml
+        cmd: "{{ venv_path }}/bin/ansible-galaxy install -r requirements.yml"
         chdir: /tmp/infrastructure/common/ansible
       when: git_clone.changed
 
     - name: Run common playbook locally
       ansible.builtin.command:
-        cmd: ansible-playbook playbook.yml
+        cmd: "{{ venv_path }}/bin/ansible-playbook playbook.yml"
         chdir: /tmp/infrastructure/common/ansible
       environment:
         GHCR_USERNAME: "{{ lookup('env', 'GHCR_USERNAME') }}"
@@ -53,7 +60,7 @@
 
     - name: Run node-specific playbook locally
       ansible.builtin.command:
-        cmd: ansible-playbook playbook.yml
+        cmd: "{{ venv_path }}/bin/ansible-playbook playbook.yml"
         chdir: "/tmp/infrastructure/{{ node_name }}/ansible"
       environment:
         GHCR_USERNAME: "{{ lookup('env', 'GHCR_USERNAME') }}"
@@ -68,9 +75,12 @@
         STALWART_MEILI_MASTER_KEY: "{{ lookup('env', 'STALWART_MEILI_MASTER_KEY') }}"
       when: git_clone.changed
 
-    - name: Clean up cloned repository
+    - name: Clean up cloned repository and venv
       become: true
       ansible.builtin.file:
-        path: /tmp/infrastructure
+        path: "{{ item }}"
         state: absent
+      loop:
+        - /tmp/infrastructure
+        - "{{ venv_path }}"
       ignore_errors: true
