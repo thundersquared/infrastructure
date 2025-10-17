@@ -2,20 +2,13 @@
 - name: Import common playbook
   import_playbook: ../../common/ansible/playbook.yml
 
-- name: web8 specific configuration
+- name: web1 specific configuration
   hosts: all
   become: true
   vars_files:
     - ../../common/ansible/defaults/main.yml
   roles:
     - role: system/php
-    - role: system/containers
-      vars:
-        host_containers_dir: true
-        compose_files:
-          - cloudflared
-          - stalwart
-    - role: system/backup
   collections:
     - devsec.hardening
   tasks:

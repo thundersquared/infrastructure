@@ -1,0 +1,5 @@
+---
+compose_files:
+  - watchtower
+common_containers_dir: true
+host_containers_dir: false
