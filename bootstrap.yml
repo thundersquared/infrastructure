@@ -1,0 +1,76 @@
+- name: Bootstrap local playbook execution
+  hosts: all
+  gather_facts: false
+  vars:
+    node_name: "{{ lookup('env', 'NODE_NAME') }}"
+
+  tasks:
+    - name: Install python3-pip
+      become: true
+      ansible.builtin.apt:
+        name: python3-pip
+        state: present
+        update_cache: true
+
+    - name: Install ansible and jmespath
+      become: true
+      ansible.builtin.pip:
+        name:
+          - ansible
+          - jmespath
+        executable: pip3
+
+    - name: Install git
+      become: true
+      ansible.builtin.apt:
+        name: git
+        state: present
+        update_cache: true
+
+    - name: Clone infrastructure repository
+      ansible.builtin.git:
+        repo: "https://github.com/thundersquared/infrastructure.git"
+        dest: /tmp/infrastructure
+        version: "{{ lookup('env', 'GIT_REF') | default('main') }}"
+        force: true
+      register: git_clone
+
+    - name: Install Ansible Galaxy requirements
+      ansible.builtin.command:
+        cmd: ansible-galaxy install -r requirements.yml
+        chdir: /tmp/infrastructure/common/ansible
+      when: git_clone.changed
+
+    - name: Run common playbook locally
+      ansible.builtin.command:
+        cmd: ansible-playbook playbook.yml
+        chdir: /tmp/infrastructure/common/ansible
+      environment:
+        GHCR_USERNAME: "{{ lookup('env', 'GHCR_USERNAME') }}"
+        GHCR_TOKEN: "{{ lookup('env', 'GHCR_TOKEN') }}"
+        SCHEDULED_RUN: "{{ lookup('env', 'SCHEDULED_RUN') }}"
+      when: git_clone.changed
+
+    - name: Run node-specific playbook locally
+      ansible.builtin.command:
+        cmd: ansible-playbook playbook.yml
+        chdir: "/tmp/infrastructure/{{ node_name }}/ansible"
+      environment:
+        GHCR_USERNAME: "{{ lookup('env', 'GHCR_USERNAME') }}"
+        GHCR_TOKEN: "{{ lookup('env', 'GHCR_TOKEN') }}"
+        SCHEDULED_RUN: "{{ lookup('env', 'SCHEDULED_RUN') }}"
+        MYSQL_PASSWORD: "{{ lookup('env', 'MYSQL_PASSWORD') }}"
+        CLOUDFLARED_TOKEN: "{{ lookup('env', 'CLOUDFLARED_TOKEN') }}"
+        BORG_REPOSITORY: "{{ lookup('env', 'BORG_REPOSITORY') }}"
+        BORG_PASSPHRASE: "{{ lookup('env', 'BORG_PASSPHRASE') }}"
+        BORG_HEARTBEAT_URL: "{{ lookup('env', 'BORG_HEARTBEAT_URL') }}"
+        STALWART_PG_PASSWORD: "{{ lookup('env', 'STALWART_PG_PASSWORD') }}"
+        STALWART_MEILI_MASTER_KEY: "{{ lookup('env', 'STALWART_MEILI_MASTER_KEY') }}"
+      when: git_clone.changed
+
+    - name: Clean up cloned repository
+      become: true
+      ansible.builtin.file:
+        path: /tmp/infrastructure
+        state: absent
+      ignore_errors: true
