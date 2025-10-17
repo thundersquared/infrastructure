@@ -50,7 +50,7 @@
 
     - name: Run common playbook locally
       ansible.builtin.command:
-        cmd: "{{ venv_path }}/bin/ansible-playbook playbook.yml"
+        cmd: "{{ venv_path }}/bin/ansible-playbook -i localhost, --connection=local playbook.yml"
         chdir: /tmp/infrastructure/common/ansible
       environment:
         GHCR_USERNAME: "{{ lookup('env', 'GHCR_USERNAME') }}"
@@ -60,7 +60,7 @@
 
     - name: Run node-specific playbook locally
       ansible.builtin.command:
-        cmd: "{{ venv_path }}/bin/ansible-playbook playbook.yml"
+        cmd: "{{ venv_path }}/bin/ansible-playbook -i localhost, --connection=local playbook.yml"
         chdir: "/tmp/infrastructure/{{ node_name }}/ansible"
       environment:
         GHCR_USERNAME: "{{ lookup('env', 'GHCR_USERNAME') }}"
