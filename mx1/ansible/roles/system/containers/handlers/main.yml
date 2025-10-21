@@ -1,0 +1,6 @@
+---
+- name: Restart containers
+  community.docker.docker_compose_v2:
+    project_src: "/opt/containers/{{ item }}"
+    state: restarted
+  loop: "{{ compose_files | default(['watchtower']) }}"

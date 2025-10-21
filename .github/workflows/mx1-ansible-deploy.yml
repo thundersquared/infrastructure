@@ -1,0 +1,65 @@
+name: Deploy mx1 with Ansible
+on:
+  workflow_dispatch:
+    inputs:
+      force_schedule_mode:
+        description: 'Force playbook to run in "schedule" mode'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'  # Every day at midnight
+jobs:
+  run-ansible:
+    runs-on: ubuntu-latest
+    environment: mx1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+      - name: Cache pip3
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.cache/pip
+          key: pip3-
+          restore-keys: |
+            pip3-
+      - name: Cache Ansible Galaxy requirements
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.ansible
+          key: ansible-galaxy-${{ hashFiles('mx1/ansible/requirements.yml') }}
+          restore-keys: |
+            ansible-galaxy-
+      - name: Install Ansible
+        uses: alex-oleshkevich/setup-ansible@v1.0.1
+        with:
+          version: "11.10.0"
+      - name: Set up inventory with secrets and SSH key
+        run: |
+          if [ -z "${{ secrets.HOST }}" ] || [ -z "${{ secrets.USER }}" ]; then
+            echo "HOST or USER secret is missing!" >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.HOST }}" >> ~/.ssh/known_hosts
+          echo "${{ secrets.HOST }} ansible_user=${{ secrets.USER }} ansible_ssh_private_key=~/.ssh/id_ed25519 ansible_ssh_common_args='-o ServerAliveInterval=60 -o ServerAliveCountMax=20 -o ConnectTimeout=60'" > inventory
+      - name: Install Ansible Galaxy requirements
+        run: |
+          ansible-galaxy install -r mx1/ansible/requirements.yml
+      - name: Run Ansible Playbook
+        env:
+          BORG_REPOSITORY: ${{ secrets.BORG_REPOSITORY }}
+          BORG_PASSPHRASE: ${{ secrets.BORG_PASSPHRASE }}
+          BORG_HEARTBEAT_URL: ${{ secrets.BORG_HEARTBEAT_URL }}
+          STALWART_PG_PASSWORD: ${{ secrets.STALWART_PG_PASSWORD }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          SCHEDULED_RUN: ${{ github.event_name == 'schedule' || github.event.inputs.force_schedule_mode == 'true' }}
+        run: |
+          ansible-playbook -i inventory mx1/ansible/playbook.yml --private-key ~/.ssh/id_ed25519

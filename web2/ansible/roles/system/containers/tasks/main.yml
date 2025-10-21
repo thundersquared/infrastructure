@@ -1,0 +1,31 @@
+---
+- name: Ensure /opt/containers exists
+  file:
+    path: /opt/containers
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy containers directory to remote node
+  copy:
+    src: "{{ playbook_dir }}/../containers/"
+    dest: /opt/containers/
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart containers
+
+- name: Create shared app-infra Docker network
+  community.docker.docker_network:
+    name: app-infra
+    internal: false
+    scope: "global"
+    state: present
+
+- name: Deploy docker-compose projects
+  community.docker.docker_compose_v2:
+    project_src: "/opt/containers/{{ item }}"
+    state: present
+  loop: "{{ compose_files | default(['watchtower']) }}"
+  register: compose_results

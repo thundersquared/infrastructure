@@ -1,0 +1,25 @@
+---
+- name: Install Docker and apply hardening
+  hosts: all
+  become: true
+  vars_files:
+    - defaults/main.yml
+  roles:
+    - role: geerlingguy.docker
+      when: scheduled_run
+    - role: system/apt
+      when: scheduled_run
+    - role: system/config
+    - role: system/docker-login
+    - role: system/containers
+  collections:
+    - devsec.hardening
+  tasks:
+    - name: Apply OS hardening
+      include_role:
+        name: devsec.hardening.os_hardening
+      when: scheduled_run
+    - name: Apply ssh hardening
+      include_role:
+        name: devsec.hardening.ssh_hardening
+      when: scheduled_run

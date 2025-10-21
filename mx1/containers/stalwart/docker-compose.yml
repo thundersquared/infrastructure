@@ -1,0 +1,62 @@
+---
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-stalwart}
+      POSTGRES_DB: ${PG_DB:-stalwart}
+    env_file:
+      - .env
+
+  keydb:
+    image: docker.io/eqalpha/keydb:latest
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - ./keydb.conf:/etc/keydb/keydb.conf
+      - keydb-data:/data
+
+  stalwart:
+    image: ghcr.io/thundersquared/stalwart:0.13.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:8080"
+      - "127.0.0.1:3002:443"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - stalwart-data:/opt/stalwart
+    environment:
+      STALWART_STORE__URL: "postgres://${PG_USER:-stalwart}:${PG_PASS}@postgres:5432/${PG_DB:-stalwart}"
+      STALWART_CACHE__URL: "redis://keydb:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keydb:
+        condition: service_healthy
+    env_file:
+      - .env
+
+volumes:
+  database:
+    driver: local
+  stalwart-data:
+    driver: local
+  keydb-data:
+    driver: local

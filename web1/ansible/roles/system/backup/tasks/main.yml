@@ -1,0 +1,43 @@
+---
+- name: Include borgbase.ansible_role_borgbackup role
+  include_role:
+    name: borgbase.ansible_role_borgbackup
+  vars:
+    borg_source_directories:
+      - "/home"
+      - "/etc"
+    borg_exclude_patterns:
+      - "/home/anatoli"
+      - "/home/clp" 
+      - "/home/mysql"
+      - "*.pyc"
+      - "*.tmp"
+      - "*/.cache"
+      - "*/.thumbnails"
+    borg_encryption_passphrase: "{{ lookup('env', 'BORG_PASSPHRASE') | default(omit) }}"
+    borg_repository: "{{ lookup('env', 'BORG_REPOSITORY') | default(omit) }}"
+    borg_ssh_key_file_path: ~/.ssh/thundersquared_borg_ed25519
+    borg_ssh_command: "ssh -i {{ borg_ssh_key_file_path }} -p 23 -o StrictHostKeyChecking=accept-new"
+    borg_retention_policy:
+      keep_hourly: 3
+      keep_daily: 7
+      keep_weekly: 4
+      keep_monthly: 6
+      keep_yearly: 1
+    borgmatic_timer: systemd
+    borgmatic_hooks:
+      mariadb_databases:
+        - name: all
+          username: "{{ lookup('env', 'MYSQL_USER') | default('root') }}"
+          password: "{{ lookup('env', 'MYSQL_PASSWORD') | default(omit) }}"
+          options: "--single-transaction --routines --triggers"
+      healthchecks:
+        ping_url: "{{ lookup('env', 'BORG_HEARTBEAT_URL') | default(omit) }}"
+
+- name: Enable borgmatic.timer
+  ansible.builtin.systemd_service:
+    name: borgmatic.timer
+    state: started
+    enabled: true
+    daemon_reload: yes
+  become: true

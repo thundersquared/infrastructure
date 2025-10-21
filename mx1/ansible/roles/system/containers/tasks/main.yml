@@ -1,0 +1,46 @@
+---
+- name: Ensure /opt/containers exists
+  file:
+    path: /opt/containers
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy containers directory to remote node
+  copy:
+    src: "{{ playbook_dir }}/../containers/"
+    dest: /opt/containers/
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart containers
+
+- name: Create shared app-infra Docker network
+  community.docker.docker_network:
+    name: app-infra
+    internal: false
+    scope: "global"
+    state: present
+
+- name: Create stalwart .env file
+  copy:
+    content: |
+      PG_PASS={{ lookup('env', 'STALWART_PG_PASSWORD') }}
+      MEILI_MASTER_KEY={{ lookup('env', 'STALWART_MEILI_MASTER_KEY') }}
+    dest: /opt/containers/stalwart/.env
+    owner: root
+    group: root
+    mode: '0600'
+  when: lookup('env', 'STALWART_PG_PASSWORD') and lookup('env', 'STALWART_MEILI_MASTER_KEY')
+
+- name: Deploy docker-compose projects
+  community.docker.docker_compose_v2:
+    project_src: "/opt/containers/{{ item }}"
+    state: present
+  loop: "{{ compose_files | default(['watchtower']) }}"
+  register: compose_results
+
+# - name: Show compose results
+#   debug:
+#     var: compose_results

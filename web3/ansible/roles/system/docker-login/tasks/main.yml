@@ -1,0 +1,7 @@
+---
+- name: Log in to GitHub Container Registry
+  community.docker.docker_login:
+    registry: ghcr.io
+    username: "{{ lookup('env', 'GHCR_USERNAME') }}"
+    password: "{{ lookup('env', 'GHCR_TOKEN') }}"
+  when: "lookup('env', 'GHCR_USERNAME') and lookup('env', 'GHCR_TOKEN')"
