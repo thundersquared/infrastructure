@@ -4,4 +4,4 @@
     registry: ghcr.io
     username: "{{ lookup('env', 'GHCR_USERNAME') }}"
     password: "{{ lookup('env', 'GHCR_TOKEN') }}"
-  when: "lookup('env', 'GHCR_USERNAME') and lookup('env', 'GHCR_TOKEN')"
+  when: lookup('env', 'GHCR_USERNAME') | length > 0 and lookup('env', 'GHCR_TOKEN') | length > 0

@@ -31,7 +31,7 @@
     owner: root
     group: root
     mode: '0600'
-  when: lookup('env', 'CLOUDFLARED_TOKEN')
+  when: lookup('env', 'CLOUDFLARED_TOKEN') | length > 0
 
 - name: Create stalwart .env file
   copy:
@@ -42,7 +42,7 @@
     owner: root
     group: root
     mode: '0600'
-  when: lookup('env', 'STALWART_PG_PASSWORD') and lookup('env', 'STALWART_MEILI_MASTER_KEY')
+  when: lookup('env', 'STALWART_PG_PASSWORD') | length > 0 and lookup('env', 'STALWART_MEILI_MASTER_KEY') | length > 0
 
 - name: Setup Authentik Infrastructure
   include_tasks: authentik.yml

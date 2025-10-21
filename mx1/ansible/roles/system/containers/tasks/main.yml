@@ -31,7 +31,7 @@
     owner: root
     group: root
     mode: '0600'
-  when: lookup('env', 'STALWART_PG_PASSWORD')
+  when: lookup('env', 'STALWART_PG_PASSWORD') | length > 0
 
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
