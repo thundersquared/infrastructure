@@ -49,7 +49,7 @@ jobs:
           echo "${{ secrets.HOST }} ansible_user=${{ secrets.USER }} ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
       - name: Install Ansible Galaxy requirements
         run: |
-          ansible-galaxy install -r web1/ansible/requirements.yml
+          ansible-galaxy install -r web1/ansible/requirements.yml --force-with-deps
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: web1/ansible/ansible.cfg

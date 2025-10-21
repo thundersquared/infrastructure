@@ -50,7 +50,7 @@ jobs:
       - name: Install Ansible Galaxy requirements
         id: galaxy
         run: |
-          ansible-galaxy install -r mx1/ansible/requirements.yml
+          ansible-galaxy install -r mx1/ansible/requirements.yml --force-with-deps
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: mx1/ansible/ansible.cfg
