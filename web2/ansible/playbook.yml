@@ -10,7 +10,6 @@
     - role: system/apt
       when: scheduled_run
     - role: system/config
-    - role: system/php
     - role: system/docker-login
     - role: system/containers
     # - role: system/backup
