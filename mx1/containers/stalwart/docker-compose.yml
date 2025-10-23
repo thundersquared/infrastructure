@@ -35,8 +35,7 @@ services:
     image: ghcr.io/thundersquared/stalwart:0.13.4
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3001:8080"
-      - "127.0.0.1:3002:443"
+      - "443:443"
       - "465:465"
       - "587:587"
       - "993:993"
