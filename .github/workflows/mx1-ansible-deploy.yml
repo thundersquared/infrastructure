@@ -10,6 +10,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.github/workflows/mx1-ansible-deploy.yml'
+      - 'mx1/ansible/**'
+      - 'mx1/containers/**'
   schedule:
     - cron: '0 0 * * *'  # Every day at midnight
 jobs:

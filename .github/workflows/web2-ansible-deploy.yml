@@ -10,6 +10,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.github/workflows/web2-ansible-deploy.yml'
+      - 'web2/ansible/**'
+      - 'web2/containers/**'
   schedule:
     - cron: '0 0 * * *'  # Every day at midnight
 jobs:
