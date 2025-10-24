@@ -17,10 +17,12 @@
     - devsec.hardening
   tasks:
     - name: Apply OS hardening
+      no_log: true
       include_role:
         name: devsec.hardening.os_hardening
       when: scheduled_run
     - name: Apply ssh hardening
+      no_log: true
       include_role:
         name: devsec.hardening.ssh_hardening
       when: scheduled_run
