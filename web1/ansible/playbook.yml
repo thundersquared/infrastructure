@@ -17,18 +17,18 @@
   collections:
     - devsec.hardening
   tasks:
-    - name: Apply OS hardening
+    - name: Apply hardening roles
       no_log: true
-      include_role:
-        name: devsec.hardening.os_hardening
-      when: scheduled_run
-    - name: Apply nginx hardening
-      no_log: true
-      include_role:
-        name: devsec.hardening.nginx_hardening
-      when: scheduled_run
-    - name: Apply ssh hardening
-      no_log: true
-      include_role:
-        name: devsec.hardening.ssh_hardening
-      when: scheduled_run
+      block:
+        - name: Apply OS hardening
+          include_role:
+            name: devsec.hardening.os_hardening
+          when: scheduled_run
+        - name: Apply nginx hardening
+          include_role:
+            name: devsec.hardening.nginx_hardening
+          when: scheduled_run
+        - name: Apply ssh hardening
+          include_role:
+            name: devsec.hardening.ssh_hardening
+          when: scheduled_run
