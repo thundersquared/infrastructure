@@ -4,6 +4,7 @@ nginx_dh_size: 4096
 os_user_pw_ageing: false
 os_auth_pam_passwdqc_enable: false
 sftp_enabled: true
+ssh_allow_tcp_forwarding: 'local'
 ssh_print_last_log: true
 ssh_permit_root_login: "without-password"
 ssh_permit_tunnel: "yes"
