@@ -13,3 +13,19 @@
     - php8.1-fpm
     - php8.2-fpm
     - php8.3-fpm
+
+- name: Find all PHP FPM pool configuration files
+  ansible.builtin.find:
+    paths: /etc/php
+    patterns: "*.conf"
+    recurse: yes
+    file_type: file
+    use_regex: no
+  register: php_conf_files
+
+- name: Ensure all PHP configuration files have read permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "a+r"
+  loop: "{{ php_conf_files.files }}"
+  when: php_conf_files.files | length > 0
