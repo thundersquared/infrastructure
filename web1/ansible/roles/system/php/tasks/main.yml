@@ -22,6 +22,7 @@
     file_type: file
     use_regex: no
   register: php_conf_files
+  no_log: true
 
 - name: Ensure all PHP configuration files have read permissions
   ansible.builtin.file:
@@ -29,3 +30,4 @@
     mode: "a+r"
   loop: "{{ php_conf_files.files }}"
   when: php_conf_files.files | length > 0
+  no_log: true
