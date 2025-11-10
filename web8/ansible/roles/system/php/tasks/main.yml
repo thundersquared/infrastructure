@@ -1,33 +1,32 @@
 ---
 - name: Ensure PHP FPM services are stopped and disabled
   ansible.builtin.systemd_service:
-    name: "{{ item }}"
+    name: "php{{ item }}-fpm"
     state: stopped
     enabled: no
   loop:
-    - php7.1-fpm
-    - php7.2-fpm
-    - php7.3-fpm
-    - php7.4-fpm
-    - php8.0-fpm
-    - php8.1-fpm
-    - php8.2-fpm
-    - php8.3-fpm
+    - "7.1"
+    - "7.2"
+    - "7.3"
+    - "7.4"
+    - "8.0"
+    - "8.1"
+    - "8.2"
+    - "8.3"
 
-- name: Find all PHP FPM pool configuration files
-  ansible.builtin.find:
-    paths: /etc/php
-    patterns: "*.conf"
-    recurse: yes
-    file_type: file
-    use_regex: no
-  register: php_conf_files
-  no_log: true
-
-- name: Ensure all PHP configuration files have read permissions
+- name: Ensure PHP FPM pool configuration files have read permissions
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "/etc/php/{{ item }}/fpm/pool.d"
     mode: "a+r"
-  loop: "{{ php_conf_files.files }}"
-  when: php_conf_files.files | length > 0
+    recurse: yes
+  loop:
+    - "7.1"
+    - "7.2"
+    - "7.3"
+    - "7.4"
+    - "8.0"
+    - "8.1"
+    - "8.2"
+    - "8.3"
+  failed_when: false
   no_log: true
