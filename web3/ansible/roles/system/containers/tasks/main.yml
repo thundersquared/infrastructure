@@ -23,13 +23,6 @@
     scope: "global"
     state: present
 
-- name: Deploy docker-compose projects
-  community.docker.docker_compose_v2:
-    project_src: "/opt/containers/{{ item }}"
-    state: present
-  loop: "{{ compose_files | default(['watchtower']) }}"
-  register: compose_results
-
 - name: Create cloudflared .env file
   copy:
     content: |
@@ -39,3 +32,10 @@
     group: root
     mode: '0600'
   when: lookup('env', 'CLOUDFLARED_TOKEN') | length > 0
+
+- name: Deploy docker-compose projects
+  community.docker.docker_compose_v2:
+    project_src: "/opt/containers/{{ item }}"
+    state: present
+  loop: "{{ compose_files | default(['watchtower']) }}"
+  register: compose_results
