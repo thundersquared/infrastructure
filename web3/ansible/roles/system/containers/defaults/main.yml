@@ -1,3 +1,5 @@
 ---
 compose_files:
   - watchtower
+  - cloudflared
+  - cobalt

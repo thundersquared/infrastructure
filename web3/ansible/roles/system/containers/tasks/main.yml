@@ -29,3 +29,13 @@
     state: present
   loop: "{{ compose_files | default(['watchtower']) }}"
   register: compose_results
+
+- name: Create cloudflared .env file
+  copy:
+    content: |
+      TUNNEL_TOKEN={{ lookup('env', 'CLOUDFLARED_TOKEN') }}
+    dest: /opt/containers/cloudflared/.env
+    owner: root
+    group: root
+    mode: '0600'
+  when: lookup('env', 'CLOUDFLARED_TOKEN') | length > 0

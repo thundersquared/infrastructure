@@ -1,0 +1,17 @@
+services:
+  cobalt-api:
+    image: ghcr.io/imputnet/cobalt:11
+    container_name: cobalt-api
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - app-infra
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    volumes:
+      - ./keys.json:/app/keys.json:ro
+      # - ./cookies.json:/cookies.json
+
+networks:
+  app-infra:
+    external: true
