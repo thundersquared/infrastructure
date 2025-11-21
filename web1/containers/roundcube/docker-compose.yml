@@ -8,6 +8,8 @@ services:
       - ./db/sqlite:/var/roundcube/db
     ports:
       - "127.0.0.1:3002:80"
+    env_file:
+      - .env
     networks:
       - app-infra
 
