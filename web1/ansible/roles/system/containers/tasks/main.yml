@@ -23,6 +23,13 @@
     scope: "global"
     state: present
 
+- name: Ensure webmail env.file exists
+  copy:
+    content: ""
+    dest: /opt/containers/webmail/env.file
+    force: no
+    mode: '0644'
+
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item }}"
