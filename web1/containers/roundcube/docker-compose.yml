@@ -1,0 +1,16 @@
+services:
+  roundcubemail:
+    image: roundcube/roundcubemail:latest
+    container_name: roundcubemail
+    restart: unless-stopped
+    volumes:
+      - ./www:/var/www/html
+      - ./db/sqlite:/var/roundcube/db
+    ports:
+      - "127.0.0.1:3002:80"
+    networks:
+      - app-infra
+
+networks:
+  app-infra:
+    external: true

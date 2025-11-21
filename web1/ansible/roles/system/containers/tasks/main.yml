@@ -30,6 +30,13 @@
     force: no
     mode: '0644'
 
+- name: Ensure roundcube .env exists
+  copy:
+    content: ""
+    dest: /opt/containers/roundcube/.env
+    force: no
+    mode: '0644'
+
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item }}"
