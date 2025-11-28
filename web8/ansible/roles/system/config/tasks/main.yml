@@ -23,15 +23,15 @@
     ansible.builtin.lineinfile:
       path: /etc/systemd/resolved.conf
       regexp: '^#?DNS='
-      line: 'DNS=8.8.8.8#dns.google 8.8.4.4#dns.google 9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net'
+      line: 'DNS=8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112'
     notify: Restart systemd-resolved
     become: true
 
-  - name: Configure systemd-resolved for Cloudflare Fallback DNS
+  - name: Configure systemd-resolved for ControlD and Cloudflare Fallback DNS
     ansible.builtin.lineinfile:
       path: /etc/systemd/resolved.conf
       regexp: '^#?FallbackDNS='
-      line: 'FallbackDNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com'
+      line: 'FallbackDNS=76.76.2.0 76.76.10.0 1.1.1.1 1.0.0.1'
     notify: Restart systemd-resolved
     become: true
 
@@ -39,7 +39,7 @@
     ansible.builtin.lineinfile:
       path: /etc/systemd/resolved.conf
       regexp: '^#?DNSOverTLS='
-      line: 'DNSOverTLS=yes'
+      line: 'DNSOverTLS=no'
     notify: Restart systemd-resolved
     become: true
 
