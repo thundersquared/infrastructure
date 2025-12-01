@@ -17,6 +17,8 @@ services:
       POSTGRES_DB: ${PG_DB:-stalwart}
     env_file:
       - .env
+    networks:
+      - app-infra
 
   keydb:
     image: docker.io/eqalpha/keydb:latest
@@ -30,6 +32,8 @@ services:
     volumes:
       - ./keydb.conf:/etc/keydb/keydb.conf
       - keydb-data:/data
+    networks:
+      - app-infra
 
   stalwart:
     image: ghcr.io/thundersquared/stalwart:0.14.1
@@ -55,6 +59,8 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    networks:
+      - app-infra
 
 volumes:
   database:
@@ -63,3 +69,7 @@ volumes:
     driver: local
   keydb-data:
     driver: local
+
+networks:
+  app-infra:
+    external: true

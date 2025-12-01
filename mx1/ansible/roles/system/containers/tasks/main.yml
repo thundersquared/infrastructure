@@ -19,6 +19,8 @@
 - name: Create shared app-infra Docker network
   community.docker.docker_network:
     name: app-infra
+    enable_ipv6: "{{ (lookup('env', 'DOCKER_IPV6_SUBNET') | length > 0) | bool }}"
+    ipam_config: "{{ [{'subnet': lookup('env', 'DOCKER_IPV6_SUBNET')}] if (lookup('env', 'DOCKER_IPV6_SUBNET') | length > 0) else omit }}"
     internal: false
     scope: "global"
     state: present

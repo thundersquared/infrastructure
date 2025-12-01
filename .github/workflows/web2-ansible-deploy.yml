@@ -59,6 +59,7 @@ jobs:
           ANSIBLE_CONFIG: web2/ansible/ansible.cfg
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          DOCKER_IPV6_SUBNET: ${{ secrets.DOCKER_IPV6_SUBNET }}
           SCHEDULED_RUN: ${{ github.event_name == 'schedule' || github.event.inputs.force_schedule_mode == 'true' }}
         run: |
           ansible-playbook -i inventory web2/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
