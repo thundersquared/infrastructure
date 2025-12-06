@@ -5,7 +5,9 @@
 
 - name: Install Nginx
   apt:
-    name: nginx
+    name:
+      - nginx
+      - libnginx-mod-stream
     state: present
 
 - name: Check if reboot required

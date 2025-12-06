@@ -61,9 +61,16 @@
 
 - name: Nginx Configuration
   block:
+  - name: Ensure Nginx modules are loaded
+    lineinfile:
+      path: /etc/nginx/nginx.conf
+      line: "include /etc/nginx/modules-enabled/*.conf;"
+      insertbefore: "^events"
+    notify: Restart Nginx
+
   - name: Copy Stalwart stream configuration
-    copy:
-      src: stalwart.conf
+    template:
+      src: stalwart.conf.j2
       dest: /etc/nginx/stalwart.conf
       owner: root
       group: root
