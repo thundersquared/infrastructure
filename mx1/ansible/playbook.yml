@@ -26,3 +26,7 @@
           include_role:
             name: devsec.hardening.ssh_hardening
           when: scheduled_run
+        - name: Apply nginx hardening
+          include_role:
+            name: devsec.hardening.nginx_hardening
+          when: scheduled_run

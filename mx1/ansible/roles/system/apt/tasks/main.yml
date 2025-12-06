@@ -3,6 +3,11 @@
     update_cache: yes
     upgrade: dist
 
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+
 - name: Check if reboot required
   stat:
     path: /var/run/reboot-required
