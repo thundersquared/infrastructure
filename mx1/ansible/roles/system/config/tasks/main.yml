@@ -1,15 +1,4 @@
 ---
-- name: UFW
-  block:
-  - name: Allow incoming UDP port 7844
-    community.general.ufw:
-      rule: allow
-      proto: udp
-      from_port: 7844
-      comment: Allow incoming traffic from UDP port 7844
-      delete: true
-    become: true
-
 - name: DNS
   block:
   - name: Ensure systemd-resolved is running
@@ -58,6 +47,32 @@
       line: 'Domain=eu.sqrd-dns.com'
     notify: Restart systemd-resolved
     become: true
+
+- name: Nginx Configuration
+  block:
+  - name: Ensure Nginx modules are loaded
+    lineinfile:
+      path: /etc/nginx/nginx.conf
+      line: "include /etc/nginx/modules-enabled/*.conf;"
+      insertbefore: "^events"
+    notify: Restart Nginx
+
+  - name: Copy Stalwart stream configuration
+    template:
+      src: stalwart.conf.j2
+      dest: /etc/nginx/stalwart.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify: Restart Nginx
+
+  - name: Include Stalwart stream config in nginx.conf
+    lineinfile:
+      path: /etc/nginx/nginx.conf
+      line: "include /etc/nginx/stalwart.conf;"
+      insertafter: EOF
+    notify: Restart Nginx
+  become: true
 
 - name: Logrotate
   block:
