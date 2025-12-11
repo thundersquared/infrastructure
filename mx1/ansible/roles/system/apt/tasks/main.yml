@@ -3,12 +3,18 @@
     update_cache: yes
     upgrade: dist
 
-- name: Install Nginx
+- name: Install nginx
   apt:
     name:
       - nginx
       - libnginx-mod-stream
     state: present
+
+- name: Ensure nginx is enabled and started
+  service:
+    name: nginx
+    enabled: yes
+    state: started
 
 - name: Check if reboot required
   stat:
