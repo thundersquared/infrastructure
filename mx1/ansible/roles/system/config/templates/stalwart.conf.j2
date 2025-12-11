@@ -10,7 +10,7 @@ stream {
 
     # Proxy HTTP
     server {
-        listen 80;
+        listen 10080;
         proxy_pass 127.0.0.1:10080;
         proxy_protocol on;
     }
@@ -31,36 +31,36 @@ stream {
 
     # Proxy HTTPS
     server {
-        listen 443;
-        proxy_pass 127.0.0.1:10443;
+        listen 10443;
+        proxy_pass 127.0.0.1:8443;
         proxy_protocol on;
     }
 
     # Proxy SMTPS
     server {
-        listen 465;
-        proxy_pass 127.0.0.1:10465;
+        listen 10465;
+        proxy_pass 127.0.0.1:465;
         proxy_protocol on;
     }
 
     # Proxy Submission
     server {
-        listen 587;
-        proxy_pass 127.0.0.1:10587;
+        listen 10587;
+        proxy_pass 127.0.0.1:587;
         proxy_protocol on;
     }
 
     # Proxy IMAPS
     server {
-        listen 993;
-        proxy_pass 127.0.0.1:10993;
+        listen 10993;
+        proxy_pass 127.0.0.1:993;
         proxy_protocol on;
     }
 
     # Proxy POP3S
     server {
-        listen 995;
-        proxy_pass 127.0.0.1:10995;
+        listen 10995;
+        proxy_pass 127.0.0.1:995;
         proxy_protocol on;
     }
 }
