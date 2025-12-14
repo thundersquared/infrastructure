@@ -10,7 +10,7 @@
 - name: Add Envoy repository
   lineinfile:
     path: /etc/apt/sources.list.d/envoy.list
-    line: "deb [arch={{ arch.stdout }} signed-by=/etc/apt/keyrings/envoy-keyring.gpg] https://apt.envoyproxy.io noble main"
+    line: "deb [arch={{ arch.stdout }} signed-by=/etc/apt/keyrings/envoy-keyring.gpg] https://apt.envoyproxy.io {{ ansible_distribution_release }} main"
     create: yes
 
 - name: Update apt-cache and do dist upgrade
