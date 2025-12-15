@@ -1,13 +1,14 @@
 - name: Add Envoy GPG key
   apt_key:
     url: https://apt.envoyproxy.io/signing.key
+    keyring: /etc/apt/trusted.gpg.d/envoy.gpg
     state: present
 
 - name: Add Envoy repository
-  lineinfile:
-    path: /etc/apt/sources.list.d/envoy.list
-    line: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/trusted.gpg.d/72F9740481B97AD5.gpg] https://apt.envoyproxy.io {{ ansible_distribution_codename }} main"
-    create: yes
+  apt_repository:
+    repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/trusted.gpg.d/envoy.gpg] https://apt.envoyproxy.io {{ ansible_distribution_codename }} main"
+    state: present
+    filename: envoy
 
 - name: Update apt-cache and do dist upgrade
   apt:
