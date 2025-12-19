@@ -1,0 +1,41 @@
+---
+- name: Fetch latest Envoy release info
+  uri:
+    url: https://api.github.com/repos/envoyproxy/envoy/releases/latest
+    return_content: yes
+  register: envoy_release
+  when: envoy_version is not defined
+
+- name: Set Envoy version
+  set_fact:
+    envoy_target_version: "{{ envoy_version | default(envoy_release.json.tag_name) }}"
+
+- name: Download Envoy binary
+  get_url:
+    url: "https://github.com/envoyproxy/envoy/releases/download/{{ envoy_target_version }}/envoy-{{ envoy_target_version | regex_replace('^v', '') }}-linux-x86_64.tar.gz"
+    dest: /tmp/envoy.tar.gz
+  register: download_result
+
+- name: Extract Envoy binary
+  unarchive:
+    src: /tmp/envoy.tar.gz
+    dest: /tmp/
+    remote_src: yes
+  when: download_result.changed
+
+- name: Install Envoy binary
+  copy:
+    src: "/tmp/envoy-{{ envoy_target_version | regex_replace('^v', '') }}-linux-x86_64/bin/envoy"
+    dest: /usr/local/bin/envoy
+    mode: '0755'
+    remote_src: yes
+  when: download_result.changed
+
+- name: Clean up temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/envoy.tar.gz
+    - "/tmp/envoy-{{ envoy_target_version | regex_replace('^v', '') }}-linux-x86_64"
+  when: download_result.changed
