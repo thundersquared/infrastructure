@@ -62,6 +62,7 @@ jobs:
           BORG_PASSPHRASE: ${{ secrets.BORG_PASSPHRASE }}
           BORG_HEARTBEAT_URL: ${{ secrets.BORG_HEARTBEAT_URL }}
           STALWART_PG_PASSWORD: ${{ secrets.STALWART_PG_PASSWORD }}
+          STALWART_OPENSEARCH_PASSWORD: ${{ secrets.STALWART_OPENSEARCH_PASSWORD }}
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           DOCKER_IPV6_SUBNET: ${{ secrets.DOCKER_IPV6_SUBNET }}

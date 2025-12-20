@@ -37,6 +37,8 @@
   loop:
     - key: PG_PASS
       value: STALWART_PG_PASSWORD
+    - key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+      value: STALWART_OPENSEARCH_PASSWORD
   when: lookup('env', item.value) | length > 0
 
 - name: Deploy docker-compose projects

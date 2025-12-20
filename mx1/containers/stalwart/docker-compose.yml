@@ -57,6 +57,8 @@ services:
       timeout: 10s
     volumes:
       - opensearch-data:/usr/share/opensearch/data
+    env_file:
+      - .env
     networks:
       - app-infra
 
