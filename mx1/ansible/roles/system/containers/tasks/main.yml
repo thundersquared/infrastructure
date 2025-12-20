@@ -28,6 +28,7 @@
 - name: Add PG_PASS to stalwart .env
   lineinfile:
     path: /opt/containers/stalwart/.env
+    regexp: '^PG_PASS='
     line: PG_PASS={{ lookup('env', 'STALWART_PG_PASSWORD') }}
     create: yes
     owner: root
@@ -38,6 +39,7 @@
 - name: Add MEILI_MASTER_KEY to stalwart .env
   lineinfile:
     path: /opt/containers/stalwart/.env
+    regexp: '^MEILI_MASTER_KEY='
     line: MEILI_MASTER_KEY={{ lookup('env', 'STALWART_MEILI_MASTER_KEY') }}
     create: yes
     owner: root
