@@ -35,6 +35,22 @@ services:
     networks:
       - app-infra
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.30
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7700/health || exit 1"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - meilisearch-data:/meili_data
+    env_file:
+      - .env
+    networks:
+      - app-infra
+
   stalwart:
     image: ghcr.io/thundersquared/stalwart:0.15.1
     restart: unless-stopped
@@ -60,6 +76,8 @@ services:
         condition: service_healthy
       keydb:
         condition: service_healthy
+      meilisearch:
+        condition: service_healthy
     env_file:
       - .env
     networks:
@@ -71,6 +89,8 @@ volumes:
   stalwart-data:
     driver: local
   keydb-data:
+    driver: local
+  meilisearch-data:
     driver: local
 
 networks:
