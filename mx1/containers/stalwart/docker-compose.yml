@@ -46,8 +46,6 @@ services:
       timeout: 5s
     volumes:
       - meilisearch-data:/meili_data
-    environment:
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?meilisearch master key required}
     env_file:
       - .env
     networks:
