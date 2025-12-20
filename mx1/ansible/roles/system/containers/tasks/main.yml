@@ -25,27 +25,21 @@
     scope: "global"
     state: present
 
-- name: Add PG_PASS to stalwart .env
+- name: Manage stalwart .env entries
   lineinfile:
     path: /opt/containers/stalwart/.env
-    regexp: '^PG_PASS='
-    line: PG_PASS={{ lookup('env', 'STALWART_PG_PASSWORD') }}
+    regexp: '^{{ item.key }}='
+    line: '{{ item.key }}={{ lookup("env", item.value) }}'
     create: yes
     owner: root
     group: root
     mode: '0600'
-  when: lookup('env', 'STALWART_PG_PASSWORD') | length > 0
-
-- name: Add MEILI_MASTER_KEY to stalwart .env
-  lineinfile:
-    path: /opt/containers/stalwart/.env
-    regexp: '^MEILI_MASTER_KEY='
-    line: MEILI_MASTER_KEY={{ lookup('env', 'STALWART_MEILI_MASTER_KEY') }}
-    create: yes
-    owner: root
-    group: root
-    mode: '0600'
-  when: lookup('env', 'STALWART_MEILI_MASTER_KEY') | length > 0
+  loop:
+    - key: PG_PASS
+      value: STALWART_PG_PASSWORD
+    - key: MEILI_MASTER_KEY
+      value: STALWART_MEILI_MASTER_KEY
+  when: lookup('env', item.value) | length > 0
 
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
