@@ -36,7 +36,7 @@ services:
       - app-infra
 
   stalwart:
-    image: ghcr.io/thundersquared/stalwart:0.14.1
+    image: ghcr.io/thundersquared/stalwart:0.15.1
     restart: unless-stopped
     ports:
       - "127.0.0.1:10025:25"
