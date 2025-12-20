@@ -37,8 +37,6 @@
   loop:
     - key: PG_PASS
       value: STALWART_PG_PASSWORD
-    - key: MEILI_MASTER_KEY
-      value: STALWART_MEILI_MASTER_KEY
   when: lookup('env', item.value) | length > 0
 
 - name: Deploy docker-compose projects
