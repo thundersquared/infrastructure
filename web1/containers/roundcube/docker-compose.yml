@@ -3,6 +3,8 @@ services:
     image: roundcube/roundcubemail:latest
     container_name: roundcubemail
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     volumes:
       - ./www:/var/www/html
       - ./db/sqlite:/var/roundcube/db

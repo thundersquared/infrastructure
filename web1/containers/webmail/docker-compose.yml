@@ -3,6 +3,8 @@ services:
     image: ghcr.io/linagora/tmail-web:release
     container_name: webmail
     restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "127.0.0.1:3001:80"
     volumes:
