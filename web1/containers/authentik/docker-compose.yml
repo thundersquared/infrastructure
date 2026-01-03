@@ -1,0 +1,57 @@
+---
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - database:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  server:
+    image: ghcr.io/goauthentik/server:2025.10.3
+    restart: unless-stopped
+    command: server
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9443:9443"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - app-infra
+
+  worker:
+    image: ghcr.io/goauthentik/server:2025.10.3
+    restart: unless-stopped
+    command: worker
+    user: root
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+      - ./certs:/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - .env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+volumes:
+  database:
+    driver: local
+
+networks:
+  app-infra:
+    external: true

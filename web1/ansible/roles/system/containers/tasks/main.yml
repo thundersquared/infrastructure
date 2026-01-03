@@ -39,6 +39,9 @@
     force: no
     mode: '0644'
 
+- name: Setup Authentik Infrastructure
+  include_tasks: authentik.yml
+
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item }}"
