@@ -27,7 +27,7 @@ services:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9443:9443"
     depends_on:
-      postgresql:
+      database:
         condition: service_healthy
     networks:
       - app-infra
@@ -45,7 +45,7 @@ services:
     env_file:
       - .env
     depends_on:
-      postgresql:
+      database:
         condition: service_healthy
 
 volumes:
