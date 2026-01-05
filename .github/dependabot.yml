@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "mx1/containers"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "web1/containers"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "web2/containers"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "web3/containers"
+    schedule:
+      interval: "weekly"
