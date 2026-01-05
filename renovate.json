@@ -5,5 +5,8 @@
   ],
   "ansible": {
     "enabled": true
+  },
+  "docker": {
+    "enabled": false
   }
 }

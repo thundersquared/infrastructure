@@ -59,6 +59,17 @@ The `scheduled_run` variable (controlled by the `SCHEDULED_RUN` environment vari
 - `SCHEDULED_RUN=true`: Runs "heavy" tasks like OS hardening, APT updates, and Docker installation. This is typically used for maintenance runs.
 - `SCHEDULED_RUN=false` (default): Skips heavy tasks for quick app deployments.
 
+## Dependency Management
+
+This repository uses automated tools to keep dependencies up-to-date:
+
+- **Dependabot**: Handles Docker image updates in `docker-compose.yml` files across all host `containers/` directories (except web8). It runs weekly and creates pull requests for updates.
+- **Renovate**: Manages Ansible requirements in `requirements.yml` files for each host. It automatically detects and updates Ansible collections and roles, creating pull requests as needed.
+
+To enable these:
+- Dependabot is built-in to GitHub; ensure `.github/dependabot.yml` is present.
+- Install the [Renovate GitHub app](https://github.com/apps/renovate) on the repository for Renovate to activate.
+
 ## Development
 
 ### Adding a Service
