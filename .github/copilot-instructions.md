@@ -49,5 +49,4 @@ This repository manages infrastructure for multiple hosts (`mx1`, `web1`, `web2`
 
 ## Dependency Management
 
-- **Dependabot**: Automatically updates Docker images in `docker-compose.yml` files within each host's `containers/` directory (configured in `.github/dependabot.yml`). Runs weekly, excludes web8.
-- **Renovate**: Handles updates for Ansible requirements in `requirements.yml` files across all hosts (configured in `renovate.json`). Requires the Renovate GitHub app to be installed on the repository.
+- **Renovate**: Handles updates for Docker images in `docker-compose.yml` files and Ansible requirements in `requirements.yml` files across all hosts. Requires the Renovate GitHub app to be installed on the repository.
