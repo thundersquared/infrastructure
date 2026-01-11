@@ -17,8 +17,8 @@ services:
     restart: unless-stopped
 
   kv:
-    image: eqalpha/keydb:alpine
-    command: ["keydb-server", "/etc/keydb/keydb.conf", "--appendonly", "yes"]
+    image: valkey/valkey:9-alpine
+    command: ["valkey-server", "--appendonly", "yes"]
     networks:
       - app-infra
       - fleet-internal
@@ -26,13 +26,13 @@ services:
     volumes:
       - kv:/data
     healthcheck:
-      test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 12
 
   fleet-init:
-    image: alpine:latest
+    image: alpine:3.19
     volumes:
       - logs:/logs
       - data:/fleet
@@ -40,7 +40,7 @@ services:
     command: sh -c "chown -R 100:101 /logs /fleet /vulndb"
 
   fleet:
-    image: fleetdm/fleet:latest
+    image: fleetdm/fleet:v4.78.2
     depends_on:
       database:
         condition: service_healthy
@@ -60,7 +60,7 @@ services:
       - app-infra
       - fleet-internal
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${FLEET_SERVER_PORT}/healthz"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${FLEET_SERVER_PORT}/healthz"]
       interval: 10s
       timeout: 5s
       retries: 12
