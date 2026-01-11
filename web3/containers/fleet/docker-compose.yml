@@ -1,0 +1,79 @@
+services:
+  database:
+    image: mysql:8.4
+    env_file: .env
+    volumes:
+      - database:/var/lib/mysql
+    cap_add:
+      - SYS_NICE
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - app-infra
+      - fleet-internal
+    restart: unless-stopped
+
+  kv:
+    image: valkey/valkey:9-alpine
+    command: ["valkey-server", "--appendonly", "yes"]
+    networks:
+      - app-infra
+      - fleet-internal
+    restart: unless-stopped
+    volumes:
+      - kv:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  fleet-init:
+    image: alpine:3.19
+    volumes:
+      - logs:/logs
+      - data:/fleet
+      - vulndb:/vulndb
+    command: sh -c "chown -R 100:101 /logs /fleet /vulndb"
+
+  fleet:
+    image: fleetdm/fleet:v4.78.2
+    depends_on:
+      database:
+        condition: service_healthy
+      kv:
+        condition: service_healthy
+      fleet-init:
+        condition: service_completed_successfully
+    command: sh -c "/usr/bin/fleet prepare db --no-prompt && /usr/bin/fleet serve"
+    ports:
+      - "127.0.0.1:3002:${FLEET_SERVER_PORT}"
+    env_file: .env
+    volumes:
+      - logs:/logs
+      - data:/fleet
+      - vulndb:/vulndb
+    networks:
+      - app-infra
+      - fleet-internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${FLEET_SERVER_PORT}/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  database:
+  logs:
+  data:
+  vulndb:
+  kv:
+networks:
+  app-infra:
+    external: true
+  fleet-internal:
+    driver: bridge

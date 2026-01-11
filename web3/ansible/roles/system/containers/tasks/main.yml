@@ -38,6 +38,9 @@
 - name: Setup Authentik Infrastructure
   include_tasks: authentik.yml
 
+- name: Setup Fleet Infrastructure
+  include_tasks: fleet.yml
+
 - name: Deploy docker-compose projects
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item }}"

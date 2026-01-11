@@ -1,0 +1,11 @@
+---
+- name: Check if fleet .env file exists
+  stat:
+    path: /opt/containers/fleet/.env
+  register: fleet_env_stat
+
+- name: Deploy Fleet docker-compose stack
+  community.docker.docker_compose_v2:
+    project_src: "/opt/containers/fleet"
+    state: present
+  when: fleet_env_stat.stat.exists
