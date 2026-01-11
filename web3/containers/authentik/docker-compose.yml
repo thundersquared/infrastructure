@@ -26,8 +26,7 @@ services:
     env_file:
       - .env
     ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9443:9443"
+      - "127.0.0.1:3001:9000"
     depends_on:
       database:
         condition: service_healthy
