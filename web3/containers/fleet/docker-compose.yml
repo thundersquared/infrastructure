@@ -12,16 +12,14 @@ services:
       timeout: 5s
       retries: 12
     networks:
-      - app-infra
-      - fleet-internal
+      - fleet
     restart: unless-stopped
 
   kv:
     image: valkey/valkey:9-alpine
     command: ["valkey-server", "--appendonly", "yes"]
     networks:
-      - app-infra
-      - fleet-internal
+      - fleet
     restart: unless-stopped
     volumes:
       - kv:/data
@@ -58,7 +56,7 @@ services:
       - vulndb:/vulndb
     networks:
       - app-infra
-      - fleet-internal
+      - fleet
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${FLEET_SERVER_PORT}/healthz"]
       interval: 10s
@@ -75,5 +73,5 @@ volumes:
 networks:
   app-infra:
     external: true
-  fleet-internal:
+  fleet:
     driver: bridge
