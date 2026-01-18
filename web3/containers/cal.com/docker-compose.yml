@@ -1,0 +1,39 @@
+services:
+  database:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    volumes:
+      - database:/var/lib/postgresql/data
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - calcom
+
+  calcom:
+    image: calcom/cal.com:v6.1.0
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3003:3000"
+    env_file:
+      - .env
+    networks:
+      - calcom
+      - app-infra
+
+volumes:
+  database:
+    driver: local
+
+networks:
+  calcom:
+    driver: bridge
+  app-infra:
+    external: true
