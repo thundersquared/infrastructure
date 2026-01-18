@@ -9,3 +9,6 @@ docker_stacks:
   cobalt:
     env_file: true
     state: present
+  calcom:
+    env_file: true
+    state: present
