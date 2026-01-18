@@ -43,16 +43,5 @@
   include_tasks: authentik.yml
 
 - name: Deploy docker-compose projects
+  include_tasks: deploy_stack.yml
   loop: "{{ docker_stacks | dict2items }}"
-  block:
-    - name: Check .env file existence
-      ansible.builtin.stat:
-        path: "/opt/containers/{{ item.key }}/.env"
-      register: env_stat
-
-    - name: Deploy stack
-      community.docker.docker_compose_v2:
-        project_src: "/opt/containers/{{ item.key }}"
-        state: "{{ item.value.state }}"
-      when: not item.value.env_file or (item.value.env_file and env_stat.stat.exists)
-      register: compose_result

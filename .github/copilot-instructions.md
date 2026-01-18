@@ -11,7 +11,7 @@ This repository manages infrastructure for multiple hosts (`mx1`, `web1`, `web2`
 - **Deployment Pattern**:
   - The `system/containers` role copies the *entire* local `containers/` directory to `/opt/containers/` on the remote host.
   - Services are deployed via `community.docker.docker_compose_v2` by iterating over the `docker_stacks` map (defined in `defaults/main.yml`).
-  - For each stack, a stat task checks for `.env` file existence before deployment.
+  - For each stack, an included task file checks for `.env` file existence and deploys conditionally.
   - Deployment conditions: A stack is deployed if `env_file: false` or (`env_file: true` and the `.env` file exists in the stack folder).
   - State is set directly from the `state` value in the map (`present` or `restarted`).
   - **Shared Network**: All containers typically attach to an external Docker network named `app-infra`.
