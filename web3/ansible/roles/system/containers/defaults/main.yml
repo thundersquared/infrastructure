@@ -1,5 +1,11 @@
 ---
-compose_files:
-  - watchtower
-  - cloudflared
-  - cobalt
+docker_stacks:
+  watchtower:
+    env_file: false
+    state: restarted
+  cloudflared:
+    env_file: true
+    state: present
+  cobalt:
+    env_file: true
+    state: present

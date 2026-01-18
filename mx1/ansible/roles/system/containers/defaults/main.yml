@@ -1,4 +1,8 @@
 ---
-compose_files:
-  - watchtower
-  - stalwart
+docker_stacks:
+  watchtower:
+    env_file: false
+    state: restarted
+  stalwart:
+    env_file: true
+    state: present

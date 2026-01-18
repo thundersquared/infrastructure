@@ -1,5 +1,11 @@
 ---
-compose_files:
-  - watchtower
-  - webmail
-  - roundcube
+docker_stacks:
+  watchtower:
+    env_file: false
+    state: restarted
+  webmail:
+    env_file: false
+    state: present
+  roundcube:
+    env_file: true
+    state: present
