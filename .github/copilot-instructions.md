@@ -36,6 +36,7 @@ This repository manages infrastructure for multiple hosts (`mx1`, `web1`, `web2`
 - **Compose Version**: Do not include the `version` top-level element in `docker-compose.yml` files, as it is deprecated in Compose V2.
 - **Environment Variables**: Prefer `.env` files over explicit `environment:` definitions in `docker-compose.yml`. Use `env_file: - .env` to load all required environment variables from a single source of truth.
 - **Container Versions**: Use fixed version tags instead of `latest` for improved accountability and reproducible deployments. For PostgreSQL, use `postgres:18-alpine` in new stacks.
+- **Port Assignment**: New stacks should use incremental ports (e.g., 3001, 3002, 3003) based on the highest port number used by existing stacks. Always bind to localhost (127.0.0.1) unless otherwise stated.
 - **Hardening**: The project uses `devsec.hardening` roles. Be mindful of strict permissions and SSH configurations (e.g., `ssh_permit_root_login: "without-password"`).
 - **Variables**: Check `defaults/main.yml` in each host's ansible directory for global settings like `sysctl` overrides and SSH policies.
 
