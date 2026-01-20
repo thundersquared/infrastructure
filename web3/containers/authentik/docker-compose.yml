@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     command: server
     volumes:
-      - ./media:/media
+      - ./data:/data
       - ./custom-templates:/templates
     env_file:
       - .env
@@ -40,7 +40,7 @@ services:
     command: worker
     user: root
     volumes:
-      - ./media:/media
+      - ./data:/data
       - ./custom-templates:/templates
       - ./certs:/certs
       - /var/run/docker.sock:/var/run/docker.sock
