@@ -31,6 +31,18 @@ This repository manages infrastructure for multiple hosts (`mx1`, `web1`, `web2`
 - **`system/backup`**: Configures Borgmatic backups using `borgbase.ansible_role_borgbackup`.
 - **`system/apt`**: Handles package updates and installation (usually conditional on `scheduled_run`).
 
+## Migrations
+
+The infrastructure includes a migration system for one-time system configuration tasks:
+
+- **Location**: `ansible/migrations/` directory per host
+- **State Storage**: `/opt/ansible/migrations.db` (SQLite database)
+- **Execution**: Via `system/migrations` role, runs before containers
+- **Error Handling**: Playbook stops on migration failure
+- **Tracking**: Each migration recorded with timestamp
+
+When adding migrations, ensure they are idempotent and handle errors appropriately. Use timestamped filenames like `20240121_0001_description.yml`.
+
 ## Conventions
 
 - **Role Structure**: Roles are often nested under `roles/system/` (e.g., `roles/system/containers`, `roles/system/config`).

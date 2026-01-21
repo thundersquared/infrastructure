@@ -11,6 +11,7 @@
       when: scheduled_run
     - role: system/config
     - role: system/docker-login
+    - role: system/migrations
     - role: system/containers
   collections:
     - devsec.hardening

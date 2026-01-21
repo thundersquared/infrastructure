@@ -1,0 +1,15 @@
+---
+# Migration: 20260121_0001_relocate_media_for_authentik
+# Description: Relocate media directory for Authentik
+
+- name: Ensure target directory exists
+  file:
+    path: /opt/containers/authentik/data
+    state: directory
+    mode: '0755'
+
+- name: Relocate authentik media directory
+  command: mv /opt/containers/authentik/media /opt/containers/authentik/data/media
+  args:
+    creates: /opt/containers/authentik/data/media
+    removes: /opt/containers/authentik/media
