@@ -39,5 +39,5 @@
 
 - name: Record applied migrations
   command: sqlite3 {{ migration_state_file }} "INSERT OR IGNORE INTO migrations (id) VALUES ('{{ item.item.path | basename | regex_replace('\\.yml$', '') }}');"
-  loop: "{{ migration_results.results | selectattr('ansible_loop_var', 'defined') | list }}"
+  loop: "{{ migration_results.results | rejectattr('skipped', 'equalto', true) | list }}"
   when: item.changed
