@@ -24,20 +24,53 @@
   set_fact:
     applied_migrations: "{{ applied_migrations_output.stdout_lines | select | list }}"
 
+- name: Show applied migrations
+  debug:
+    msg: "Already applied migrations: {{ applied_migrations }}"
+    verbosity: 1
+  no_log: false
+
 - name: Find migration files
   find:
     paths: "{{ migration_dir }}"
     patterns: "*.yml"
     recurse: no
+  delegate_to: localhost
   register: migration_files
 
+- name: Extract migration IDs from files
+  set_fact:
+    pending_migrations: |
+      {{ migration_files.files | map(attribute='path') | map('basename') | map('regex_replace', '\.yml$', '') | reject('in', applied_migrations) | list }}
+
+- name: Show pending migrations
+  debug:
+    msg: "Pending migrations to apply: {{ pending_migrations }}"
+    verbosity: 1
+  no_log: false
+
 - name: Run pending migrations
-  include_tasks: "{{ item.path }}"
-  loop: "{{ migration_files.files }}"
-  when: "item.path | basename | regex_replace('\\.yml$', '') not in applied_migrations"
+  include_tasks: "{{ migration_dir }}/{{ item }}.yml"
+  loop: "{{ pending_migrations }}"
   register: migration_results
 
 - name: Record applied migrations
-  command: sqlite3 {{ migration_state_file }} "INSERT OR IGNORE INTO migrations (id) VALUES ('{{ item.item.path | basename | regex_replace('\\.yml$', '') }}');"
-  loop: "{{ migration_results.results | rejectattr('skipped', 'equalto', true) | list }}"
-  when: not (item.failed | default(false))
+  command: sqlite3 {{ migration_state_file }} "INSERT INTO migrations (id) VALUES ('{{ item }}');"
+  loop: "{{ pending_migrations }}"
+  loop_control:
+    index_var: migration_index
+  when:
+    - migration_results.results is defined
+    - migration_results.results | length > 0
+    - not (migration_results.results[migration_index].failed | default(false))
+
+- name: Verify migrations were recorded
+  command: sqlite3 {{ migration_state_file }} "SELECT id FROM migrations;"
+  register: final_migrations
+  changed_when: false
+
+- name: Show all recorded migrations
+  debug:
+    msg: "All recorded migrations: {{ final_migrations.stdout_lines }}"
+    verbosity: 1
+  no_log: false
