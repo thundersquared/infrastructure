@@ -1,0 +1,31 @@
+---
+# Migration: 20260121_0001_relocate_media_for_authentik
+# Description: Relocate media directory for Authentik
+
+- name: Check if source directory exists and destination doesn't
+  stat:
+    path: "{{ item }}"
+  register: dir_stat
+  loop:
+    - /opt/containers/authentik/media
+    - /opt/containers/authentik/data/media
+
+- name: Ensure target directory exists
+  file:
+    path: /opt/containers/authentik/data
+    state: directory
+    mode: '0755'
+  when: dir_stat.results[0].stat.exists and not dir_stat.results[1].stat.exists
+
+- name: Copy authentik media directory to new location
+  copy:
+    src: /opt/containers/authentik/media/
+    dest: /opt/containers/authentik/data/media/
+    remote_src: true
+  when: dir_stat.results[0].stat.exists and not dir_stat.results[1].stat.exists
+
+- name: Remove old media directory
+  file:
+    path: /opt/containers/authentik/media
+    state: absent
+  when: dir_stat.results[0].stat.exists and not dir_stat.results[1].stat.exists

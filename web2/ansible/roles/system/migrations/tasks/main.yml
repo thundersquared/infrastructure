@@ -1,0 +1,43 @@
+---
+- name: Ensure sqlite3 is installed
+  package:
+    name: sqlite3
+    state: present
+
+- name: Ensure /opt/ansible directory exists
+  file:
+    path: /opt/ansible
+    state: directory
+    mode: '0755'
+
+- name: Ensure migration state database exists
+  command: sqlite3 {{ migration_state_file }} "CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP);"
+  args:
+    creates: "{{ migration_state_file }}"
+
+- name: Get applied migrations
+  command: sqlite3 {{ migration_state_file }} "SELECT id FROM migrations;"
+  register: applied_migrations_output
+  changed_when: false
+
+- name: Parse applied migrations
+  set_fact:
+    applied_migrations: "{{ applied_migrations_output.stdout_lines | select | list }}"
+
+- name: Find migration files
+  find:
+    paths: "{{ migration_dir }}"
+    patterns: "*.yml"
+    recurse: no
+  register: migration_files
+
+- name: Run pending migrations
+  include_tasks: "{{ item.path }}"
+  loop: "{{ migration_files.files }}"
+  when: "item.path | basename | regex_replace('\\.yml$', '') not in applied_migrations"
+  register: migration_results
+
+- name: Record applied migrations
+  command: sqlite3 {{ migration_state_file }} "INSERT OR IGNORE INTO migrations (id) VALUES ('{{ item.item.path | basename | regex_replace('\\.yml$', '') }}');"
+  loop: "{{ migration_results.results | selectattr('ansible_loop_var', 'defined') | list }}"
+  when: item.changed

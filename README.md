@@ -59,6 +59,45 @@ The `scheduled_run` variable (controlled by the `SCHEDULED_RUN` environment vari
 - `SCHEDULED_RUN=true`: Runs "heavy" tasks like OS hardening, APT updates, and Docker installation. This is typically used for maintenance runs.
 - `SCHEDULED_RUN=false` (default): Skips heavy tasks for quick app deployments.
 
+## Migrations
+
+This infrastructure uses a migration system similar to Laravel's database migrations, but for system configuration. Migrations are one-time Ansible tasks that run only once per host.
+
+### Migration Features
+- **One-time execution**: Each migration runs only once, tracked in `/opt/ansible/migrations.db`
+- **Per-host state**: Each host maintains its own migration history
+- **Error handling**: Playbook execution stops if a migration fails
+- **Versioned**: Migrations use timestamped filenames (e.g., `20240121_0001_setup_database.yml`)
+
+### Creating Migrations
+1. Create a new `.yml` file in `<host>/ansible/migrations/`
+2. Use timestamp format: `YYYYMMDD_NNNN_description.yml`
+3. Write standard Ansible tasks in the file
+
+### Example Migration
+```yaml
+---
+# Migration: 20240121_0001_create_app_user
+- name: Create application user
+  user:
+    name: myapp
+    system: yes
+    shell: /bin/bash
+
+- name: Create application directory
+  file:
+    path: /opt/myapp
+    state: directory
+    owner: myapp
+    group: myapp
+    mode: '0755'
+```
+
+### Migration Execution
+Migrations run automatically as part of the playbook execution via the `system/migrations` role. They execute before container deployment to ensure system prerequisites are met.
+
+If a migration fails, the entire playbook stops to prevent inconsistent states.
+
 ## Dependency Management
 
 This repository uses Renovate to keep dependencies up-to-date:
