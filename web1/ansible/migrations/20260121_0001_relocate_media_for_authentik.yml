@@ -10,3 +10,6 @@
 
 - name: Relocate authentik media directory
   command: mv /opt/containers/authentik/media /opt/containers/authentik/data/media
+  args:
+    creates: /opt/containers/authentik/data/media
+    removes: /opt/containers/authentik/media
