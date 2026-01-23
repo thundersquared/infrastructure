@@ -13,6 +13,7 @@
     - role: system/docker-login
     - role: system/migrations
     - role: system/containers
+    - role: system/envoy
   collections:
     - devsec.hardening
   tasks:
