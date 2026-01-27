@@ -11,6 +11,7 @@
       when: scheduled_run
     - role: system/config
     - role: system/php
+    - role: system/crowdsec
     - role: system/docker-login
     - role: system/migrations
     - role: system/containers
