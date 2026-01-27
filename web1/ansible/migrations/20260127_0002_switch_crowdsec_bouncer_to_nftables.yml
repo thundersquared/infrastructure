@@ -1,0 +1,18 @@
+---
+# Migration: 20260127_0002_switch_crowdsec_bouncer_to_nftables
+# Description: Switch CrowdSec firewall bouncer from iptables to nftables
+
+- name: Remove CrowdSec iptables firewall bouncer
+  apt:
+    name: crowdsec-firewall-bouncer-iptables
+    state: absent
+
+- name: Install CrowdSec nftables firewall bouncer
+  apt:
+    name: crowdsec-firewall-bouncer-nftables
+    state: present
+
+- name: Restart CrowdSec firewall bouncer service
+  service:
+    name: crowdsec-firewall-bouncer
+    state: restarted

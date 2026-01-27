@@ -25,9 +25,9 @@
     name: crowdsec
     state: present
 
-- name: Install CrowdSec iptables firewall bouncer
+- name: Install CrowdSec nftables firewall bouncer
   apt:
-    name: crowdsec-firewall-bouncer-iptables
+    name: crowdsec-firewall-bouncer-nftables
     state: present
 
 - name: Install CrowdSec nginx bouncer
