@@ -1,0 +1,53 @@
+- name: Add CrowdSec GPG key
+  apt_key:
+    url: https://packagecloud.io/crowdsec/crowdsec/gpgkey
+    state: present
+
+- name: Add CrowdSec repository
+  apt_repository:
+    repo: deb https://packagecloud.io/crowdsec/crowdsec/debian/ {{ ansible_distribution_release }} main
+    state: present
+    filename: crowdsec
+  register: crowdsec_repo
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: crowdsec_repo.changed
+
+- name: Install CrowdSec
+  apt:
+    name: crowdsec
+    state: present
+
+- name: Install CrowdSec iptables firewall bouncer
+  apt:
+    name: crowdsec-firewall-bouncer-iptables
+    state: present
+
+- name: Install CrowdSec nginx bouncer
+  apt:
+    name: crowdsec-nginx-bouncer
+    state: present
+
+- name: Enable and start CrowdSec service
+  service:
+    name: crowdsec
+    enabled: yes
+    state: started
+
+- name: Enable and start CrowdSec firewall bouncer service
+  service:
+    name: crowdsec-firewall-bouncer
+    enabled: yes
+    state: started
+
+- name: Check CrowdSec console enrollment status
+  command: cscli console status
+  register: console_status
+  failed_when: false
+  when: ansible_env.CROWDSEC_TOKEN is defined and ansible_env.CROWDSEC_TOKEN != ''
+
+- name: Enroll CrowdSec with console
+  command: cscli console enroll "{{ ansible_env.CROWDSEC_TOKEN }}"
+  when: ansible_env.CROWDSEC_TOKEN is defined and ansible_env.CROWDSEC_TOKEN != '' and console_status.rc != 0

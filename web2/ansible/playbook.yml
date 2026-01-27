@@ -10,6 +10,7 @@
     - role: system/apt
       when: scheduled_run
     - role: system/config
+    - role: system/crowdsec
     - role: system/docker-login
     - role: system/migrations
     - role: system/containers
