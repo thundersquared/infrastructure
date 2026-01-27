@@ -40,7 +40,7 @@ jobs:
           restore-keys: |
             ansible-galaxy-
       - name: Install Ansible
-        run: pip3 install ansible==12.1.0 mitogen==0.3.29
+        run: pip3 install ansible==13.2.0 mitogen==0.3.38
       - name: Set up inventory with secrets and SSH key
         run: |
           if [ -z "${{ secrets.HOST }}" ] || [ -z "${{ secrets.USER }}" ]; then
