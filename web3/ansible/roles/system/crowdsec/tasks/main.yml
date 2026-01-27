@@ -47,6 +47,13 @@
     enabled: yes
     state: started
 
+- name: Configure CrowdSec to listen on port 8081
+  lineinfile:
+    path: /etc/crowdsec/config.yaml
+    regexp: '^\s*listen_uri:'
+    line: 'listen_uri: 127.0.0.1:8081'
+  notify: restart crowdsec
+
 - name: Check CrowdSec console enrollment status
   command: cscli console status -o json
   register: console_status
