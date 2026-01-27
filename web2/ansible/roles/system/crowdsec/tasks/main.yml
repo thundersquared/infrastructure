@@ -10,7 +10,7 @@
 
 - name: Add CrowdSec repository
   apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/crowdsec.asc] https://packagecloud.io/crowdsec/crowdsec/ubuntu/ {{ ansible_distribution_release }} main
+    repo: deb [signed-by=/usr/share/keyrings/crowdsec.asc] https://packagecloud.io/crowdsec/crowdsec/ubuntu/ {{ ansible_facts.distribution_release }} main
     state: present
     filename: crowdsec
   register: crowdsec_repo
