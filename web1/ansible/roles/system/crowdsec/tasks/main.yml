@@ -1,11 +1,16 @@
-- name: Add CrowdSec GPG key
-  apt_key:
+- name: Set CrowdSec token
+  set_fact:
+    crowdsec_token: "{{ lookup('env', 'CROWDSEC_TOKEN') }}"
+
+- name: Download CrowdSec GPG key
+  get_url:
     url: https://packagecloud.io/crowdsec/crowdsec/gpgkey
-    state: present
+    dest: /usr/share/keyrings/crowdsec.asc
+    mode: '0644'
 
 - name: Add CrowdSec repository
   apt_repository:
-    repo: deb https://packagecloud.io/crowdsec/crowdsec/debian/ {{ ansible_distribution_release }} main
+    repo: deb [signed-by=/usr/share/keyrings/crowdsec.asc] https://packagecloud.io/crowdsec/crowdsec/ubuntu/ {{ ansible_distribution_release }} main
     state: present
     filename: crowdsec
   register: crowdsec_repo
@@ -46,8 +51,8 @@
   command: cscli console status
   register: console_status
   failed_when: false
-  when: ansible_env.CROWDSEC_TOKEN is defined and ansible_env.CROWDSEC_TOKEN != ''
+  when: crowdsec_token is defined and crowdsec_token != ''
 
 - name: Enroll CrowdSec with console
-  command: cscli console enroll "{{ ansible_env.CROWDSEC_TOKEN }}"
-  when: ansible_env.CROWDSEC_TOKEN is defined and ansible_env.CROWDSEC_TOKEN != '' and console_status.rc != 0
+  command: cscli console enroll "{{ crowdsec_token }}"
+  when: crowdsec_token is defined and crowdsec_token != '' and console_status is defined and console_status.rc != 0
