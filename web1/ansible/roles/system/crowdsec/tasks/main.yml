@@ -53,6 +53,19 @@
     enabled: yes
     state: started
 
+- name: Update firewall bouncer API URL
+  lineinfile:
+    path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    regexp: '^api_url:'
+    line: 'api_url: http://127.0.0.1:8081/'
+  notify: restart crowdsec-firewall-bouncer
+
+- name: Update nginx bouncer API URL
+  lineinfile:
+    path: /etc/crowdsec/bouncers/crowdsec-nginx-bouncer.conf
+    regexp: '^API_URL='
+    line: 'API_URL=http://127.0.0.1:8081'
+
 - name: Check CrowdSec console enrollment status
   command: cscli console status -o json
   register: console_status
