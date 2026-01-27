@@ -41,6 +41,12 @@
     dest: /etc/crowdsec/config.yaml
   notify: restart crowdsec
 
+- name: Update local API credentials URL
+  lineinfile:
+    path: /etc/crowdsec/local_api_credentials.yaml
+    regexp: '^url:'
+    line: 'url: http://127.0.0.1:8081'
+
 - name: Enable and start CrowdSec service
   service:
     name: crowdsec
