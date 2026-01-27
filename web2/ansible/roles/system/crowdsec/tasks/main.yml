@@ -1,6 +1,6 @@
-- name: Set CrowdSec token
+- name: Read CrowdSec token from environment
   set_fact:
-    crowdsec_token: "{{ lookup('env', 'CROWDSEC_TOKEN') }}"
+    crowdsec_token: "{{ lookup('env', 'CROWDSEC_TOKEN') | default('', true) }}"
 
 - name: Download CrowdSec GPG key
   get_url:
@@ -48,11 +48,10 @@
     state: started
 
 - name: Check CrowdSec console enrollment status
-  command: cscli console status
+  command: cscli console status -o json
   register: console_status
-  failed_when: false
-  when: crowdsec_token is defined and crowdsec_token != ''
+  changed_when: false
 
 - name: Enroll CrowdSec with console
   command: cscli console enroll "{{ crowdsec_token }}"
-  when: crowdsec_token is defined and crowdsec_token != '' and console_status is defined and console_status.rc != 0
+  when: crowdsec_token | length > 0 and 'console_management' not in (console_status.stdout | from_json)
