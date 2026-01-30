@@ -62,7 +62,7 @@ jobs:
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: web1/ansible/ansible.cfg
-          ANSIBLE_STRATEGY_PLUGINS: ${{ env.pythonLocation }}/lib/${{ env.PYTHON_VERSION }}/site-packages/ansible_mitogen/plugins/strategy
+          ANSIBLE_STRATEGY_PLUGINS: ${{ env.pythonLocation }}/lib/python${{ env.PYTHON_VERSION }}/site-packages/ansible_mitogen/plugins/strategy
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
