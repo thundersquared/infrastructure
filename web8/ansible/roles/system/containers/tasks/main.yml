@@ -51,6 +51,13 @@
   include_tasks: deploy_stack.yml
   loop: "{{ docker_stacks | dict2items }}"
 
+- name: Clean up Docker system
+  community.docker.docker_prune:
+    containers: yes
+    images: yes
+    networks: yes
+    build: yes
+
 # - name: Show compose results
 #   debug:
 #     var: compose_results
