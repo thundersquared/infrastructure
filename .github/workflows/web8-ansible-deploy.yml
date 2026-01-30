@@ -60,6 +60,7 @@ jobs:
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: web8/ansible/ansible.cfg
+          ANSIBLE_STRATEGY_PLUGINS: ${{ env.pythonLocation }}/lib/python3.14/site-packages/ansible_mitogen/plugins/strategy
           CLOUDFLARED_TOKEN: ${{ secrets.CLOUDFLARED_TOKEN }}
           BORG_REPOSITORY: ${{ secrets.BORG_REPOSITORY }}
           BORG_PASSPHRASE: ${{ secrets.BORG_PASSPHRASE }}
