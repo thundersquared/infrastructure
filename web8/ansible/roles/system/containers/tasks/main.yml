@@ -56,7 +56,7 @@
     containers: yes
     images: yes
     networks: yes
-    build: yes
+    builder_cache: yes
 
 # - name: Show compose results
 #   debug:
