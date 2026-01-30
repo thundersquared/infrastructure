@@ -1,6 +1,8 @@
 name: Deploy web1 with Ansible
 permissions:
   contents: read
+env:
+  PYTHON_VERSION: '3.14'
 on:
   workflow_dispatch:
     inputs:
@@ -16,6 +18,7 @@ on:
       - '.github/workflows/web1-ansible-deploy.yml'
       - 'web1/ansible/**'
       - 'web1/containers/**'
+      - 'requirements.txt'
   schedule:
     - cron: '0 0 * * *'  # Every day at midnight
 jobs:
@@ -25,13 +28,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
-      - name: Cache pip3
-        uses: actions/cache@v5.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('web1/ansible/requirements.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: ${{ env.PYTHON_VERSION }}
+          check-latest: true
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
       - name: Cache Ansible Galaxy requirements
         uses: actions/cache@v5.0.3
         with:
@@ -40,7 +43,10 @@ jobs:
           restore-keys: |
             ansible-galaxy-
       - name: Install Ansible
-        run: pip3 install ansible==13.2.0 mitogen==0.3.38
+        run: pip install -r requirements.txt
+      - name: Install Ansible Galaxy requirements
+        run: |
+          ansible-galaxy install -r web1/ansible/requirements.yml --force-with-deps
       - name: Set up inventory with secrets and SSH key
         run: |
           if [ -z "${{ secrets.HOST }}" ] || [ -z "${{ secrets.USER }}" ]; then
@@ -53,12 +59,10 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.HOST }}" >> ~/.ssh/known_hosts
           echo "${{ secrets.HOST }} ansible_user=${{ secrets.USER }} ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
-      - name: Install Ansible Galaxy requirements
-        run: |
-          ansible-galaxy install -r web1/ansible/requirements.yml --force-with-deps
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: web1/ansible/ansible.cfg
+          ANSIBLE_STRATEGY_PLUGINS: ${{ env.pythonLocation }}/lib/${{ env.PYTHON_VERSION }}/site-packages/ansible_mitogen/plugins/strategy
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
