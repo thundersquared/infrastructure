@@ -1,0 +1,54 @@
+---
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 10s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    environment:
+      PGDATA: /var/lib/postgresql/18/docker
+    volumes:
+      - postgres:/var/lib/postgresql
+    env_file:
+      - .postgres.env
+    networks:
+      - n8n
+
+  n8n:
+    image: ghcr.io/thundersquared/n8n:2.4.8
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3004:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - n8n
+      - app-infra
+
+  runner:
+    image: n8nio/runners:2.4.8
+    restart: unless-stopped
+    env_file:
+      - .runner.env
+    depends_on:
+      - n8n
+    networks:
+      - n8n
+
+volumes:
+  postgres:
+  n8n_data:
+
+networks:
+  n8n:
+  app-infra:
+    external: true

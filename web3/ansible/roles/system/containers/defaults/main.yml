@@ -12,3 +12,6 @@ docker_stacks:
   calcom:
     env_file: true
     state: present
+  n8n:
+    env_file: true
+    state: present
