@@ -1,8 +1,6 @@
 name: Deploy web8 with Ansible
 permissions:
   contents: read
-env:
-  PYTHON_VERSION: '3.14'
 on:
   workflow_dispatch:
     inputs:
@@ -28,27 +26,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
-      - name: Set up Python
-        uses: actions/setup-python@v6.2.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          check-latest: true
-          cache: 'pip'
-          cache-dependency-path: 'requirements.txt'
-      - name: Cache Ansible Galaxy requirements
-        uses: actions/cache@v5.0.3
-        with:
-          path: ~/.ansible
-          key: ansible-galaxy-${{ hashFiles('web8/ansible/requirements.yml') }}
-          restore-keys: |
-            ansible-galaxy-
-      - name: Install Ansible
-        run: pip install -r requirements.txt
-      - name: Install Ansible Galaxy requirements
+      - name: Set up inventory, Python version, and SSH key
         run: |
-          ansible-galaxy install -r web8/ansible/requirements.yml --force-with-deps
-      - name: Set up inventory with secrets and SSH key
-        run: |
+          echo "PYTHON_VERSION=$(cat .python-version)" >> "$GITHUB_ENV"
           if [ -z "${{ secrets.HOST }}" ] || [ -z "${{ secrets.USER }}" ]; then
             echo "HOST or USER secret is missing!" >&2
             exit 1
@@ -59,10 +39,34 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.HOST }}" >> ~/.ssh/known_hosts
           echo "${{ secrets.HOST }} ansible_user=${{ secrets.USER }} ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
+      - name: Cache Ansible Galaxy requirements
+        uses: actions/cache@v5.0.3
+        with:
+          path: ~/.ansible
+          key: ansible-galaxy-${{ hashFiles('web8/ansible/requirements.yml') }}
+          restore-keys: |
+            ansible-galaxy-
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version-file: '.python-version'
+          check-latest: true
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7.2.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: 'requirements.txt'
+      - name: Install Ansible
+        run: |
+          uv venv
+          uv pip install --python .venv/bin/python -r requirements.txt
+      - name: Install Ansible Galaxy requirements
+        run: |
+          uv run ansible-galaxy install -r web8/ansible/requirements.yml --force-with-deps
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: web8/ansible/ansible.cfg
-          ANSIBLE_STRATEGY_PLUGINS: ${{ env.pythonLocation }}/lib/python${{ env.PYTHON_VERSION }}/site-packages/ansible_mitogen/plugins/strategy
+          ANSIBLE_STRATEGY_PLUGINS: ${{ github.workspace }}/.venv/lib/python${{ env.PYTHON_VERSION }}/site-packages/ansible_mitogen/plugins/strategy
           CLOUDFLARED_TOKEN: ${{ secrets.CLOUDFLARED_TOKEN }}
           BORG_REPOSITORY: ${{ secrets.BORG_REPOSITORY }}
           BORG_PASSPHRASE: ${{ secrets.BORG_PASSPHRASE }}
@@ -74,4 +78,4 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           SCHEDULED_RUN: ${{ github.event_name == 'schedule' || github.event.inputs.force_schedule_mode == 'true' }}
         run: |
-          ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
+          uv run ansible-playbook -i inventory web8/ansible/playbook.yml --private-key ~/.ssh/id_ed25519
