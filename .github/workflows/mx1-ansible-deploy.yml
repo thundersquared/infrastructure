@@ -62,7 +62,7 @@ jobs:
           uv pip install --python .venv/bin/python -r requirements.txt
       - name: Install Ansible Galaxy requirements
         run: |
-          uv run ansible-galaxy install -r mx1/ansible/requirements.yml --force-with-deps
+          uv run ansible-galaxy install -r mx1/ansible/requirements.yml
       - name: Run Ansible Playbook
         env:
           ANSIBLE_CONFIG: mx1/ansible/ansible.cfg
