@@ -22,8 +22,6 @@
       community.docker.docker_compose_v2:
         project_src: "/opt/containers/authentik"
         state: present
-        recreate: "always"
-        pull: "always"
         wait: true
         wait_timeout: 300
       when: authentik_env_file.stat.exists
