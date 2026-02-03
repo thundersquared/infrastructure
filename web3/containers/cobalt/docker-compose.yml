@@ -10,7 +10,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     volumes:
       - ./keys.json:/app/keys.json:ro
-      # - ./cookies.json:/cookies.json
+      - ./cookies.json:/cookies.json
 
 networks:
   app-infra:
