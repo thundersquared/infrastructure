@@ -15,7 +15,7 @@ services:
       - calcom
 
   calcom:
-    image: calcom/cal.com:v6.1.10
+    image: calcom/cal.com:v6.1.11
     restart: unless-stopped
     depends_on:
       database:
