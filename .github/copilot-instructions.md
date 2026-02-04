@@ -38,7 +38,7 @@ The infrastructure includes a migration system for one-time system configuration
 
 - **Location**: `ansible/migrations/` directory per host
 - **State Storage**: `/opt/ansible/migrations.db` (SQLite database)
-- **Execution**: Via `system/migrations` role, runs before containers
+- **Execution**: Via `system/migrations` role, runs **first** after apt (before config, crowdsec, containers, etc.) to apply patches before other roles run as a sanity check
 - **Error Handling**: Playbook stops on migration failure
 - **Tracking**: Each migration recorded with timestamp
 

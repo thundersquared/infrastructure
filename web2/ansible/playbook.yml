@@ -9,10 +9,10 @@
       when: scheduled_run
     - role: system/apt
       when: scheduled_run
+    - role: system/migrations
     - role: system/config
     - role: system/crowdsec
     - role: system/docker-login
-    - role: system/migrations
     - role: system/containers
     # - role: system/backup
   collections:

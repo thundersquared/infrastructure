@@ -36,7 +36,7 @@
     ansible.builtin.lineinfile:
       path: /etc/systemd/resolved.conf
       regexp: '^#?Cache='
-      line: 'Cache=no-negative'
+      line: 'Cache=yes'
     notify: Restart systemd-resolved
     become: true
 
