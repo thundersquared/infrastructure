@@ -66,6 +66,13 @@
     line: 'api_url: http://127.0.0.1:8081/'
   notify: restart crowdsec-firewall-bouncer
 
+- name: Ensure CrowdSec firewall bouncer uses nftables mode
+  lineinfile:
+    path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    regexp: '^mode:'
+    line: 'mode: nftables'
+  notify: restart crowdsec-firewall-bouncer
+
 - name: Update nginx bouncer API URL
   lineinfile:
     path: /etc/crowdsec/bouncers/crowdsec-nginx-bouncer.conf
