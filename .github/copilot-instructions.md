@@ -27,9 +27,10 @@ This repository manages infrastructure for multiple hosts (`mx1`, `web1`, `web2`
 ## Role Responsibilities
 
 - **`system/containers`**: Core deployment role. Copies `containers/` to `/opt/containers/` and deploys Docker Compose stacks based on the `docker_stacks` configuration, with conditional deployment based on environment file requirements.
-- **`system/config`**: System-level config including UFW rules and `systemd-resolved` (DNS over TLS with Cloudflare/Quad9).
+- **`system/config`**: System-level config including UFW rules and `systemd-resolved` DNS configuration. Configures conntrack tuning to prevent connection tracking table exhaustion in nftables environments.
 - **`system/backup`**: Configures Borgmatic backups using `borgbase.ansible_role_borgbackup`.
 - **`system/apt`**: Handles package updates and installation (usually conditional on `scheduled_run`).
+- **`system/crowdsec`**: Deploys CrowdSec and its bouncers (nftables and nginx). Ensures bouncer mode is set to `nftables` when using nftables firewall.
 
 ## Migrations
 
@@ -54,6 +55,47 @@ When adding migrations, ensure they are idempotent and handle errors appropriate
 - **Port Assignment**: New stacks should use incremental ports (e.g., 3001, 3002, 3003) based on the highest port number used by existing stacks. Always bind to localhost (127.0.0.1) unless otherwise stated.
 - **Hardening**: The project uses `devsec.hardening` roles. Be mindful of strict permissions and SSH configurations (e.g., `ssh_permit_root_login: "without-password"`).
 - **Variables**: Check `defaults/main.yml` in each host's ansible directory for global settings like `sysctl` overrides, SSH policies, and the `docker_stacks` map defining which containers to deploy and their configuration.
+
+## nftables & Docker Compatibility
+
+When using nftables as the firewall backend with Docker containers and CrowdSec:
+
+1. **CrowdSec Bouncer Configuration**: Ensure `mode: nftables` is set in `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml`. If the bouncer uses iptables mode while nftables is the system firewall, it will cause container outbound traffic to be blocked. Migration `20260204_0003_fix_crowdsec_nftables_priority` applies this fix to existing hosts.
+
+2. **Connection Tracking Tuning**: Add the following sysctl settings in `defaults/main.yml` under `sysctl_overwrite` to prevent conntrack table exhaustion with many containers:
+   ```yaml
+   net.netfilter.nf_conntrack_max: 262144
+   net.netfilter.nf_conntrack_tcp_timeout_established: 86400
+   net.netfilter.nf_conntrack_tcp_timeout_time_wait: 30
+   ```
+
+3. **CrowdSec nftables Priority**: The bouncer configuration should include:
+   ```yaml
+   nftables:
+     ipv4:
+       enabled: true
+       set-only: false
+       table: crowdsec
+       chain: crowdsec-chain
+       priority: -10
+     ipv6:
+       enabled: true
+       set-only: false
+       table: crowdsec6
+       chain: crowdsec6-chain
+       priority: -10
+   ```
+   This ensures CrowdSec rules are evaluated before Docker's NAT rules (priority 0), maintaining proper chain processing order.
+
+## DNS Configuration
+
+**systemd-resolved** settings in `system/config`:
+
+- **Servers**: Primary DNS resolvers (Google, Quad9)
+- **Fallback DNS**: Secondary resolvers (ControlD, Cloudflare) for redundancy
+- **Cache**: Use `Cache=yes` (default) in production for optimal performance. Caches both positive and negative responses, reducing DNS query load. Avoid `Cache=no-negative` as it causes repeated queries for failed lookups.
+- **DNSOverTLS**: Set to `no` for compatibility with common network environments
+- **Search Domain**: Can be configured via `Domain=` setting (e.g., `Domain=eu.sqrd-dns.com`) to append domain to single-label hostname lookups
 
 ## Development Tips
 
