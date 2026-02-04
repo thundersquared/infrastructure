@@ -38,7 +38,7 @@ services:
     command: sh -c "chown -R 100:101 /logs /fleet /vulndb"
 
   fleet:
-    image: ghcr.io/thundersquared/fleet:4.78.3
+    image: ghcr.io/thundersquared/fleet:4.80.0
     depends_on:
       database:
         condition: service_healthy
