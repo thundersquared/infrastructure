@@ -62,14 +62,21 @@ When using nftables as the firewall backend with Docker containers and CrowdSec:
 
 1. **CrowdSec Bouncer Configuration**: Ensure `mode: nftables` is set in `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml`. If the bouncer uses iptables mode while nftables is the system firewall, it will cause container outbound traffic to be blocked. Migration `20260204_0003_fix_crowdsec_nftables_priority` applies this fix to existing hosts.
 
-2. **Connection Tracking Tuning**: Add the following sysctl settings in `defaults/main.yml` under `sysctl_overwrite` to prevent conntrack table exhaustion with many containers:
+2. **IP Forwarding**: Both IPv4 and IPv6 forwarding must be enabled for containers to reach external services:
+   ```yaml
+   net.ipv4.ip_forward: 1
+   net.ipv6.conf.all.forwarding: 1
+   ```
+   Without IPv6 forwarding, containers with IPv6 addresses will fail to connect to IPv6-only or dual-stack services.
+
+3. **Connection Tracking Tuning**: Add the following sysctl settings in `defaults/main.yml` under `sysctl_overwrite` to prevent conntrack table exhaustion with many containers:
    ```yaml
    net.netfilter.nf_conntrack_max: 262144
    net.netfilter.nf_conntrack_tcp_timeout_established: 86400
    net.netfilter.nf_conntrack_tcp_timeout_time_wait: 30
    ```
 
-3. **CrowdSec nftables Priority**: The bouncer configuration should include:
+4. **CrowdSec nftables Priority**: The bouncer configuration should include:
    ```yaml
    nftables:
      ipv4:
