@@ -1,23 +1,33 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":dependencyDashboard",
+    ":rebaseStalePrs"
   ],
+  "dependencyDashboardTitle": "Renovate Dashboard",
+  "labels": [
+    "renovatebot"
+  ],
+  "pinDigests": true,
+  "rebaseWhen": "conflicted",
+  "rebaseStalePrs": false,
+  "commitBodyTable": true,
   "ansible": {
-    "enabled": true
+    "managerFilePatterns": [
+      "/ansible/.*\\.ya?ml$/"
+    ]
   },
   "docker": {
-    "enabled": true,
-    "registries": {
-      "ghcr.io": {
-        "username": "{{ secrets.GHCR_USERNAME }}",
-        "password": "{{ secrets.GHCR_TOKEN }}"
-      }
-    }
+    "managerFilePatterns": [
+      "/containers/.*docker-compose\\.ya?ml$/",
+      "/Dockerfile$/"
+    ]
   },
   "hostRules": [
     {
       "matchHost": "ghcr.io",
+      "hostType": "docker",
       "username": "{{ secrets.GHCR_USERNAME }}",
       "password": "{{ secrets.GHCR_TOKEN }}"
     }
