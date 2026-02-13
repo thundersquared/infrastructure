@@ -117,3 +117,6 @@ When using nftables as the firewall backend with Docker containers and CrowdSec:
 ## Dependency Management
 
 - **Renovate**: Handles updates for Docker images in `docker-compose.yml` files and Ansible requirements in `requirements.yml` files across all hosts. Requires the Renovate GitHub app to be installed on the repository.
+  - Configuration is in `renovate.json` at the root.
+  - Supports GHCR authentication via `GHCR_USERNAME` and `GHCR_TOKEN` secrets.
+  - Processes Ansible playbooks, Docker Compose files, and Python requirements.

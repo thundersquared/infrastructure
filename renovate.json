@@ -11,12 +11,6 @@
   ],
   "rebaseWhen": "conflicted",
   "commitBodyTable": true,
-  "docker": {
-    "managerFilePatterns": [
-      "/containers/.*docker-compose\\.ya?ml$/",
-      "/Dockerfile$/"
-    ]
-  },
   "hostRules": [
     {
       "matchHost": "ghcr.io",
