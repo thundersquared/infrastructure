@@ -1,6 +1,6 @@
 services:
   cobalt-api:
-    image: ghcr.io/imputnet/cobalt:11
+    image: ghcr.io/imputnet/cobalt:11@sha256:01637bc0ae6668f132f66b2dd992fc71865b7373ff483a406afa81d679118fc0
     container_name: cobalt-api
     restart: unless-stopped
     env_file: .env

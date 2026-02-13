@@ -1,7 +1,7 @@
 ---
 services:
   postgres:
-    image: docker.io/library/postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine@sha256:97ff59a4e30e08d1c11bdcd9455e7832368c0572b576c9092cde2df4ae5552a3
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -19,7 +19,7 @@ services:
       - .env
 
   keydb:
-    image: docker.io/eqalpha/keydb:latest
+    image: docker.io/eqalpha/keydb:latest@sha256:6537505c42355ca1f571276bddf83f5b750f760f07b2a185a676481791e388ac
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
@@ -32,7 +32,7 @@ services:
       - keydb-data:/data
 
   meilisearch:
-    image: docker.io/getmeili/meilisearch:v1
+    image: docker.io/getmeili/meilisearch:v1@sha256:348ba1c1f61101130304370a9522cc5405e6906b64a426dc2fcd5c428a516a98
     restart: unless-stopped
     volumes:
       - meilisearch-data:/meili_data
@@ -49,7 +49,7 @@ services:
       - .env
 
   stalwart:
-    image: ghcr.io/thundersquared/stalwart:0.13.4
+    image: ghcr.io/thundersquared/stalwart:0.13.4@sha256:a0cdd323e98bd39d586ee953bb574b5247d3595fa016c38c89a9fe974b689117
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:8080"

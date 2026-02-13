@@ -1,6 +1,6 @@
 services:
   database:
-    image: mysql:8.4
+    image: mysql:8.4@sha256:7fcf7bcd3fa703ff23a2b998e4ed9077e5db570bcc4468459902e33b23d2841d
     env_file: .env
     volumes:
       - database:/var/lib/mysql
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   kv:
-    image: valkey/valkey:9-alpine
+    image: valkey/valkey:9-alpine@sha256:68677f85c863830af7836ff07c4a13b7f085ebeff62f4dedb71499ca27d229f2
     command: ["valkey-server", "--appendonly", "yes"]
     networks:
       - fleet
@@ -30,7 +30,7 @@ services:
       retries: 12
 
   fleet-init:
-    image: alpine:3.23
+    image: alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
     volumes:
       - logs:/logs
       - data:/fleet
@@ -38,7 +38,7 @@ services:
     command: sh -c "chown -R 100:101 /logs /fleet /vulndb"
 
   fleet:
-    image: ghcr.io/thundersquared/fleet:4.80.1
+    image: ghcr.io/thundersquared/fleet:4.80.1@sha256:05ae7c1f82978ce0da4b93ff75e39fed585725ba62d82b66081b5180a67f3de9
     depends_on:
       database:
         condition: service_healthy

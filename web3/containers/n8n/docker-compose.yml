@@ -1,7 +1,7 @@
 ---
 services:
   postgres:
-    image: postgres:18-alpine
+    image: postgres:18-alpine@sha256:88f300be8635fe8a9ed4c18a68ba497fb6df1215fd2b074895afd027bd3e1006
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -19,7 +19,7 @@ services:
       - n8n
 
   n8n:
-    image: ghcr.io/thundersquared/n8n:2.7.4
+    image: ghcr.io/thundersquared/n8n:2.7.4@sha256:a70aee4024624d6a3d959e5eb9657d22440f24da496baf7fe77ab3013828ea90
     restart: unless-stopped
     ports:
       - "127.0.0.1:3004:5678"
@@ -35,7 +35,7 @@ services:
       - app-infra
 
   runner:
-    image: n8nio/runners:2.7.1
+    image: n8nio/runners:2.7.1@sha256:b23acb2eb85b568ee55cd81e8633a322b0885484c1809b9af0155f058776014b
     restart: unless-stopped
     env_file:
       - .runner.env

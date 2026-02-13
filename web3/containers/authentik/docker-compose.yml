@@ -1,7 +1,7 @@
 ---
 services:
   database:
-    image: docker.io/library/postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine@sha256:97ff59a4e30e08d1c11bdcd9455e7832368c0572b576c9092cde2df4ae5552a3
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -17,7 +17,7 @@ services:
       - authentik
 
   server:
-    image: ghcr.io/goauthentik/server:2025.12.3
+    image: ghcr.io/goauthentik/server:2025.12.3@sha256:0e7e82b29a4c0899d0e2efa4a7a83452b48b6971faa3a87346f595ebf54fd74c
     restart: unless-stopped
     command: server
     volumes:
@@ -35,7 +35,7 @@ services:
       - app-infra
 
   worker:
-    image: ghcr.io/goauthentik/server:2025.12.3
+    image: ghcr.io/goauthentik/server:2025.12.3@sha256:0e7e82b29a4c0899d0e2efa4a7a83452b48b6971faa3a87346f595ebf54fd74c
     restart: unless-stopped
     command: worker
     user: root

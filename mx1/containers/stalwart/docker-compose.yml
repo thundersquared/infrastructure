@@ -1,7 +1,7 @@
 ---
 services:
   postgres:
-    image: docker.io/library/postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine@sha256:97ff59a4e30e08d1c11bdcd9455e7832368c0572b576c9092cde2df4ae5552a3
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
@@ -23,7 +23,7 @@ services:
       - app-infra
 
   keydb:
-    image: docker.io/eqalpha/keydb:latest
+    image: docker.io/eqalpha/keydb:latest@sha256:6537505c42355ca1f571276bddf83f5b750f760f07b2a185a676481791e388ac
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
@@ -40,7 +40,7 @@ services:
       - app-infra
 
   opensearch:
-    image: opensearchproject/opensearch:3.4.0
+    image: opensearchproject/opensearch:3.4.0@sha256:1647ce2e07371f1ac8bbad28890a64ef77c5a694a61f656120f0ace09e66bf48
     restart: unless-stopped
     environment:
       discovery.type: single-node
@@ -67,7 +67,7 @@ services:
       - app-infra
 
   stalwart:
-    image: ghcr.io/thundersquared/stalwart:0.15.4
+    image: ghcr.io/thundersquared/stalwart:0.15.4@sha256:401860d450155621345df07bee510007fa908e2716a17c7927d858c621ed9583
     restart: unless-stopped
     ports:
       - "127.0.0.1:10025:25"
