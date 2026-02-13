@@ -1,6 +1,6 @@
 services:
   database:
-    image: mysql:8.4
+    image: mysql:9.6
     env_file: .env
     volumes:
       - database:/var/lib/mysql
