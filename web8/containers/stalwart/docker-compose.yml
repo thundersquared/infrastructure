@@ -49,7 +49,7 @@ services:
       - .env
 
   stalwart:
-    image: ghcr.io/thundersquared/stalwart:0.15.4
+    image: ghcr.io/thundersquared/stalwart:0.15.5
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:8080"
