@@ -35,7 +35,7 @@ services:
       - app-infra
 
   runner:
-    image: n8nio/runners:2.11.1
+    image: n8nio/runners:2.11.2
     restart: unless-stopped
     env_file:
       - .runner.env
