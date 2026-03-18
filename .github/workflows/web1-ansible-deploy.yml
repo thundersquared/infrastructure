@@ -43,7 +43,7 @@ jobs:
           ssh-keyscan -H "${{ secrets.HOST }}" >> ~/.ssh/known_hosts
           echo "${{ secrets.HOST }} ansible_user=${{ secrets.USER }} ansible_ssh_private_key=~/.ssh/id_ed25519" > inventory
       - name: Cache Ansible Galaxy requirements
-        uses: actions/cache@v5.0.3
+        uses: actions/cache@v5.0.4
         with:
           path: ~/.ansible
           key: ansible-galaxy-${{ hashFiles('web1/ansible/requirements.yml') }}
