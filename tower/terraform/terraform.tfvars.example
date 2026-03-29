@@ -1,0 +1,22 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit it.
+
+tenancy_ocid        = "ocid1.tenancy.oc1..aaaaaaaa"
+user_ocid           = "ocid1.user.oc1..aaaaaaaa"
+fingerprint         = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+region              = "eu-frankfurt-1"
+compartment_ocid    = "ocid1.compartment.oc1..aaaaaaaa"
+availability_domain = "Uocm:EU-FRANKFURT-1-AD-1"
+
+private_key = <<-EOT
+-----BEGIN RSA PRIVATE KEY-----
+...
+-----END RSA PRIVATE KEY-----
+EOT
+
+ssh_authorized_keys = [
+  "ssh-ed25519 AAAAC3... user@host",
+]
+
+cloudflare_api_token = "..."
+cloudflare_zone_id   = "..."
