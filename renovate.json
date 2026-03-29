@@ -11,6 +11,12 @@
   ],
   "rebaseWhen": "conflicted",
   "commitBodyTable": true,
+  "packageRules": [
+    {
+      "matchDatasources": ["terraform-provider"],
+      "registryUrls": ["https://registry.opentofu.org"]
+    }
+  ],
   "hostRules": [
     {
       "matchHost": "ghcr.io",

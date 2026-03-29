@@ -6,9 +6,11 @@ This repository manages the infrastructure for multiple hosts using Ansible and 
 
 The project follows a host-based isolation strategy where each top-level directory corresponds to a specific host (e.g., `mx1`, `web1`).
 
-Each host directory contains:
+Most host directories contain:
 - `ansible/`: Playbooks and roles for system configuration.
 - `containers/`: Docker Compose definitions for services running on that host.
+
+Some hosts are provisioned with OpenTofu instead of Ansible. These contain a `terraform/` directory with `.tf` files and a node-specific `docs/` directory.
 
 ### Deployment Pattern
 
@@ -20,11 +22,17 @@ Each host directory contains:
 ## Hosts
 
 The repository currently manages the following hosts:
-- `mx1`
-- `web1`
-- `web2`
-- `web3`
-- `web8`
+
+| Host | Tool | Purpose |
+|---|---|---|
+| `mx1` | Ansible + Docker | Mail server |
+| `web1` | Ansible + Docker | Web/app services |
+| `web2` | Ansible + Docker | Web/app services |
+| `web3` | Ansible + Docker | Web/app services |
+| `web8` | Ansible + Docker | Web/app services |
+| `tower` | OpenTofu | ARM VM on OCI — WireGuard VPN endpoint and SSH bastion |
+
+See [`tower/docs/setup.md`](tower/docs/setup.md) for the one-time bootstrap steps for the tower node.
 
 ## Usage
 
