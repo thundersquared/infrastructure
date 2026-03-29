@@ -71,6 +71,7 @@ In your GitHub repository → **Settings** → **Environments** → **tower** (c
 
 | Secret name | Where to find the value |
 |---|---|
+| `OCI_REGION` | Configuration file preview from Step 1 (`region`, e.g. `eu-frankfurt-1`) |
 | `OCI_TENANCY_OCID` | Configuration file preview from Step 1 (`tenancy`) |
 | `OCI_USER_OCID` | Configuration file preview from Step 1 (`user`) |
 | `OCI_FINGERPRINT` | Configuration file preview from Step 1 (`fingerprint`) |
