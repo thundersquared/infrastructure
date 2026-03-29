@@ -2,7 +2,7 @@ resource "oci_core_vcn" "tower" {
   compartment_id = var.compartment_ocid
   cidr_blocks    = [var.vcn_cidr]
   display_name   = "${var.instance_display_name}-vcn"
-  dns_label      = "gateway"
+  dns_label      = var.instance_display_name
 }
 
 resource "oci_core_internet_gateway" "tower" {

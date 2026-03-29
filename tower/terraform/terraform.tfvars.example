@@ -6,7 +6,8 @@ user_ocid           = "ocid1.user.oc1..aaaaaaaa"
 fingerprint         = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
 region              = "eu-frankfurt-1"
 compartment_ocid    = "ocid1.compartment.oc1..aaaaaaaa"
-availability_domain = "Uocm:EU-FRANKFURT-1-AD-1"
+# availability_domain = "Uocm:EU-FRANKFURT-1-AD-1"  # auto-detected if omitted
+# image_ocid          = "ocid1.image.oc1..."          # auto-detected if omitted
 
 private_key = <<-EOT
 -----BEGIN RSA PRIVATE KEY-----
