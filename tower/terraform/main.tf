@@ -52,11 +52,27 @@ resource "oci_core_instance" "tower" {
     subnet_id        = oci_core_subnet.tower.id
     display_name     = "${var.instance_display_name}-vnic"
     assign_public_ip = true
+    assign_ipv6ip    = true
     hostname_label   = var.instance_display_name
   }
 
   metadata = {
     ssh_authorized_keys = join("\n", var.ssh_authorized_keys)
+  }
+
+  # platform_config for AMPERE_FLEXIBLE (Secure Boot, TPM, Measured Boot) is not
+  # supported in oracle/oci provider 8.7.0 — type is missing from schema validation.
+  # Enable via OCI Console: stop instance → Edit → Security → enable → start.
+
+  agent_config {
+    plugins_config {
+      name          = "Block Volume Management"
+      desired_state = "ENABLED"
+    }
+    plugins_config {
+      name          = "Management Agent"
+      desired_state = "ENABLED"
+    }
   }
 
   # This instance is never destroyed by OpenTofu
@@ -65,4 +81,13 @@ resource "oci_core_instance" "tower" {
     # Ignore image changes so upgrades don't trigger replace
     ignore_changes = [source_details[0].source_id]
   }
+}
+
+data "oci_core_vnic_attachments" "tower" {
+  compartment_id = var.compartment_ocid
+  instance_id    = oci_core_instance.tower.id
+}
+
+data "oci_core_vnic" "tower" {
+  vnic_id = data.oci_core_vnic_attachments.tower.vnic_attachments[0].vnic_id
 }
