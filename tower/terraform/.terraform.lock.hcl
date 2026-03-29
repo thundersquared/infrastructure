@@ -6,6 +6,7 @@ provider "registry.opentofu.org/cloudflare/cloudflare" {
   constraints = "5.18.0"
   hashes = [
     "h1:2FKT5YVLuHLmv7BnFxDC3UtipD3hSSrb0iJ9Ei2C/ks=",
+    "h1:B9eoAx4QKNVuKHDahNl8JzuSLCCeIGAJiS0MckJu5wQ=",
     "zh:47e7bdfd8eddd2685f383269c0b6936ef62edd6d8383c8d7757b0cce0a689737",
     "zh:aa23eb6aa128667883cabc449ceca4072d0181f574cd727e08ebd6d69a4bfd48",
     "zh:c3da673e05d3bd933c82e2b6ba0f85aa23c5e24fadd3932f7c066314feeb65a3",
@@ -23,6 +24,7 @@ provider "registry.opentofu.org/oracle/oci" {
   constraints = "8.7.0"
   hashes = [
     "h1:Jcnomog7lTrOEXmDWZaqEZFMO2R5FAJJlcNq2js7PMQ=",
+    "h1:QfAkAFtoKC15B/n6i6/uhXqrmehcEHAVnJpxbs6VhZw=",
     "zh:06edf1a61c0cb335dc6691c25e9e9d9dad794ed78901e2b9c1ea960eeb62404b",
     "zh:250c86a2a8ed41a2c0dd592f99ccd8ea2e6e4381da9dbd435fd6cab8742faea9",
     "zh:30172fc1e69c9247f905198900caa20602327a2a91b8e441b5db782235f5a2b6",

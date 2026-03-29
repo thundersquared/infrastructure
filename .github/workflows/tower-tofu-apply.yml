@@ -31,10 +31,17 @@ jobs:
       TF_VAR_ssh_authorized_keys: ${{ secrets.SSH_AUTHORIZED_KEYS }}
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
+
+      - name: Cache providers
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: tofu-providers-${{ hashFiles('tower/terraform/.terraform.lock.hcl') }}
 
       - name: Install OpenTofu
         uses: opentofu/setup-opentofu@v2.0.0
