@@ -62,24 +62,4 @@ jobs:
             -backend-config="force_path_style=true"
 
       - name: Apply
-        run: |
-          set -o pipefail
-          tofu apply -auto-approve -no-color 2>&1 | tee /tmp/apply-output.txt
-
-      - name: Upload apply output
-        if: always()
-        env:
-          OCI_S3_ACCESS_KEY: ${{ secrets.OCI_S3_ACCESS_KEY }}
-          OCI_S3_SECRET_KEY: ${{ secrets.OCI_S3_SECRET_KEY }}
-          OCI_S3_BUCKET: ${{ secrets.OCI_S3_BUCKET }}
-          OCI_S3_NAMESPACE: ${{ secrets.OCI_S3_NAMESPACE }}
-          OCI_S3_REGION: ${{ secrets.OCI_S3_REGION }}
-        run: |
-          [ -f /tmp/apply-output.txt ] || exit 0
-          curl --fail --silent --show-error \
-            --request PUT \
-            --data-binary "@/tmp/apply-output.txt" \
-            --header "Content-Type: text/plain" \
-            --aws-sigv4 "aws:amz:${OCI_S3_REGION}:s3" \
-            --user "${OCI_S3_ACCESS_KEY}:${OCI_S3_SECRET_KEY}" \
-            "https://${OCI_S3_NAMESPACE}.compat.objectstorage.${OCI_S3_REGION}.oraclecloud.com/${OCI_S3_BUCKET}/tower/apply-${GITHUB_RUN_NUMBER}.txt"
+        run: tofu apply -auto-approve -no-color > /dev/null
