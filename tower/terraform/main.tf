@@ -22,12 +22,12 @@ locals {
   availability_domain = var.availability_domain != null ? var.availability_domain : (
     length(data.oci_identity_availability_domains.ads.availability_domains) > 0
     ? data.oci_identity_availability_domains.ads.availability_domains[0].name
-    : tobool("No availability domains found in tenancy — set var.availability_domain explicitly")
+    : error("No availability domains found in tenancy — set var.availability_domain explicitly")
   )
   image_id = var.image_ocid != null ? var.image_ocid : (
     length(data.oci_core_images.ubuntu_24_04_minimal.images) > 0
     ? data.oci_core_images.ubuntu_24_04_minimal.images[0].id
-    : tobool("No Ubuntu 24.04 Minimal ARM image found in region — set var.image_ocid explicitly")
+    : error("No Ubuntu 24.04 Minimal ARM image found in region — set var.image_ocid explicitly")
   )
 }
 

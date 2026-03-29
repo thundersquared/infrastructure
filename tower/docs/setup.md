@@ -77,7 +77,7 @@ In your GitHub repository → **Settings** → **Environments** → **tower** (c
 | `OCI_FINGERPRINT` | Configuration file preview from Step 1 (`fingerprint`) |
 | `OCI_PRIVATE_KEY` | Full content of the downloaded `.pem` private key file |
 | `OCI_COMPARTMENT_OCID` | OCI Console → **Identity** → **Compartments** (use tenancy OCID for root) |
-| `SSH_AUTHORIZED_KEY` | JSON array of SSH public keys, e.g. `["ssh-ed25519 AAAA...", "ssh-ed25519 BBBB..."]` |
+| `SSH_AUTHORIZED_KEYS` | JSON array of SSH public keys, e.g. `["ssh-ed25519 AAAA...", "ssh-ed25519 BBBB..."]` |
 | `CLOUDFLARE_API_TOKEN` | API token from Step 4 |
 | `CLOUDFLARE_ZONE_ID` | Zone ID for `sqrd-dns.com` from Step 4 |
 

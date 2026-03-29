@@ -8,7 +8,7 @@ This repo manages infrastructure for multiple hosts using Ansible + Docker Compo
 
 **Ansible hosts** (`mx1`, `web1`, `web2`, `web3`, `web8`): each top-level directory contains `ansible/` (playbooks and roles) and `containers/` (Docker Compose stacks).
 
-**OpenTofu hosts** (`tower`): each top-level directory contains `terraform/` (`.tf` files) and `docs/` (node-specific setup guide). Run `tofu` commands from the `terraform/` subdirectory. Variables are passed via `TF_VAR_*` env vars; the S3 backend requires `-backend-config` flags at `init` time — see `tower/docs/setup.md`.
+**OpenTofu hosts** (`tower`): each top-level directory contains `terraform/` (`.tf` files) and `docs/` (node-specific setup guide). Run `tofu` commands from the `terraform/` subdirectory. Variables are passed via `TF_VAR_*` env vars; the S3 backend requires `-backend-config` flags at `init` time — see `tower/docs/setup.md`. OpenTofu version: **1.11.x** (pinned in `.github/workflows/tower-tofu-apply.yml`). Note: `error()` in expressions requires ≥ 1.9.
 
 ## Running Playbooks
 
