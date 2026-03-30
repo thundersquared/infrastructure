@@ -1,4 +1,10 @@
 ---
+- name: Ensure syslog group exists for OS hardening compatibility
+  ansible.builtin.group:
+    name: syslog
+    state: present
+  become: true
+
 - name: DNS
   block:
   - name: Ensure systemd-resolved is running
