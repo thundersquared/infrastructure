@@ -1,0 +1,7 @@
+---
+- name: Reload WireGuard
+  ansible.builtin.shell:
+    cmd: ip link show wg0 && wg syncconf wg0 <(wg-quick strip wg0) || true
+  args:
+    executable: /bin/bash
+  changed_when: false
