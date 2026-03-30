@@ -31,14 +31,14 @@ jobs:
       TF_VAR_ssh_authorized_keys: ${{ secrets.SSH_AUTHORIZED_KEYS }}
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
 
       - name: Create plugin cache dir
-        run: mkdir -p ~/.terraform.d/plugin-cache
+        run: |
+          mkdir -p "$HOME/.terraform.d/plugin-cache"
+          echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> "$GITHUB_ENV"
 
       - name: Cache providers
         uses: actions/cache@v4
