@@ -41,7 +41,7 @@ jobs:
           echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> "$GITHUB_ENV"
 
       - name: Cache providers
-        uses: actions/cache@v4
+        uses: actions/cache@v5.0.4
         with:
           path: ~/.terraform.d/plugin-cache
           key: tofu-providers-${{ hashFiles('tower/terraform/.terraform.lock.hcl') }}
