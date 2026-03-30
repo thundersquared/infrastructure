@@ -3,4 +3,5 @@
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item }}"
     state: restarted
-  loop: "{{ compose_files | default(['watchtower']) }}"
+  loop: "{{ docker_stacks.keys() | list }}"
+  when: docker_stacks | length > 0
