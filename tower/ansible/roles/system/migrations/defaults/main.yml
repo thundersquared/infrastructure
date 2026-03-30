@@ -1,0 +1,3 @@
+---
+migration_dir: "{{ playbook_dir }}/migrations"
+migration_state_file: /opt/ansible/migrations.db

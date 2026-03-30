@@ -1,0 +1,77 @@
+---
+- name: DNS
+  block:
+  - name: Ensure systemd-resolved is running
+    ansible.builtin.systemd_service:
+      name: systemd-resolved
+      state: started
+      enabled: yes
+    become: true
+
+  - name: Configure systemd-resolved for Google and Quad9 DNS
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?DNS='
+      line: 'DNS=8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for ControlD and Cloudflare Fallback DNS
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?FallbackDNS='
+      line: 'FallbackDNS=76.76.2.0 76.76.10.0 1.1.1.1 1.0.0.1'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for DNSOverTLS
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?DNSOverTLS='
+      line: 'DNSOverTLS=no'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for Cache
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?Cache='
+      line: 'Cache=yes'
+    notify: Restart systemd-resolved
+    become: true
+
+  - name: Configure systemd-resolved for Domain
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/resolved.conf
+      regexp: '^#?Domain='
+      line: 'Domain=eu.sqrd-dns.com'
+    notify: Restart systemd-resolved
+    become: true
+
+- name: Logrotate
+  block:
+  - name: Copy logrotate config for Docker containers
+    ansible.builtin.copy:
+      src: files/docker-logrotate
+      dest: /etc/logrotate.d/docker
+      owner: root
+      group: root
+      mode: '0644'
+    become: true
+
+  - name: Create logrotate.timer.d directory
+    ansible.builtin.file:
+      path: /etc/systemd/system/logrotate.timer.d
+      state: directory
+      mode: '0755'
+    become: true
+
+  - name: Override logrotate.timer
+    ansible.builtin.copy:
+      src: files/logrotate.timer.d/override.conf
+      dest: /etc/systemd/system/logrotate.timer.d/override.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify: Restart logrotate.timer
+    become: true

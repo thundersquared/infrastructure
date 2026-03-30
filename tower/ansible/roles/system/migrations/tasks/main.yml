@@ -1,0 +1,76 @@
+---
+- name: Ensure sqlite3 is installed
+  package:
+    name: sqlite3
+    state: present
+
+- name: Ensure /opt/ansible directory exists
+  file:
+    path: /opt/ansible
+    state: directory
+    mode: '0755'
+
+- name: Ensure migration state database exists
+  command: sqlite3 {{ migration_state_file }} "CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP);"
+  args:
+    creates: "{{ migration_state_file }}"
+
+- name: Get applied migrations
+  command: sqlite3 {{ migration_state_file }} "SELECT id FROM migrations;"
+  register: applied_migrations_output
+  changed_when: false
+
+- name: Parse applied migrations
+  set_fact:
+    applied_migrations: "{{ applied_migrations_output.stdout_lines | select | list }}"
+
+- name: Show applied migrations
+  debug:
+    msg: "Already applied migrations: {{ applied_migrations }}"
+    verbosity: 1
+  no_log: false
+
+- name: Find migration files
+  find:
+    paths: "{{ migration_dir }}"
+    patterns: "*.yml"
+    recurse: no
+  delegate_to: localhost
+  register: migration_files
+
+- name: Extract migration IDs from files
+  set_fact:
+    pending_migrations: |
+      {{ migration_files.files | map(attribute='path') | map('basename') | map('regex_replace', '\.yml$', '') | reject('in', applied_migrations) | list }}
+
+- name: Show pending migrations
+  debug:
+    msg: "Pending migrations to apply: {{ pending_migrations }}"
+    verbosity: 1
+  no_log: false
+
+- name: Run pending migrations
+  include_tasks: "{{ migration_dir }}/{{ item }}.yml"
+  loop: "{{ pending_migrations }}"
+  register: migration_results
+
+- name: Record applied migrations
+  command: sqlite3 {{ migration_state_file }} "INSERT INTO migrations (id) VALUES ('{{ item }}');"
+  loop: "{{ pending_migrations }}"
+  loop_control:
+    index_var: migration_index
+  when:
+    - migration_results.results is defined
+    - migration_results.results | length > 0
+    - not (migration_results.results[migration_index].failed | default(false))
+
+- name: Verify migrations were recorded
+  command: sqlite3 {{ migration_state_file }} "SELECT id FROM migrations;"
+  register: final_migrations
+  changed_when: false
+
+- name: Show all recorded migrations
+  debug:
+    msg: "All recorded migrations: {{ final_migrations.stdout_lines }}"
+    verbosity: 1
+  no_log: false
