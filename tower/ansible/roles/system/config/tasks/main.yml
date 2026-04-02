@@ -50,9 +50,10 @@
     ansible.builtin.lineinfile:
       path: /etc/systemd/resolved.conf
       regexp: '^#?Domain='
-      line: 'Domain=eu.sqrd-dns.com'
+      line: "Domain={{ dns_search_domain }}"
     notify: Restart systemd-resolved
     become: true
+    when: dns_search_domain | default('') | length > 0
 
 - name: Logrotate
   block:

@@ -1,5 +1,6 @@
 ---
 scheduled_run: "{{ lookup('env', 'SCHEDULED_RUN') | bool }}"
+dns_search_domain: "{{ lookup('env', 'DNS_SEARCH_DOMAIN') }}"
 nginx_dh_size: 4096
 os_env_umask: "022"
 os_user_pw_ageing: false

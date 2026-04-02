@@ -68,10 +68,10 @@ variable "subnet_cidr" {
   default     = "10.0.0.0/24"
 }
 
-variable "wireguard_port" {
-  description = "UDP port for WireGuard"
+variable "headscale_stun_port" {
+  description = "UDP port for STUN (Headscale NAT traversal)"
   type        = number
-  default     = 51820
+  default     = 3478
 }
 
 variable "cloudflare_api_token" {
@@ -81,6 +81,6 @@ variable "cloudflare_api_token" {
 }
 
 variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for sqrd-dns.com"
+  description = "Cloudflare zone ID"
   type        = string
 }

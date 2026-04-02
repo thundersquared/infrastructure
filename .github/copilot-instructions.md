@@ -102,7 +102,7 @@ When using nftables as the firewall backend with Docker containers and CrowdSec:
 - **Fallback DNS**: Secondary resolvers (ControlD, Cloudflare) for redundancy
 - **Cache**: Use `Cache=yes` (default) in production for optimal performance. Caches both positive and negative responses, reducing DNS query load. Avoid `Cache=no-negative` as it causes repeated queries for failed lookups.
 - **DNSOverTLS**: Set to `no` for compatibility with common network environments
-- **Search Domain**: Can be configured via `Domain=` setting (e.g., `Domain=eu.sqrd-dns.com`) to append domain to single-label hostname lookups
+- **Search Domain**: Can be configured via `Domain=` setting to append a domain to single-label hostname lookups
 
 ## Development Tips
 

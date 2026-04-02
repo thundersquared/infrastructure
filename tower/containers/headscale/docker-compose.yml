@@ -1,0 +1,23 @@
+services:
+  headscale:
+    image: headscale/headscale:0.28.0
+    restart: unless-stopped
+    ports:
+      - "443:443/tcp"
+      - "3478:3478/udp"
+    volumes:
+      - /opt/headscale/data:/var/lib/headscale
+      - /opt/headscale/config.yaml:/etc/headscale/config.yaml:ro
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app-infra
+
+networks:
+  app-infra:
+    external: true

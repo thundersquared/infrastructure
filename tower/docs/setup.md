@@ -41,9 +41,9 @@ Complete these steps once before the first `tofu apply`. All steps use the OCI C
 
 1. Cloudflare dashboard → **My Profile** → **API Tokens** → **Create Token**
 2. Use the **Edit zone DNS** template
-3. Under **Zone Resources**, select `sqrd-dns.com`
+3. Under **Zone Resources**, select your DNS zone
 4. Create the token and copy it — shown only once
-5. Note the **Zone ID** for `sqrd-dns.com` from the zone's overview page (right-hand sidebar)
+5. Note the **Zone ID** for your zone from the zone's overview page (right-hand sidebar)
 
 ---
 
@@ -62,6 +62,7 @@ In your GitHub repository → **Settings** → **Secrets and variables** → **A
 | `OCI_S3_BUCKET` | Bucket name from Step 3 (e.g. `infrastructure-state`) |
 | `OCI_S3_ACCESS_KEY` | Access Key from Step 2 |
 | `OCI_S3_SECRET_KEY` | Secret from Step 2 (shown only once) |
+| `DNS_SEARCH_DOMAIN` | Search domain appended to single-label hostnames by systemd-resolved on all hosts |
 
 These are reused by every OpenTofu node in this repo — add them once, not per node. Using an `OCI_S3_` prefix keeps the backend credentials distinct from node-level `OCI_REGION`, allowing nodes in different regions to share the same state bucket.
 
@@ -79,7 +80,7 @@ In your GitHub repository → **Settings** → **Environments** → **tower** (c
 | `OCI_COMPARTMENT_OCID` | OCI Console → **Identity** → **Compartments** (use tenancy OCID for root) |
 | `SSH_AUTHORIZED_KEYS` | JSON array of SSH public keys, e.g. `["ssh-ed25519 AAAA...", "ssh-ed25519 BBBB..."]` |
 | `CLOUDFLARE_API_TOKEN` | API token from Step 4 |
-| `CLOUDFLARE_ZONE_ID` | Zone ID for `sqrd-dns.com` from Step 4 |
+| `CLOUDFLARE_ZONE_ID` | Zone ID for your DNS zone from Step 4 |
 
 ---
 
