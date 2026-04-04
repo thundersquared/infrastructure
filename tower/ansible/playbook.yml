@@ -11,7 +11,6 @@
       when: scheduled_run
     - role: system/migrations
     - role: system/config
-    - role: system/wireguard
     - role: system/docker-login
     - role: system/containers
   collections:

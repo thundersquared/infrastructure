@@ -1,0 +1,28 @@
+---
+# Migration: 20260331_0001_remove_wireguard
+# Description: Stop and remove WireGuard service, packages, and configuration
+
+- name: Stop wg-quick@wg0 service
+  service:
+    name: wg-quick@wg0
+    state: stopped
+  failed_when: false
+
+- name: Disable wg-quick@wg0 service
+  service:
+    name: wg-quick@wg0
+    enabled: false
+  failed_when: false
+
+- name: Purge wireguard packages
+  apt:
+    name:
+      - wireguard
+      - wireguard-tools
+    state: absent
+    purge: true
+
+- name: Remove /etc/wireguard directory
+  file:
+    path: /etc/wireguard
+    state: absent

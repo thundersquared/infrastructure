@@ -1,5 +1,6 @@
 ---
 scheduled_run: "{{ lookup('env', 'SCHEDULED_RUN') | bool }}"
+dns_search_domain: "{{ lookup('env', 'DNS_SEARCH_DOMAIN') }}"
 os_env_umask: "022"
 os_user_pw_ageing: false
 os_auth_pam_passwdqc_enable: false
