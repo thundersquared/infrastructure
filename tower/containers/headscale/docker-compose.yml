@@ -6,8 +6,8 @@ services:
       - "443:443/tcp"
       - "3478:3478/udp"
     volumes:
-      - /opt/headscale/data:/var/lib/headscale
-      - /opt/headscale/config.yaml:/etc/headscale/config.yaml:ro
+      - /opt/containers/headscale/data:/var/lib/headscale
+      - /opt/containers/headscale/config.yaml:/etc/headscale/config.yaml:ro
     cap_drop:
       - ALL
     cap_add:
