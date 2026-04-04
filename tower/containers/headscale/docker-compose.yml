@@ -1,6 +1,7 @@
 services:
   headscale:
     image: headscale/headscale:0.28.0
+    command: serve
     restart: unless-stopped
     ports:
       - "443:443/tcp"
@@ -8,6 +9,8 @@ services:
     volumes:
       - /opt/containers/headscale/data:/var/lib/headscale
       - /opt/containers/headscale/config.yaml:/etc/headscale/config.yaml:ro
+    tmpfs:
+      - /var/run/headscale
     cap_drop:
       - ALL
     cap_add:

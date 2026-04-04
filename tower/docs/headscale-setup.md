@@ -102,7 +102,7 @@ docker compose exec headscale headscale users create homelab
 Create a reusable preauth key so nodes can register without manual approval:
 
 ```bash
-docker compose exec headscale headscale preauthkeys create --user homelab --reusable --expiration 24h
+docker compose exec headscale headscale preauthkeys create --reusable --expiration 24h
 ```
 
 Copy the key from the output. Share it securely with each node operator (or use it yourself on each Unraid host). After nodes are registered you can let the key expire or delete it.
@@ -115,8 +115,8 @@ Copy the key from the output. Share it securely with each node operator (or use 
 |---|---|
 | Create a user | `docker compose exec headscale headscale users create <name>` |
 | List users | `docker compose exec headscale headscale users list` |
-| Create a preauth key | `docker compose exec headscale headscale preauthkeys create --user <name> --reusable --expiration 24h` |
-| List preauth keys | `docker compose exec headscale headscale preauthkeys list --user <name>` |
+| Create a preauth key | `docker compose exec headscale headscale preauthkeys create --reusable --expiration 24h` |
+| List preauth keys | `docker compose exec headscale headscale preauthkeys list` |
 | List registered nodes | `docker compose exec headscale headscale nodes list` |
 | Rename a node | `docker compose exec headscale headscale nodes rename --identifier <id> <new-name>` |
 | Expire a node | `docker compose exec headscale headscale nodes expire --identifier <id>` |
