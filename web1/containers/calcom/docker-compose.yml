@@ -17,6 +17,13 @@ services:
   calcom:
     image: calcom/cal.com:v6.2.0
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     depends_on:
       database:
         condition: service_healthy

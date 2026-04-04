@@ -3,6 +3,13 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_METRICS=localhost:60123

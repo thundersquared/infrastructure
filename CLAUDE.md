@@ -49,6 +49,40 @@ docker_stacks:
       external: true
   ```
 
+## Container Security
+
+Every service must have these two options by default:
+
+```yaml
+cap_drop:
+  - ALL
+security_opt:
+  - no-new-privileges:true
+```
+
+**When to add `cap_add` back** (always pair with `cap_drop: [ALL]`):
+- `NET_BIND_SERVICE` — container binds a privileged port (< 1024) directly, e.g. SMTP (25, 465, 587), IMAP (993), HTTPS (443)
+- `NET_ADMIN` — VPN/network management (e.g. headscale)
+- `SYS_NICE` — real-time scheduling (e.g. MySQL)
+- `CHOWN` — init/setup containers that `chown` volume paths on startup
+
+**Stateless containers** (no writable volume mounts) also get `read_only: true` plus `tmpfs` for any paths the runtime needs to write:
+
+```yaml
+read_only: true
+tmpfs:
+  - /tmp        # all runtimes
+  - /run        # nginx (PID file)
+```
+
+Applied to: cloudflared, webmail, calcom, n8n runner.
+
+**Containers exempt from `cap_drop`** (do not add):
+- `watchtower` — requires Docker socket management
+- `authentik worker` — runs as `root` with Docker socket for blueprint management
+- Any init container whose sole job is `chown` (needs `CAP_CHOWN`; dropping all caps breaks it)
+- **All data store images** (PostgreSQL, MySQL, Redis, KeyDB, Valkey, OpenSearch, Meilisearch) — their entrypoints start as `root` and use `gosu` to drop to the database user, which requires `CAP_SETUID`/`CAP_SETGID`. Both `cap_drop: [ALL]` and `no-new-privileges:true` break this pattern and prevent the container from starting.
+
 ## Adding a Service
 
 1. Create `<host>/containers/<service>/docker-compose.yml`

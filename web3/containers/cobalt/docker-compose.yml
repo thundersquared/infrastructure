@@ -3,6 +3,10 @@ services:
     image: ghcr.io/imputnet/cobalt:11
     container_name: cobalt-api
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     env_file: .env
     networks:
       - app-infra

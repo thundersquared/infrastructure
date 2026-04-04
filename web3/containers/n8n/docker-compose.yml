@@ -21,6 +21,10 @@ services:
   n8n:
     image: ghcr.io/thundersquared/n8n:2.14.2
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "127.0.0.1:3004:5678"
     volumes:
@@ -37,6 +41,13 @@ services:
   runner:
     image: n8nio/runners:2.15.0
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     env_file:
       - .runner.env
     depends_on:

@@ -19,6 +19,10 @@ services:
   server:
     image: ghcr.io/goauthentik/server:2026.2.1
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     command: server
     volumes:
       - ./data:/data

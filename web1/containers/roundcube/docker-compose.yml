@@ -3,6 +3,10 @@ services:
     image: roundcube/roundcubemail:latest
     container_name: roundcubemail
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     volumes:

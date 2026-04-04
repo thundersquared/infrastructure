@@ -3,6 +3,14 @@ services:
     image: ghcr.io/linagora/tmail-web:release
     container_name: webmail
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     ports:
