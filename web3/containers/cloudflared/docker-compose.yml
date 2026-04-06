@@ -21,8 +21,6 @@ services:
       interval: 30s
       retries: 3
       timeout: 10s
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - cloudflared-gw
       - app-infra

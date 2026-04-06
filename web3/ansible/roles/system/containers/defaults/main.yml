@@ -1,8 +1,5 @@
 ---
 docker_stacks:
-  watchtower:
-    env_file: false
-    state: restarted
   cloudflared:
     env_file: true
     state: present

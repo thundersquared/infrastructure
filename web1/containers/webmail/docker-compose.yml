@@ -11,8 +11,6 @@ services:
     tmpfs:
       - /tmp
       - /run
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "127.0.0.1:3001:80"
     volumes:

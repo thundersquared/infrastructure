@@ -10,8 +10,6 @@ services:
     env_file: .env
     networks:
       - app-infra
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
     volumes:
       - ./keys.json:/app/keys.json:ro
       - ./cookies.json:/cookies.json

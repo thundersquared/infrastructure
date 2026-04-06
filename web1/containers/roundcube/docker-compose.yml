@@ -7,8 +7,6 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
     volumes:
       - ./www:/var/www/html
       - ./db/sqlite:/var/roundcube/db
