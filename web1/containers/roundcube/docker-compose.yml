@@ -1,6 +1,6 @@
 services:
   roundcubemail:
-    image: roundcube/roundcubemail:latest
+    image: roundcube/roundcubemail:1.6.15-apache
     container_name: roundcubemail
     restart: unless-stopped
     cap_drop:

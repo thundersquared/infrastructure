@@ -19,7 +19,7 @@ services:
       - .env
 
   keydb:
-    image: docker.io/eqalpha/keydb:latest
+    image: docker.io/eqalpha/keydb:x86_64_v0.9.6
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
