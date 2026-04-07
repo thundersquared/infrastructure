@@ -1,6 +1,6 @@
 services:
   cobalt-api:
-    image: ghcr.io/imputnet/cobalt:11
+    image: ghcr.io/imputnet/cobalt:11.7.1
     container_name: cobalt-api
     restart: unless-stopped
     cap_drop:
