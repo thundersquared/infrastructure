@@ -1,5 +1,8 @@
 ---
 docker_stacks:
+  cloudflared:
+    env_file: true
+    state: present
   cobalt:
     env_file: true
     state: present

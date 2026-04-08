@@ -1,0 +1,32 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.3.0
+    container_name: cloudflared
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_METRICS=localhost:60123
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "localhost:60123", "ready"]
+      start_period: 10s
+      interval: 30s
+      retries: 3
+      timeout: 10s
+    networks:
+      - cloudflared-gw
+      - app-infra
+
+networks:
+  cloudflared-gw:
+    driver: bridge
+  app-infra:
+    external: true
