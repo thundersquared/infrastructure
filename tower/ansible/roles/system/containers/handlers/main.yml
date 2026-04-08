@@ -1,7 +1,17 @@
 ---
+- name: Check .env files for restart
+  ansible.builtin.stat:
+    path: "/opt/containers/{{ item.key }}/.env"
+  loop: "{{ docker_stacks | dict2items }}"
+  register: env_checks
+  listen: Restart containers
+
 - name: Restart containers
   community.docker.docker_compose_v2:
-    project_src: "/opt/containers/{{ item }}"
+    project_src: "/opt/containers/{{ item.key }}"
     state: restarted
-  loop: "{{ docker_stacks.keys() | list }}"
-  when: docker_stacks | length > 0
+  loop: "{{ docker_stacks | dict2items }}"
+  when: not item.value.env_file or env_check.stat.exists
+  vars:
+    env_check: "{{ env_checks.results | selectattr('item.key', 'equalto', item.key) | first }}"
+  listen: Restart containers
