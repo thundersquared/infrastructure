@@ -1,5 +1,8 @@
 ---
 docker_stacks:
+  cobalt:
+    env_file: true
+    state: present
   headscale:
     env_file: false
     state: present
