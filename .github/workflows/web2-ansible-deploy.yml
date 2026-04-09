@@ -70,6 +70,7 @@ jobs:
         env:
           ANSIBLE_CONFIG: web2/ansible/ansible.cfg
           ANSIBLE_STRATEGY_PLUGINS: ${{ github.workspace }}/.venv/lib/python${{ env.PYTHON_VERSION }}/site-packages/ansible_mitogen/plugins/strategy
+          CLOUDFLARED_TOKEN: ${{ secrets.CLOUDFLARED_TOKEN }}
           GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           DOCKER_IPV6_SUBNET: ${{ secrets.DOCKER_IPV6_SUBNET }}
