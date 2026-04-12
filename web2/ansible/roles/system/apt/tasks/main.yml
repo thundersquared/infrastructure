@@ -3,6 +3,18 @@
     update_cache: yes
     upgrade: dist
 
+- name: Install packages
+  apt:
+    name:
+      - qemu-guest-agent
+    state: present
+
+- name: Enable and start qemu-guest-agent
+  service:
+    name: qemu-guest-agent
+    enabled: yes
+    state: started
+
 - name: Check if reboot required
   stat:
     path: /var/run/reboot-required

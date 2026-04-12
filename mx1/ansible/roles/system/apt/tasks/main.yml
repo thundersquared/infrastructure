@@ -3,12 +3,19 @@
     update_cache: yes
     upgrade: dist
 
-- name: Install nginx
+- name: Install packages
   apt:
     name:
       - nginx
       - libnginx-mod-stream
+      - qemu-guest-agent
     state: present
+
+- name: Enable and start qemu-guest-agent
+  service:
+    name: qemu-guest-agent
+    enabled: yes
+    state: started
 
 - name: Ensure nginx is enabled and started
   service:
