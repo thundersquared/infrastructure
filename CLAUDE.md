@@ -82,6 +82,7 @@ Applied to: cloudflared, webmail, calcom, n8n runner.
 - `authentik worker` — runs as `root` with Docker socket for blueprint management
 - Any init container whose sole job is `chown` (needs `CAP_CHOWN`; dropping all caps breaks it)
 - **All data store images** (PostgreSQL, MySQL, Redis, KeyDB, Valkey, OpenSearch, Meilisearch) — their entrypoints start as `root` and use `gosu` to drop to the database user, which requires `CAP_SETUID`/`CAP_SETGID`. Both `cap_drop: [ALL]` and `no-new-privileges:true` break this pattern and prevent the container from starting.
+- `roundcube` — Apache+PHP image breaks with `cap_drop: [ALL]`; gets `tmpfs: [/tmp]` only.
 
 ## Adding a Service
 
