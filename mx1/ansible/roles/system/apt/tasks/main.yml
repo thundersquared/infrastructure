@@ -17,6 +17,12 @@
     enabled: yes
     state: started
 
+- name: Enable fstrim timer
+  service:
+    name: fstrim.timer
+    enabled: yes
+    state: started
+
 - name: Ensure nginx is enabled and started
   service:
     name: nginx

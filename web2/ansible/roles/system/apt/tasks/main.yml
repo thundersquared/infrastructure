@@ -15,6 +15,12 @@
     enabled: yes
     state: started
 
+- name: Enable fstrim timer
+  service:
+    name: fstrim.timer
+    enabled: yes
+    state: started
+
 - name: Check if reboot required
   stat:
     path: /var/run/reboot-required
