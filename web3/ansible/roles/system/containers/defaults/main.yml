@@ -12,3 +12,6 @@ docker_stacks:
   n8n:
     env_file: true
     state: present
+  open-webui:
+    env_file: true
+    state: present

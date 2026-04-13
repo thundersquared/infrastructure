@@ -1,0 +1,25 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.8.12-ollama
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3005:8080"
+    volumes:
+      - ollama:/root/.ollama
+      - open_webui:/app/backend/data
+    env_file:
+      - .env
+    networks:
+      - app-infra
+
+volumes:
+  ollama:
+  open_webui:
+
+networks:
+  app-infra:
+    external: true
