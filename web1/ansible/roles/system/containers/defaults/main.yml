@@ -9,3 +9,6 @@ docker_stacks:
   calcom:
     env_file: true
     state: present
+  open-webui:
+    env_file: true
+    state: present
