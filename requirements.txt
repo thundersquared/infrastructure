@@ -1,2 +1,2 @@
 ansible==13.5.0
-mitogen==0.3.45
+mitogen==0.3.46
