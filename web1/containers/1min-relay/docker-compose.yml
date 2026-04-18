@@ -1,26 +1,16 @@
 services:
-  memcached:
-    image: memcached:1.6.41-alpine
-    restart: unless-stopped
-    networks:
-      - 1min-relay-internal
-
   1min-relay:
-    image: kokofixcomputers/1min-relay:d1409dfd95224f2ab282656f5b1a284be289f378
+    image: ghcr.io/thundersquared/1min-relay:v1.0.0
     restart: unless-stopped
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
-    depends_on:
-      - memcached
     env_file:
       - .env
     networks:
-      - 1min-relay-internal
       - app-infra
 
 networks:
-  1min-relay-internal:
   app-infra:
     external: true
