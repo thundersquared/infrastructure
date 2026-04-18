@@ -15,3 +15,6 @@ docker_stacks:
   open-webui:
     env_file: true
     state: present
+  1min-relay:
+    env_file: true
+    state: present
