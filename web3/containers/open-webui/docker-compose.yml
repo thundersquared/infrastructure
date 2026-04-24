@@ -1,6 +1,6 @@
 services:
   open-webui:
-    image: ghcr.io/open-webui/open-webui:v0.9.1
+    image: ghcr.io/open-webui/open-webui:v0.9.2
     restart: unless-stopped
     cap_drop:
       - ALL
