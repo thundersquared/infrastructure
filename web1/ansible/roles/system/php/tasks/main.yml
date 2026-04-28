@@ -31,3 +31,6 @@
     - "8.4"
   failed_when: false
   no_log: true
+
+- name: Build PECL extensions for installed PHP versions
+  ansible.builtin.include_tasks: build_extensions.yml

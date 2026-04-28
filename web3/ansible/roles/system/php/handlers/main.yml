@@ -1,0 +1,15 @@
+---
+# One handler per PHP version that may have extensions registered.
+# Notified by lineinfile tasks in _build_php_extension.yml after a new
+# extension=*.so line is added. Only fires for versions actually installed
+# on the host (the notifying tasks are gated on fpm php.ini existing).
+
+- name: restart php8.4-fpm
+  ansible.builtin.systemd_service:
+    name: php8.4-fpm
+    state: restarted
+
+- name: restart php8.5-fpm
+  ansible.builtin.systemd_service:
+    name: php8.5-fpm
+    state: restarted

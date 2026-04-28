@@ -1,0 +1,22 @@
+---
+# Build PHP extensions from PECL.
+# Driven by `php_custom_extensions` in defaults/main.yml.
+# Only PHP versions whose php-fpm config is present on the host are processed.
+
+- name: Stat php-fpm config for each configured PHP version
+  ansible.builtin.stat:
+    path: "/etc/php/{{ item }}/fpm/php.ini"
+  register: _php_fpm_stat
+  loop: "{{ php_custom_extensions.keys() | list }}"
+  loop_control:
+    label: "PHP {{ item }}"
+
+- name: Build configured extensions for each installed PHP version
+  ansible.builtin.include_tasks: _build_php_version.yml
+  vars:
+    php_version: "{{ item.item }}"
+    php_extensions: "{{ php_custom_extensions[item.item] }}"
+  loop: "{{ _php_fpm_stat.results }}"
+  when: item.stat.exists
+  loop_control:
+    label: "PHP {{ item.item }}"

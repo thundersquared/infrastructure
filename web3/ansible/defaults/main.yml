@@ -23,3 +23,14 @@ sysctl_overwrite:
   net.netfilter.nf_conntrack_max: 262144
   net.netfilter.nf_conntrack_tcp_timeout_established: 86400
   net.netfilter.nf_conntrack_tcp_timeout_time_wait: 30
+
+# PHP extensions to build from PECL per PHP version.
+# Only versions whose php-fpm is installed on the host are processed.
+# Add an entry to enable a new extension on the next playbook run.
+php_custom_extensions:
+  "8.4":
+    - { name: brotli, version: "0.18.3", apt_deps: ["libbrotli-dev"] }
+    - { name: zstd,   version: "0.15.2", apt_deps: ["libzstd-dev"]   }
+  "8.5":
+    - { name: brotli, version: "0.18.3", apt_deps: ["libbrotli-dev"] }
+    - { name: zstd,   version: "0.15.2", apt_deps: ["libzstd-dev"]   }

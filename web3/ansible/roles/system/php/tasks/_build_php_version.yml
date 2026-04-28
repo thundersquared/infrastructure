@@ -1,0 +1,11 @@
+---
+# Build each extension in `php_extensions` for the given `php_version`.
+# Vars: php_version (string), php_extensions (list).
+
+- name: "Build extension for PHP {{ php_version }}"
+  ansible.builtin.include_tasks: _build_php_extension.yml
+  vars:
+    ext: "{{ item }}"
+  loop: "{{ php_extensions }}"
+  loop_control:
+    label: "{{ item.name }} {{ item.version }} (PHP {{ php_version }})"

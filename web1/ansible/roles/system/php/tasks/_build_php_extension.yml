@@ -1,0 +1,66 @@
+---
+# Build and register a single PECL extension for one PHP version.
+# Vars:
+#   php_version  e.g. "8.4"
+#   ext          { name, version, apt_deps }
+
+- name: "PHP {{ php_version }} {{ ext.name }} - check if registered in fpm php.ini"
+  ansible.builtin.command: >
+    grep -Fxq 'extension={{ ext.name }}.so' /etc/php/{{ php_version }}/fpm/php.ini
+  register: _ext_registered
+  failed_when: false
+  changed_when: false
+
+- name: "PHP {{ php_version }} {{ ext.name }} - build and install from PECL"
+  when: _ext_registered.rc != 0
+  block:
+    - name: "PHP {{ php_version }} {{ ext.name }} - install build dependencies"
+      ansible.builtin.apt:
+        name: "{{ ['php' ~ php_version ~ '-dev', 'php' ~ php_version ~ '-cli', 'make', 'gcc', 'pkg-config'] + ext.apt_deps }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: "PHP {{ php_version }} {{ ext.name }} - ensure build directory exists"
+      ansible.builtin.file:
+        path: /tmp/php-ext-build
+        state: directory
+        mode: '0755'
+
+    - name: "PHP {{ php_version }} {{ ext.name }} - download PECL tarball"
+      ansible.builtin.get_url:
+        url: "https://pecl.php.net/get/{{ ext.name }}-{{ ext.version }}.tgz"
+        dest: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}.tgz"
+        mode: '0644'
+
+    - name: "PHP {{ php_version }} {{ ext.name }} - extract source"
+      ansible.builtin.unarchive:
+        src: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}.tgz"
+        dest: /tmp/php-ext-build/
+        remote_src: true
+        creates: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}/config.m4"
+
+    - name: "PHP {{ php_version }} {{ ext.name }} - phpize, configure, make, make install"
+      ansible.builtin.shell: |
+        set -euo pipefail
+        phpize{{ php_version }}
+        ./configure --with-php-config=/usr/bin/php-config{{ php_version }}
+        make -j"$(nproc)"
+        make install
+      args:
+        chdir: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}"
+        executable: /bin/bash
+
+    - name: "PHP {{ php_version }} {{ ext.name }} - register in cli php.ini"
+      ansible.builtin.lineinfile:
+        path: "/etc/php/{{ php_version }}/cli/php.ini"
+        line: "extension={{ ext.name }}.so"
+        state: present
+      notify: "restart php{{ php_version }}-fpm"
+
+    - name: "PHP {{ php_version }} {{ ext.name }} - register in fpm php.ini"
+      ansible.builtin.lineinfile:
+        path: "/etc/php/{{ php_version }}/fpm/php.ini"
+        line: "extension={{ ext.name }}.so"
+        state: present
+      notify: "restart php{{ php_version }}-fpm"
