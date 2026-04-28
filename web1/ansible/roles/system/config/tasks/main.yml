@@ -87,3 +87,47 @@
       mode: '0644'
     notify: Restart logrotate.timer
     become: true
+
+- name: Nginx Compression
+  # CloudPanel pre-loads brotli via /etc/nginx/modules-enabled/50-mod-ngx-brotli.conf
+  # but ships nginx.conf with gzip only. The brotli `on`, `brotli_static on`,
+  # `brotli_comp_level`, and `brotli_types` directives must already exist in
+  # /etc/nginx/nginx.conf (inside the `http {}` block) for the tuning tasks below
+  # to take effect — bootstrap manually on a fresh node.
+  block:
+    - name: Tune gzip_comp_level
+      ansible.builtin.replace:
+        path: /etc/nginx/nginx.conf
+        regexp: '^(\s*)gzip_comp_level\s+\d+\s*;'
+        replace: '\g<1>gzip_comp_level 5;'
+      notify: Reload nginx
+      become: true
+
+    - name: Tune gzip_types
+      ansible.builtin.replace:
+        path: /etc/nginx/nginx.conf
+        regexp: '^(\s*)gzip_types[^;]*;'
+        replace: '\g<1>gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss application/atom+xml application/rss+xml application/wasm application/manifest+json image/svg+xml font/ttf font/otf application/vnd.ms-fontobject;'
+      notify: Reload nginx
+      become: true
+
+    - name: Tune brotli_comp_level
+      ansible.builtin.replace:
+        path: /etc/nginx/nginx.conf
+        regexp: '^(\s*)brotli_comp_level\s+\d+\s*;'
+        replace: '\g<1>brotli_comp_level 6;'
+      notify: Reload nginx
+      become: true
+
+    - name: Tune brotli_types
+      ansible.builtin.replace:
+        path: /etc/nginx/nginx.conf
+        regexp: '^(\s*)brotli_types[^;]*;'
+        replace: '\g<1>brotli_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss application/atom+xml application/rss+xml application/wasm application/manifest+json image/svg+xml font/ttf font/otf application/vnd.ms-fontobject;'
+      notify: Reload nginx
+      become: true
+
+    - name: Validate nginx config
+      ansible.builtin.command: nginx -t
+      changed_when: false
+      become: true
