@@ -14,9 +14,10 @@
 - name: Build configured extensions for each installed PHP version
   ansible.builtin.include_tasks: _build_php_version.yml
   vars:
-    php_version: "{{ item.item }}"
-    php_extensions: "{{ php_custom_extensions[item.item] }}"
+    php_version: "{{ _ver_stat.item }}"
+    php_extensions: "{{ php_custom_extensions[_ver_stat.item] }}"
   loop: "{{ _php_fpm_stat.results }}"
-  when: item.stat.exists
+  when: _ver_stat.stat.exists
   loop_control:
-    label: "PHP {{ item.item }}"
+    loop_var: _ver_stat
+    label: "PHP {{ _ver_stat.item }}"

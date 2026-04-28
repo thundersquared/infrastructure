@@ -5,7 +5,8 @@
 - name: "Build extension for PHP {{ php_version }}"
   ansible.builtin.include_tasks: _build_php_extension.yml
   vars:
-    ext: "{{ item }}"
+    ext: "{{ _ext }}"
   loop: "{{ php_extensions }}"
   loop_control:
-    label: "{{ item.name }} {{ item.version }} (PHP {{ php_version }})"
+    loop_var: _ext
+    label: "{{ _ext.name }} {{ _ext.version }} (PHP {{ php_version }})"
