@@ -3,6 +3,10 @@
 # Vars:
 #   php_version  e.g. "8.4"
 #   ext          { name, version, apt_deps }
+#
+# Build dirs are version-scoped (/tmp/php-ext-build/<ver>/<pkg>/) so that
+# each PHP version gets its own compiled .so — cross-version reuse would
+# produce "module API mismatch" errors at startup.
 
 - name: "PHP {{ php_version }} {{ ext.name }} - check if registered in fpm php.ini"
   ansible.builtin.command: >
@@ -21,9 +25,9 @@
         update_cache: true
         cache_valid_time: 3600
 
-    - name: "PHP {{ php_version }} {{ ext.name }} - ensure build directory exists"
+    - name: "PHP {{ php_version }} {{ ext.name }} - ensure version-scoped build directory"
       ansible.builtin.file:
-        path: /tmp/php-ext-build
+        path: "/tmp/php-ext-build/{{ php_version }}"
         state: directory
         mode: '0755'
 
@@ -33,12 +37,12 @@
         dest: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}.tgz"
         mode: '0644'
 
-    - name: "PHP {{ php_version }} {{ ext.name }} - extract source"
+    - name: "PHP {{ php_version }} {{ ext.name }} - extract source into version-scoped directory"
       ansible.builtin.unarchive:
         src: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}.tgz"
-        dest: /tmp/php-ext-build/
+        dest: "/tmp/php-ext-build/{{ php_version }}/"
         remote_src: true
-        creates: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}/config.m4"
+        creates: "/tmp/php-ext-build/{{ php_version }}/{{ ext.name }}-{{ ext.version }}/config.m4"
 
     - name: "PHP {{ php_version }} {{ ext.name }} - phpize, configure, make, make install"
       ansible.builtin.shell: |
@@ -48,7 +52,7 @@
         make -j"$(nproc)"
         make install
       args:
-        chdir: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}"
+        chdir: "/tmp/php-ext-build/{{ php_version }}/{{ ext.name }}-{{ ext.version }}"
         executable: /bin/bash
 
     - name: "PHP {{ php_version }} {{ ext.name }} - register in cli php.ini"
