@@ -1,0 +1,51 @@
+---
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 10s
+      interval: 5s
+      retries: 10
+      timeout: 3s
+    environment:
+      PGDATA: /var/lib/postgresql/18/docker
+    volumes:
+      - postgres:/var/lib/postgresql
+    env_file:
+      - .env
+    networks:
+      - domain-locker
+
+  app:
+    image: lissy93/domain-locker:0.1.4
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3006:3000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    networks:
+      - domain-locker
+      - app-infra
+
+volumes:
+  postgres:
+
+networks:
+  domain-locker:
+  app-infra:
+    external: true
