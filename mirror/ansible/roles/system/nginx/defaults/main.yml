@@ -1,0 +1,6 @@
+---
+nginx_hostname: "{{ inventory_hostname }}"
+nginx_certbot_email: "{{ lookup('env', 'CERTBOT_EMAIL') }}"
+nginx_certbot_webroot: /var/www/certbot
+nginx_media_root: /media/mirror
+nginx_vhost_name: mirror

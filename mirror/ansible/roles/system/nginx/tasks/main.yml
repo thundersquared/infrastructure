@@ -1,0 +1,89 @@
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+  become: true
+
+- name: Create media directory
+  ansible.builtin.file:
+    path: "{{ nginx_media_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: true
+
+- name: Create certbot webroot directory
+  ansible.builtin.file:
+    path: "{{ nginx_certbot_webroot }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: true
+
+- name: Remove default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+  become: true
+
+- name: Check if TLS certificate exists
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ nginx_hostname }}/fullchain.pem"
+  register: nginx_cert
+  become: true
+
+- name: Deploy HTTP-only vhost (pre-certificate)
+  ansible.builtin.template:
+    src: vhost_http.conf.j2
+    dest: "/etc/nginx/sites-available/{{ nginx_vhost_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload nginx
+  become: true
+  when: not nginx_cert.stat.exists
+
+- name: Enable vhost
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ nginx_vhost_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ nginx_vhost_name }}"
+    state: link
+  notify: Reload nginx
+  become: true
+
+- name: Ensure nginx is started and enabled
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Obtain TLS certificate
+  ansible.builtin.include_role:
+    name: geerlingguy.certbot
+  vars:
+    certbot_install_method: package
+    certbot_create_if_missing: true
+    certbot_create_method: webroot
+    certbot_webroot_path: "{{ nginx_certbot_webroot }}"
+    certbot_admin_email: "{{ nginx_certbot_email }}"
+    certbot_certs:
+      - domains:
+          - "{{ nginx_hostname }}"
+
+- name: Deploy HTTPS vhost (post-certificate)
+  ansible.builtin.template:
+    src: vhost.conf.j2
+    dest: "/etc/nginx/sites-available/{{ nginx_vhost_name }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload nginx
+  become: true

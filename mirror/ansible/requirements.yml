@@ -1,0 +1,8 @@
+collections:
+  - name: devsec.hardening
+    version: "10.5.2"
+roles:
+  - name: geerlingguy.docker
+    version: "8.0.0"
+  - name: geerlingguy.certbot
+    version: "5.4.1"

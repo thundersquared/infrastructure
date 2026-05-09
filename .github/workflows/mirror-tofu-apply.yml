@@ -1,0 +1,78 @@
+name: Deploy mirror with OpenTofu
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/mirror-tofu-apply.yml'
+      - 'mirror/terraform/**'
+  schedule:
+    - cron: '0 0 * * *'  # Every day at midnight
+jobs:
+  apply:
+    name: OpenTofu Apply
+    runs-on: ubuntu-latest
+    environment: mirror
+
+    defaults:
+      run:
+        working-directory: mirror/terraform
+
+    env:
+      TF_VAR_tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
+      TF_VAR_user_ocid: ${{ secrets.OCI_USER_OCID }}
+      TF_VAR_fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+      TF_VAR_private_key: ${{ secrets.OCI_PRIVATE_KEY }}
+      TF_VAR_region: ${{ secrets.OCI_REGION }}
+      TF_VAR_compartment_ocid: ${{ secrets.OCI_COMPARTMENT_OCID }}
+      TF_VAR_ssh_authorized_keys: ${{ secrets.SSH_AUTHORIZED_KEYS }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Create plugin cache dir
+        run: |
+          mkdir -p "$HOME/.terraform.d/plugin-cache"
+          echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> "$GITHUB_ENV"
+
+      - name: Cache providers
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: tofu-providers-${{ hashFiles('mirror/terraform/.terraform.lock.hcl') }}
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v2.0.0
+        with:
+          tofu_version: "1.11.x"
+
+      - name: Init
+        env:
+          OCI_S3_BUCKET: ${{ secrets.OCI_S3_BUCKET }}
+          OCI_S3_REGION: ${{ secrets.OCI_S3_REGION }}
+          OCI_S3_NAMESPACE: ${{ secrets.OCI_S3_NAMESPACE }}
+          OCI_S3_ACCESS_KEY: ${{ secrets.OCI_S3_ACCESS_KEY }}
+          OCI_S3_SECRET_KEY: ${{ secrets.OCI_S3_SECRET_KEY }}
+        run: |
+          tofu init \
+            -backend-config="bucket=${OCI_S3_BUCKET}" \
+            -backend-config="key=mirror/terraform.tfstate" \
+            -backend-config="region=${OCI_S3_REGION}" \
+            -backend-config="endpoint=https://${OCI_S3_NAMESPACE}.compat.objectstorage.${OCI_S3_REGION}.oraclecloud.com" \
+            -backend-config="access_key=${OCI_S3_ACCESS_KEY}" \
+            -backend-config="secret_key=${OCI_S3_SECRET_KEY}" \
+            -backend-config="skip_region_validation=true" \
+            -backend-config="skip_credentials_validation=true" \
+            -backend-config="skip_metadata_api_check=true" \
+            -backend-config="force_path_style=true"
+
+      - name: Apply
+        run: tofu apply -auto-approve -no-color > /dev/null
