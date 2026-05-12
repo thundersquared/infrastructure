@@ -5,6 +5,54 @@
     state: present
   become: true
 
+- name: Firewall
+  block:
+  - name: Allow HTTP in iptables
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: "80"
+      ctstate: NEW
+      jump: ACCEPT
+      action: insert
+    become: true
+    notify: Save iptables rules
+
+  - name: Allow HTTPS in iptables
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: "443"
+      ctstate: NEW
+      jump: ACCEPT
+      action: insert
+    become: true
+    notify: Save iptables rules
+
+  - name: Allow HTTP in ip6tables
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: "80"
+      ctstate: NEW
+      jump: ACCEPT
+      action: insert
+      ip_version: ipv6
+    become: true
+    notify: Save iptables rules
+
+  - name: Allow HTTPS in ip6tables
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: "443"
+      ctstate: NEW
+      jump: ACCEPT
+      action: insert
+      ip_version: ipv6
+    become: true
+    notify: Save iptables rules
+
 - name: DNS
   block:
   - name: Ensure systemd-resolved is running

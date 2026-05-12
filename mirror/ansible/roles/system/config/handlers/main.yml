@@ -1,4 +1,10 @@
 ---
+- name: Save iptables rules
+  ansible.builtin.shell: |
+    iptables-save > /etc/iptables/rules.v4
+    ip6tables-save > /etc/iptables/rules.v6
+  become: true
+
 - name: Restart systemd-resolved
   ansible.builtin.systemd_service:
     name: systemd-resolved
