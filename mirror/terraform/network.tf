@@ -61,7 +61,19 @@ resource "oci_core_security_list" "mirror" {
     }
   }
 
-  # Headscale HTTPS + DERP
+  # HTTP (Let's Encrypt HTTP-01 challenge)
+  ingress_security_rules {
+    protocol  = "6" # TCP
+    source    = "0.0.0.0/0"
+    stateless = false
+
+    tcp_options {
+      min = 80
+      max = 80
+    }
+  }
+
+  # HTTPS
   ingress_security_rules {
     protocol  = "6" # TCP
     source    = "0.0.0.0/0"
@@ -70,18 +82,6 @@ resource "oci_core_security_list" "mirror" {
     tcp_options {
       min = 443
       max = 443
-    }
-  }
-
-  # STUN (Headscale NAT traversal)
-  ingress_security_rules {
-    protocol  = "17" # UDP
-    source    = "0.0.0.0/0"
-    stateless = false
-
-    udp_options {
-      min = var.headscale_stun_port
-      max = var.headscale_stun_port
     }
   }
 
@@ -120,7 +120,19 @@ resource "oci_core_security_list" "mirror" {
     }
   }
 
-  # Headscale HTTPS + DERP (IPv6)
+  # HTTP (Let's Encrypt HTTP-01 challenge, IPv6)
+  ingress_security_rules {
+    protocol  = "6" # TCP
+    source    = "::/0"
+    stateless = false
+
+    tcp_options {
+      min = 80
+      max = 80
+    }
+  }
+
+  # HTTPS (IPv6)
   ingress_security_rules {
     protocol  = "6" # TCP
     source    = "::/0"
@@ -129,18 +141,6 @@ resource "oci_core_security_list" "mirror" {
     tcp_options {
       min = 443
       max = 443
-    }
-  }
-
-  # STUN (Headscale NAT traversal, IPv6)
-  ingress_security_rules {
-    protocol  = "17" # UDP
-    source    = "::/0"
-    stateless = false
-
-    udp_options {
-      min = var.headscale_stun_port
-      max = var.headscale_stun_port
     }
   }
 

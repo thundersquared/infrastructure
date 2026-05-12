@@ -62,12 +62,6 @@ variable "subnet_cidr" {
   default     = "10.0.0.0/24"
 }
 
-variable "headscale_stun_port" {
-  description = "UDP port for STUN (Headscale NAT traversal)"
-  type        = number
-  default     = 3478
-}
-
 variable "cloudflare_api_token" {
   description = "Cloudflare API token with DNS edit permissions for the target zone"
   type        = string
