@@ -19,11 +19,7 @@ data "oci_identity_availability_domains" "ads" {
 }
 
 locals {
-  availability_domain = var.availability_domain != null ? var.availability_domain : (
-    length(data.oci_identity_availability_domains.ads.availability_domains) > 0
-    ? data.oci_identity_availability_domains.ads.availability_domains[0].name
-    : error("No availability domains found in tenancy — set var.availability_domain explicitly")
-  )
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
   image_id = var.image_ocid != null ? var.image_ocid : (
     length(data.oci_core_images.ubuntu_24_04_minimal.images) > 0
     ? data.oci_core_images.ubuntu_24_04_minimal.images[0].id
@@ -53,7 +49,10 @@ resource "oci_core_instance" "mirror" {
     display_name     = "${var.instance_display_name}-vnic"
     assign_public_ip = true
     assign_ipv6ip    = true
-    hostname_label   = var.instance_display_name
+    ipv6address_ipv6subnet_cidr_pair_details {
+      ipv6subnet_cidr = oci_core_subnet.mirror.ipv6cidr_block
+    }
+    hostname_label = var.instance_display_name
   }
 
   metadata = {

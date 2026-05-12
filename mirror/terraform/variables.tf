@@ -32,12 +32,6 @@ variable "compartment_ocid" {
   type        = string
 }
 
-variable "availability_domain" {
-  description = "Availability domain name (e.g. Uocm:EU-FRANKFURT-1-AD-1). Find with: oci iam availability-domain list"
-  type        = string
-  default     = null
-}
-
 variable "image_ocid" {
   description = "Override the auto-detected Ubuntu 24.04 Minimal ARM image OCID. Use when the image filter returns no results in a region."
   type        = string
