@@ -72,7 +72,6 @@
     certbot_install_method: package
     certbot_create_if_missing: true
     certbot_create_method: webroot
-    certbot_webroot_path: "{{ nginx_certbot_webroot }}"
     certbot_admin_email: "{{ nginx_certbot_email }}"
     certbot_certs:
       - domains:
