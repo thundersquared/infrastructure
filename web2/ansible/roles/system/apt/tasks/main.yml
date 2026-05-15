@@ -1,7 +1,9 @@
-- name: Update apt-cache and do dist upgrade
+- name: Update apt cache, dist-upgrade, and autoremove
   apt:
     update_cache: yes
     upgrade: dist
+    autoremove: yes
+    purge: yes
 
 - name: Install packages
   apt:
