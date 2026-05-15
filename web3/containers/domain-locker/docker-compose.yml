@@ -19,7 +19,7 @@ services:
       - domain-locker
 
   app:
-    image: lissy93/domain-locker:0.1.5
+    image: lissy93/domain-locker:0.1.6
     restart: unless-stopped
     cap_drop:
       - ALL
