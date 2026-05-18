@@ -50,7 +50,7 @@ jobs:
           key: tofu-providers-${{ hashFiles('tower/terraform/.terraform.lock.hcl') }}
 
       - name: Install OpenTofu
-        uses: opentofu/setup-opentofu@v2.0.0
+        uses: opentofu/setup-opentofu@v2.0.1
         with:
           tofu_version: "1.11.x"
 
