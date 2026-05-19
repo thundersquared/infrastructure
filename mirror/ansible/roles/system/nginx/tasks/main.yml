@@ -3,7 +3,15 @@
   ansible.builtin.apt:
     name: nginx
     state: present
-  become: true
+    update_cache: false
+
+- name: Create ACME webroot directory
+  ansible.builtin.file:
+    path: "{{ nginx_certbot_webroot }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
 
 - name: Create media directory
   ansible.builtin.file:
@@ -11,78 +19,65 @@
     state: directory
     owner: www-data
     group: www-data
-    mode: '0755'
-  become: true
-
-- name: Create certbot webroot directory
-  ansible.builtin.file:
-    path: "{{ nginx_certbot_webroot }}"
-    state: directory
-    owner: www-data
-    group: www-data
-    mode: '0755'
-  become: true
+    mode: "0755"
 
 - name: Remove default nginx site
   ansible.builtin.file:
     path: /etc/nginx/sites-enabled/default
     state: absent
   notify: Reload nginx
-  become: true
 
-- name: Check if TLS certificate exists
+- name: Check if certificate exists
   ansible.builtin.stat:
     path: "/etc/letsencrypt/live/{{ nginx_hostname }}/fullchain.pem"
-  register: nginx_cert
-  become: true
+  register: nginx_cert_stat
 
-- name: Deploy HTTP-only vhost (pre-certificate)
+- name: Deploy HTTP-only vhost (pre-cert)
   ansible.builtin.template:
     src: vhost_http.conf.j2
     dest: "/etc/nginx/sites-available/{{ nginx_vhost_name }}"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
+  when: not nginx_cert_stat.stat.exists
   notify: Reload nginx
-  become: true
-  when: not nginx_cert.stat.exists
 
 - name: Enable vhost
   ansible.builtin.file:
     src: "/etc/nginx/sites-available/{{ nginx_vhost_name }}"
     dest: "/etc/nginx/sites-enabled/{{ nginx_vhost_name }}"
     state: link
-  notify: Reload nginx
-  become: true
 
-- name: Ensure nginx is started and enabled
+- name: Start and enable nginx
   ansible.builtin.systemd_service:
     name: nginx
     state: started
     enabled: true
-  become: true
 
-- name: Flush handlers
+- name: Flush handlers so nginx is live for ACME challenge
   ansible.builtin.meta: flush_handlers
 
-- name: Obtain TLS certificate
+- name: Obtain certificate via certbot
   ansible.builtin.include_role:
     name: geerlingguy.certbot
   vars:
     certbot_install_method: package
     certbot_create_if_missing: true
     certbot_create_method: webroot
+    certbot_webroot_path: "{{ nginx_certbot_webroot }}"
     certbot_admin_email: "{{ nginx_certbot_email }}"
     certbot_certs:
       - domains:
           - "{{ nginx_hostname }}"
 
-- name: Deploy HTTPS vhost (post-certificate)
+- name: Deploy HTTPS vhost (post-cert)
   ansible.builtin.template:
     src: vhost.conf.j2
     dest: "/etc/nginx/sites-available/{{ nginx_vhost_name }}"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   notify: Reload nginx
-  become: true
+
+- name: Flush handlers to apply HTTPS vhost
+  ansible.builtin.meta: flush_handlers
