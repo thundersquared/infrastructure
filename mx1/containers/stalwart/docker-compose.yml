@@ -36,7 +36,7 @@ services:
       - app-infra
 
   opensearch:
-    image: opensearchproject/opensearch:3.5.0
+    image: opensearchproject/opensearch:3.6.0
     restart: unless-stopped
     environment:
       discovery.type: single-node
