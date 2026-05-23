@@ -5,4 +5,4 @@ roles:
   - name: geerlingguy.docker
     version: "8.0.0"
   - name: borgbase.ansible_role_borgbackup
-    version: "v2.0.0"
+    version: "v2.1.0"
