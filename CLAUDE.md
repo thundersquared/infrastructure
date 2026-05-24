@@ -75,7 +75,9 @@ tmpfs:
   - /run        # nginx (PID file)
 ```
 
-Applied to: cloudflared, webmail, calcom, n8n runner.
+Applied to: cloudflared, webmail, n8n runner.
+
+`calcom` is **not** read-only — its entrypoint installs NPM packages and writes a build cache on startup, which breaks under `read_only: true`. Keep `cap_drop: [ALL]` + `no-new-privileges:true`, omit `read_only`/`tmpfs`.
 
 **Containers exempt from `cap_drop`** (do not add):
 - `watchtower` — requires Docker socket management

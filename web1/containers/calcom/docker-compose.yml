@@ -21,9 +21,6 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
     depends_on:
       database:
         condition: service_healthy
