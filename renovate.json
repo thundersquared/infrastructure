@@ -15,6 +15,12 @@
     {
       "matchDatasources": ["terraform-provider"],
       "registryUrls": ["https://registry.opentofu.org"]
+    },
+    {
+      "description": "Hold ansible at 13.x: Mitogen (mitogen_linear strategy) does not support ansible-core 2.21 (ansible 14). Remove once Mitogen ships 2.21 support or Mitogen is dropped.",
+      "matchManagers": ["pip_requirements"],
+      "matchPackageNames": ["ansible"],
+      "allowedVersions": "<14"
     }
   ],
   "hostRules": [
