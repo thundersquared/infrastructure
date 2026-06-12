@@ -30,7 +30,7 @@ services:
       retries: 12
 
   fleet-init:
-    image: alpine:3.23
+    image: alpine:3.24
     volumes:
       - logs:/logs
       - data:/fleet
