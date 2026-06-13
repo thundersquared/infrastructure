@@ -21,16 +21,28 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./php-conf.d/zz-hypebun.ini:/usr/local/etc/php/conf.d/zz-hypebun.ini:ro
-      # App docroots are pre-placed on the host (CI/rsync), bind-mounted
-      # read-write so the app can write uploads/cache.
-      - /apps/hypebun/bio-prod:/apps/hypebun/bio-prod
-      - /apps/hypebun/bio-test:/apps/hypebun/bio-test
+      # App release trees (code) live on the host under /opt/hypebun/<env>,
+      # provisioned by CI (see deploy.sh). Mounted READ-ONLY: the app must not
+      # mutate code. The whole env dir is mounted (not the "current" symlink) so
+      # atomic symlink swaps are visible in the container -> zero-downtime.
+      - /opt/hypebun/prod:/app/prod:ro
+      - /opt/hypebun/test:/app/test:ro
+      # Mutable state lives in named volumes, decoupled from the code tree and
+      # surviving redeploys. Each release's uploads/ is a symlink into shared/
+      # (created by deploy.sh), so we mount the stable shared paths here.
+      - uploads_prod:/app/prod/shared/uploads
+      - uploads_test:/app/test/shared/uploads
       # Caddy certificate + ACME account store. MUST persist so on-demand TLS
       # certificates survive container restarts/recreations.
       - caddy_data:/data
       - caddy_config:/config
       # MySQL UNIX socket shared from the db service (zero-TCP app -> DB).
       - db_socket:/sockets:ro
+    tmpfs:
+      # Image/biolink render cache is ephemeral; keep it off disk and out of
+      # backups. deploy.sh symlinks each release's uploads/cache here.
+      - /app/prod/shared/cache
+      - /app/test/shared/cache
 
   db:
     image: mariadb:12.3.2
@@ -62,3 +74,5 @@ volumes:
   caddy_config:
   db_data:
   db_socket:
+  uploads_prod:
+  uploads_test:
