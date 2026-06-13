@@ -6,13 +6,22 @@ php-fpm + 3-node DB cluster + MaxScale/ProxySQL).
 
 ## Architecture
 
-| Service      | Image                              | Role                                                        |
-|--------------|------------------------------------|-------------------------------------------------------------|
-| `frankenphp` | `dunglas/frankenphp:1.12.4-php8.5` | Caddy + PHP in-process; serves prod, test and user domains. |
-| `db`         | `mariadb:12.3.2`                   | Single MySQL-compatible database.                           |
+| Service      | Image                                    | Role                                                        |
+|--------------|------------------------------------------|-------------------------------------------------------------|
+| `frankenphp` | built from `Dockerfile` (FrankenPHP 1.12.4 / PHP 8.5) | Caddy + PHP in-process; serves prod, test and user domains. |
+| `db`         | `mariadb:12.3.2`                         | Single MySQL-compatible database.                           |
 
 Both join the external `app-infra` network. PHP runs in **classic** (per-request)
 mode — see [Worker mode](#worker-mode-future) before changing that.
+
+### Custom PHP image
+
+The base `dunglas/frankenphp` image ships a minimal extension set (PDO + mysqlnd
+only). AltumCode requires `mysqli` (its core DB layer) and `gd` (captcha / image
+processing), so `frankenphp` is built from the local `Dockerfile`, which adds:
+`mysqli`, `pdo_mysql`, `gd`, `intl`, `zip`, `exif`, `bcmath`, `gmp`, `opcache`.
+Compose builds it automatically; the resulting image is tagged
+`hypebun-frankenphp:1.12.4-php8.5`.
 
 ### Environments (shared ports)
 
@@ -26,13 +35,29 @@ One FrankenPHP process owns `:80` / `:443`. The `Caddyfile` has named site block
 
 Users point their own domain at this server. Any hostname not matched by the named
 blocks falls into the catch-all block, which uses Caddy **on-demand TLS** to obtain a
-Let's Encrypt certificate. Issuance is gated by the `ask` endpoint:
+Let's Encrypt certificate. Issuance is gated by a local **ask** endpoint:
 
 ```
-https://licensing-v1.sqrd-prod.com/hypebun/can-generate-https.php
+http://127.0.0.1:9180/can-generate-https.php
 ```
 
-Caddy queries it with `?domain=<host>`; an HTTP 200 allows the certificate.
+This is served by the same FrankenPHP instance via a loopback-only listener
+(`:9180` site block in the `Caddyfile`) that runs the prod release's
+`tools/can-generate-https.php`. No external licensing service is contacted on the
+cert hot path. Caddy queries it with `?domain=<host>`; the endpoint replies `200`
+(allow) if the host is one of our first-party hosts **or** exists in the `domains`
+table with `is_enabled = 1`, otherwise `403` (deny). It **fails closed** — any error
+denies issuance.
+
+The endpoint reads two optional env vars (set on the `frankenphp` service if needed):
+
+- `HYPEBUN_TLS_VERIFY_DNS` — `0` to skip the DNS pre-check (default: on). When on,
+  the requested host must resolve (A/AAAA) to one of this server's IPs before a cert
+  is issued — extra protection against issuing certs for domains not actually pointed
+  here.
+- `HYPEBUN_SERVER_IPS` — comma-separated public IP(s) of this host, used by the DNS
+  check. If unset it is derived from the hostname; set it explicitly to avoid
+  surprises.
 
 ### TLS certificate persistence
 

@@ -5,10 +5,22 @@
 
 	# Self-served domains: users point their own domain at this server and Caddy
 	# obtains a Let's Encrypt certificate on demand. The "ask" endpoint gates which
-	# hostnames are allowed a certificate (returns HTTP 200 to allow).
+	# hostnames are allowed a certificate (returns HTTP 200 to allow). It is served
+	# locally by this same FrankenPHP instance (see the :9180 block below), so there
+	# is no external dependency on the cert hot path.
 	on_demand_tls {
-		ask https://licensing-v1.sqrd-prod.com/hypebun/can-generate-https.php
+		ask http://127.0.0.1:9180/can-generate-https.php
 	}
+}
+
+### Internal on-demand TLS authorization endpoint (loopback only).
+# Caddy queries this before issuing a certificate for an unknown host. It runs
+# the prod release's tools/can-generate-https.php, which checks the `domains`
+# table. Plain HTTP on loopback => no TLS recursion, no external calls.
+http://127.0.0.1:9180 {
+	root * /app/prod/current
+	rewrite * /tools/can-generate-https.php?{query}
+	php_server
 }
 
 ### Production
