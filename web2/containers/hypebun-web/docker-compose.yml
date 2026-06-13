@@ -1,0 +1,64 @@
+services:
+  frankenphp:
+    image: dunglas/frankenphp:1.12.4-php8.5
+    container_name: hypebun-web
+    restart: unless-stopped
+    depends_on:
+      - db
+    cap_drop:
+      - ALL
+    cap_add:
+      # Bind privileged ports 80/443 (HTTP + ACME challenges for on-demand TLS)
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    networks:
+      - app-infra
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./php-conf.d/zz-hypebun.ini:/usr/local/etc/php/conf.d/zz-hypebun.ini:ro
+      # App docroots are pre-placed on the host (CI/rsync), bind-mounted
+      # read-write so the app can write uploads/cache.
+      - /apps/hypebun/bio-prod:/apps/hypebun/bio-prod
+      - /apps/hypebun/bio-test:/apps/hypebun/bio-test
+      # Caddy certificate + ACME account store. MUST persist so on-demand TLS
+      # certificates survive container restarts/recreations.
+      - caddy_data:/data
+      - caddy_config:/config
+      # MySQL UNIX socket shared from the db service (zero-TCP app -> DB).
+      - db_socket:/sockets:ro
+
+  db:
+    image: mariadb:12.3.2
+    container_name: hypebun-db
+    restart: unless-stopped
+    # Data-store image: exempt from cap_drop / no-new-privileges. The
+    # entrypoint runs as root and uses gosu (needs SETUID/SETGID).
+    command: >-
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    env_file: .env
+    networks:
+      - app-infra
+    ports:
+      # Localhost-only, for DBA access / imports.
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Shared socket directory consumed by frankenphp via db_socket:/sockets.
+      - db_socket:/run/mysqld
+      - ./my.cnf:/etc/mysql/conf.d/zz-hypebun.cnf:ro
+
+networks:
+  app-infra:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:
+  db_socket:

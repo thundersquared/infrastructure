@@ -1,4 +1,8 @@
 .DS_Store
+
+# Container stack secrets — only .env.example is committed
+.env
+
 .terraform/
 *.tfstate
 *.tfstate.backup

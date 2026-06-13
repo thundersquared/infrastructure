@@ -6,3 +6,6 @@ docker_stacks:
   cobalt:
     env_file: true
     state: present
+  hypebun-web:
+    env_file: true
+    state: present
