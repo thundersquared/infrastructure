@@ -1,0 +1,89 @@
+services:
+  frankenphp:
+    # Custom image: base FrankenPHP + mysqli/gd/intl/... required by AltumCode.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hypebun-frankenphp:1.12.4-php8.5
+    container_name: hypebun-web
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      # On-demand TLS authorization (tools/can-generate-https.php). Set this
+      # host's public IP(s) so the DNS pre-check can confirm a custom domain
+      # actually points here before a certificate is issued. Set
+      # HYPEBUN_TLS_VERIFY_DNS=0 to skip the DNS check entirely.
+      HYPEBUN_SERVER_IPS: "${HYPEBUN_SERVER_IPS:-}"
+      HYPEBUN_TLS_VERIFY_DNS: "${HYPEBUN_TLS_VERIFY_DNS:-1}"
+    cap_drop:
+      - ALL
+    cap_add:
+      # Bind privileged ports 80/443 (HTTP + ACME challenges for on-demand TLS)
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    networks:
+      - app-infra
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./php-conf.d/zz-hypebun.ini:/usr/local/etc/php/conf.d/zz-hypebun.ini:ro
+      # App release trees (code) live on the host under /opt/hypebun/<env>,
+      # provisioned by CI (see deploy.sh). Mounted READ-ONLY: the app must not
+      # mutate code. The whole env dir is mounted (not the "current" symlink) so
+      # atomic symlink swaps are visible in the container -> zero-downtime.
+      - /opt/hypebun/prod:/app/prod:ro
+      - /opt/hypebun/test:/app/test:ro
+      # Mutable state lives in named volumes, decoupled from the code tree and
+      # surviving redeploys. Each release's uploads/ is a symlink into shared/
+      # (created by deploy.sh), so we mount the stable shared paths here.
+      - uploads_prod:/app/prod/shared/uploads
+      - uploads_test:/app/test/shared/uploads
+      # Caddy certificate + ACME account store. MUST persist so on-demand TLS
+      # certificates survive container restarts/recreations.
+      - caddy_data:/data
+      - caddy_config:/config
+      # MySQL UNIX socket shared from the db service (zero-TCP app -> DB).
+      - db_socket:/sockets:ro
+    tmpfs:
+      # Image/biolink render cache is ephemeral; keep it off disk and out of
+      # backups. deploy.sh symlinks each release's uploads/cache here.
+      - /app/prod/shared/cache
+      - /app/test/shared/cache
+
+  db:
+    image: mariadb:12.3.2
+    container_name: hypebun-db
+    restart: unless-stopped
+    # Data-store image: exempt from cap_drop / no-new-privileges. The
+    # entrypoint runs as root and uses gosu (needs SETUID/SETGID).
+    command: >-
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    env_file: .env
+    networks:
+      - app-infra
+    ports:
+      # Localhost-only, for DBA access / imports.
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Shared socket directory consumed by frankenphp via db_socket:/sockets.
+      - db_socket:/run/mysqld
+      - ./my.cnf:/etc/mysql/conf.d/zz-hypebun.cnf:ro
+
+networks:
+  app-infra:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:
+  db_socket:
+  uploads_prod:
+  uploads_test:
