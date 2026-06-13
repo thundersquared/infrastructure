@@ -33,6 +33,9 @@ services:
       # FrankenPHP reads its Caddyfile from /etc/frankenphp/Caddyfile.
       - ./Caddyfile:/etc/frankenphp/Caddyfile:ro
       - ./php-conf.d/zz-hypebun.ini:/usr/local/etc/php/conf.d/zz-hypebun.ini:ro
+      # On-demand TLS authorization script — stack-owned, independent of any app
+      # release, so the cert gate works even before the app is deployed.
+      - ./tls-check.php:/opt/tls/tls-check.php:ro
       # App release trees (code) live on the host under /opt/hypebun/<env>,
       # provisioned by CI (see deploy.sh). Mounted READ-ONLY: the app must not
       # mutate code. The whole env dir is mounted (not the "current" symlink) so

@@ -9,18 +9,31 @@
 	# locally by this same FrankenPHP instance (see the :9180 block below), so there
 	# is no external dependency on the cert hot path.
 	on_demand_tls {
-		ask http://127.0.0.1:9180/can-generate-https.php
+		ask http://127.0.0.1:9180/check
 	}
 }
 
 ### Internal on-demand TLS authorization endpoint (loopback only).
-# Caddy queries this before issuing a certificate for an unknown host. It runs
-# the prod release's tools/can-generate-https.php, which checks the `domains`
-# table. Plain HTTP on loopback => no TLS recursion, no external calls.
+# Caddy queries this before issuing a certificate for an unknown host. It runs a
+# stack-owned script (mounted at /opt/tls/tls-check.php, independent of any app
+# release) that checks the `domains` table. Plain HTTP on loopback => no TLS
+# recursion, no external calls.
+#
+# Fail closed: if the script is missing for any reason, return 403 rather than
+# letting php_server emit a 200 (which would authorize every domain).
 http://127.0.0.1:9180 {
-	root * /app/prod/current
-	rewrite * /tools/can-generate-https.php?{query}
-	php_server
+	root * /opt/tls
+
+	# Fail closed: if the script is missing, deny instead of letting php_server
+	# emit a 200 that would authorize every domain.
+	@script_present file /tls-check.php
+	handle @script_present {
+		rewrite * /tls-check.php?{query}
+		php_server
+	}
+	handle {
+		respond "no" 403
+	}
 }
 
 ### Production
