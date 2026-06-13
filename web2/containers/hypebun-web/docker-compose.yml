@@ -9,13 +9,10 @@ services:
     restart: unless-stopped
     depends_on:
       - db
-    environment:
-      # On-demand TLS authorization (tls-check.php). Set this host's public
-      # IP(s) so the DNS pre-check can confirm a custom domain actually points
-      # here before a certificate is issued. Set HYPEBUN_TLS_VERIFY_DNS=0 to
-      # skip the DNS check entirely.
-      HYPEBUN_SERVER_IPS: "${HYPEBUN_SERVER_IPS:-}"
-      HYPEBUN_TLS_VERIFY_DNS: "${HYPEBUN_TLS_VERIFY_DNS:-1}"
+    # tls-check.php (on-demand TLS gate) needs MYSQL_* creds to reach the
+    # domains DB over the socket, plus the HYPEBUN_* vars for the DNS pre-check.
+    # All live in .env (the same file the db service uses).
+    env_file: .env
     cap_drop:
       - ALL
     cap_add:
