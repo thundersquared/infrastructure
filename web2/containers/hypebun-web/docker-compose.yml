@@ -30,7 +30,8 @@ services:
     networks:
       - app-infra
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # FrankenPHP reads its Caddyfile from /etc/frankenphp/Caddyfile.
+      - ./Caddyfile:/etc/frankenphp/Caddyfile:ro
       - ./php-conf.d/zz-hypebun.ini:/usr/local/etc/php/conf.d/zz-hypebun.ini:ro
       # App release trees (code) live on the host under /opt/hypebun/<env>,
       # provisioned by CI (see deploy.sh). Mounted READ-ONLY: the app must not
