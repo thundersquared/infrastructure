@@ -49,6 +49,32 @@
     mode: '0755'
   when: "'hypebun-web' in docker_stacks"
 
+- name: Find Hypebun environment directories
+  # The env dirs (prod/test) are populated by `git clone` + migrated media, so
+  # they may not exist yet; only normalize the ones present.
+  ansible.builtin.find:
+    paths: /opt/hypebun
+    patterns: ['prod', 'test']
+    file_type: directory
+    recurse: false
+  register: hypebun_env_dirs
+  when: "'hypebun-web' in docker_stacks"
+
+- name: Normalize Hypebun app ownership to root
+  # FrankenPHP runs as root inside the container. Files rsync'd/migrated from
+  # another host often carry a foreign UID (e.g. 1000) which the container's
+  # root cannot read across the bind mount, breaking plugin loading and uploads.
+  # Recursively chown each env dir to root so the app can always read/write.
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    recurse: true
+  loop: "{{ hypebun_env_dirs.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when: "'hypebun-web' in docker_stacks"
+
 - name: Deploy docker-compose projects
   include_tasks: deploy_stack.yml
   loop: "{{ docker_stacks | dict2items }}"
