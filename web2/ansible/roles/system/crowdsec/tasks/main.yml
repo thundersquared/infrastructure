@@ -30,11 +30,6 @@
     name: crowdsec-firewall-bouncer-nftables
     state: present
 
-- name: Install CrowdSec nginx bouncer
-  apt:
-    name: crowdsec-nginx-bouncer
-    state: present
-
 - name: Deploy CrowdSec configuration
   template:
     src: config.yaml.j2
@@ -72,12 +67,6 @@
     regexp: '^mode:'
     line: 'mode: nftables'
   notify: restart crowdsec-firewall-bouncer
-
-- name: Update nginx bouncer API URL
-  lineinfile:
-    path: /etc/crowdsec/bouncers/crowdsec-nginx-bouncer.conf
-    regexp: '^API_URL='
-    line: 'API_URL=http://127.0.0.1:8081'
 
 - name: Check CrowdSec console enrollment status
   command: cscli console status -o json

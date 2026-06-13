@@ -1,0 +1,29 @@
+---
+# Migration: 20260613_0004_remove_nginx_crowdsec_bouncer
+# Description: Remove the CrowdSec nginx bouncer and nginx itself.
+# Problem: web2 now serves HTTP via FrankenPHP. The crowdsec-nginx-bouncer
+#   package pulls in nginx, which binds :80/:443 and conflicts with FrankenPHP.
+#   The nginx bouncer is a WAF for nginx and is useless here; edge protection is
+#   the nftables firewall bouncer.
+# Solution: purge the nginx bouncer + nginx packages and their leftover config.
+
+- name: Remove CrowdSec nginx bouncer and nginx packages
+  apt:
+    name:
+      - crowdsec-nginx-bouncer
+      - nginx
+      - nginx-common
+      - nginx-core
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Remove leftover CrowdSec nginx bouncer config
+  file:
+    path: /etc/crowdsec/bouncers/crowdsec-nginx-bouncer.conf
+    state: absent
+
+- name: Reload CrowdSec to drop the removed bouncer
+  service:
+    name: crowdsec
+    state: restarted

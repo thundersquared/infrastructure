@@ -10,6 +10,34 @@
       delete: true
     become: true
 
+  # Web traffic for FrankenPHP (HTTP, HTTPS, HTTP/3). Docker publishes these
+  # ports and inserts its own nftables rules that bypass UFW's INPUT chain, so
+  # the container is reachable regardless; these rules codify the intended open
+  # ports and cover any host-level listener.
+  - name: Allow incoming HTTP (80/tcp)
+    community.general.ufw:
+      rule: allow
+      proto: tcp
+      port: '80'
+      comment: HTTP (FrankenPHP / ACME)
+    become: true
+
+  - name: Allow incoming HTTPS (443/tcp)
+    community.general.ufw:
+      rule: allow
+      proto: tcp
+      port: '443'
+      comment: HTTPS (FrankenPHP)
+    become: true
+
+  - name: Allow incoming HTTP/3 (443/udp)
+    community.general.ufw:
+      rule: allow
+      proto: udp
+      port: '443'
+      comment: HTTP/3 QUIC (FrankenPHP)
+    become: true
+
 - name: DNS
   block:
   - name: Ensure systemd-resolved is running
