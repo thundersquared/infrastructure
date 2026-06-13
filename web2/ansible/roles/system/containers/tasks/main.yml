@@ -35,6 +35,47 @@
     mode: '0600'
   when: lookup('env', 'CLOUDFLARED_TOKEN') | length > 0
 
+# The frankenphp container mounts /opt/hypebun/<env> read-only and overlays a
+# tmpfs/volume on shared/cache and shared/uploads. Those mountpoints must exist
+# on the host first, otherwise Docker cannot create them under the read-only
+# mount and the container fails to start.
+#
+# Ownership: PHP runs as root in the default FrankenPHP image, so root:root is
+# correct. uploads/ is the only path PHP writes (user media) and is made
+# group-writable so a future switch to a non-root runtime only needs a chown.
+# cache/ is a tmpfs whose perms come from the mount, so the host dir is just a
+# mountpoint. releases/ and shared/config.php are read-only to the app.
+- name: Ensure Hypebun base/code host directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /opt/hypebun
+    - /opt/hypebun/prod
+    - /opt/hypebun/prod/releases
+    - /opt/hypebun/prod/shared
+    - /opt/hypebun/prod/shared/cache
+    - /opt/hypebun/test
+    - /opt/hypebun/test/releases
+    - /opt/hypebun/test/shared
+    - /opt/hypebun/test/shared/cache
+  when: "'hypebun-web' in docker_stacks"
+
+- name: Ensure Hypebun uploads directories exist (writable by the app)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0775'
+  loop:
+    - /opt/hypebun/prod/shared/uploads
+    - /opt/hypebun/test/shared/uploads
+  when: "'hypebun-web' in docker_stacks"
+
 - name: Deploy docker-compose projects
   include_tasks: deploy_stack.yml
   loop: "{{ docker_stacks | dict2items }}"

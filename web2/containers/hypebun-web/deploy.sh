@@ -81,9 +81,13 @@ SOURCE_DIR="$2"
 [ -d "$SOURCE_DIR" ] || err "source dir '$SOURCE_DIR' does not exist"
 [ -f "$SOURCE_DIR/index.php" ] || err "source dir has no index.php (wrong path?)"
 
-# Ensure shared structure exists (uploads + cache are backed by Docker volumes,
-# config.php is supplied out of band).
-mkdir -p "$RELEASES_DIR" "$SHARED_DIR/uploads" "$SHARED_DIR/cache"
+# Ensure shared structure exists (uploads + cache are backed by a Docker volume
+# / tmpfs at runtime; config.php is supplied out of band). uploads/ is the only
+# app-writable path, so make it group-writable (root-owned today; one chown away
+# from a non-root runtime). These are normally created by the Ansible role too.
+mkdir -p "$RELEASES_DIR" "$SHARED_DIR/cache"
+mkdir -p "$SHARED_DIR/uploads"
+chmod 0775 "$SHARED_DIR/uploads"
 [ -f "$SHARED_DIR/config.php" ] \
 	|| err "missing $SHARED_DIR/config.php (create it before first deploy; see README)"
 
