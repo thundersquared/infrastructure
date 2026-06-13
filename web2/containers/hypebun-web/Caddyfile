@@ -37,17 +37,15 @@ http://127.0.0.1:9180 {
 }
 
 ### Production
-# Docroot is the "current" symlink of the release tree; deploy.sh flips it
-# atomically for zero-downtime deploys.
 bio.hypebun.com {
-	root * /app/prod/current
+	root * /app/prod
 	try_files {path} /index.php?{query}&altum={path}
 	php_server
 }
 
 ### Test
 bio-test.hypebun.com {
-	root * /app/test/current
+	root * /app/test
 	try_files {path} /index.php?{query}&altum={path}
 	php_server
 }
@@ -60,7 +58,7 @@ https:// {
 		on_demand
 	}
 
-	root * /app/prod/current
+	root * /app/prod
 	try_files {path} /index.php?{query}&altum={path}
 	php_server
 }

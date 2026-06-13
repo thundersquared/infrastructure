@@ -10,10 +10,10 @@ services:
     depends_on:
       - db
     environment:
-      # On-demand TLS authorization (tools/can-generate-https.php). Set this
-      # host's public IP(s) so the DNS pre-check can confirm a custom domain
-      # actually points here before a certificate is issued. Set
-      # HYPEBUN_TLS_VERIFY_DNS=0 to skip the DNS check entirely.
+      # On-demand TLS authorization (tls-check.php). Set this host's public
+      # IP(s) so the DNS pre-check can confirm a custom domain actually points
+      # here before a certificate is issued. Set HYPEBUN_TLS_VERIFY_DNS=0 to
+      # skip the DNS check entirely.
       HYPEBUN_SERVER_IPS: "${HYPEBUN_SERVER_IPS:-}"
       HYPEBUN_TLS_VERIFY_DNS: "${HYPEBUN_TLS_VERIFY_DNS:-1}"
     cap_drop:
@@ -33,20 +33,19 @@ services:
       # FrankenPHP reads its Caddyfile from /etc/frankenphp/Caddyfile.
       - ./Caddyfile:/etc/frankenphp/Caddyfile:ro
       - ./php-conf.d/zz-hypebun.ini:/usr/local/etc/php/conf.d/zz-hypebun.ini:ro
-      # On-demand TLS authorization script — stack-owned, independent of any app
-      # release, so the cert gate works even before the app is deployed.
+      # On-demand TLS authorization script — stack-owned, independent of the app
+      # code, so the cert gate works even before the app is cloned.
       - ./tls-check.php:/opt/tls/tls-check.php:ro
-      # App release trees (code) live on the host under /opt/hypebun/<env>,
-      # provisioned by CI (see deploy.sh). Mounted READ-ONLY: the app must not
-      # mutate code. The whole env dir is mounted (not the "current" symlink) so
-      # atomic symlink swaps are visible in the container -> zero-downtime.
+      # App code lives on the host under /opt/hypebun/<env> as a plain git
+      # clone (git pull to update). Mounted READ-ONLY: the app must not mutate
+      # its own code.
       - /opt/hypebun/prod:/app/prod:ro
       - /opt/hypebun/test:/app/test:ro
-      # Mutable state lives in named volumes, decoupled from the code tree and
-      # surviving redeploys. Each release's uploads/ is a symlink into shared/
-      # (created by deploy.sh), so we mount the stable shared paths here.
-      - uploads_prod:/app/prod/shared/uploads
-      - uploads_test:/app/test/shared/uploads
+      # Mutable user media: uploads/ is git-ignored in the app repo, so it lives
+      # inside the clone at /opt/hypebun/<env>/uploads. Bind it back read-write
+      # over the read-only code mount so the app can write user media.
+      - /opt/hypebun/prod/uploads:/app/prod/uploads
+      - /opt/hypebun/test/uploads:/app/test/uploads
       # Caddy certificate + ACME account store. MUST persist so on-demand TLS
       # certificates survive container restarts/recreations.
       - caddy_data:/data
@@ -54,10 +53,9 @@ services:
       # MySQL UNIX socket shared from the db service (zero-TCP app -> DB).
       - db_socket:/sockets:ro
     tmpfs:
-      # Image/biolink render cache is ephemeral; keep it off disk and out of
-      # backups. deploy.sh symlinks each release's uploads/cache here.
-      - /app/prod/shared/cache
-      - /app/test/shared/cache
+      # Image/biolink render cache is ephemeral; keep it off disk and backups.
+      - /app/prod/uploads/cache
+      - /app/test/uploads/cache
 
   db:
     image: mariadb:12.3.2
@@ -89,5 +87,3 @@ volumes:
   caddy_config:
   db_data:
   db_socket:
-  uploads_prod:
-  uploads_test:
