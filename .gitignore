@@ -1,7 +1,11 @@
 .DS_Store
 
-# Container stack secrets — only .env.example is committed
+# Container stack secrets — only *.example files are committed
 .env
+.env.*
+!.env.example
+!*.env.example
+!.env.*.example
 
 .terraform/
 *.tfstate

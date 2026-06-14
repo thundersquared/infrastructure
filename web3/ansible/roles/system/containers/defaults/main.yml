@@ -21,3 +21,6 @@ docker_stacks:
   domain-locker:
     env_file: true
     state: present
+  twenty:
+    env_file: true
+    state: present
