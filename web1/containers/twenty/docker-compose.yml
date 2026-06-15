@@ -1,0 +1,97 @@
+---
+services:
+  db:
+    image: postgres:18.4-alpine3.23
+    restart: unless-stopped
+    env_file:
+      - .env.postgres
+    environment:
+      # PG18: version-specific PGDATA; volume mounts at /var/lib/postgresql
+      PGDATA: /var/lib/postgresql/18/docker
+    volumes:
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - twenty
+
+  redis:
+    image: valkey/valkey:9.1-alpine3.23
+    restart: unless-stopped
+    command: ["valkey-server", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - twenty
+
+  server:
+    image: ghcr.io/thundersquared/twentycrm:2.12.0
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3005:3000"
+    env_file:
+      - .env
+    environment:
+      # Per-service overrides only; everything else lives in .env
+      NODE_PORT: 3000
+      DISABLE_DB_MIGRATIONS: "false"
+      DISABLE_CRON_JOBS_REGISTRATION: "false"
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:3000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    networks:
+      - twenty
+      - app-infra
+
+  worker:
+    image: ghcr.io/thundersquared/twentycrm:2.12.0
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command: ["yarn", "worker:prod"]
+    env_file:
+      - .env
+    environment:
+      # Migrations & cron run on the server only
+      DISABLE_DB_MIGRATIONS: "true"
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    networks:
+      - twenty
+
+volumes:
+  db:
+  server-local-data:
+
+networks:
+  twenty:
+  app-infra:
+    external: true
