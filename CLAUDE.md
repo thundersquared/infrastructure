@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repo manages infrastructure for multiple hosts using Ansible + Docker Compose (most hosts) or OpenTofu (tower).
 
-**Ansible hosts** (`mx1`, `web1`, `web2`, `web3`, `web8`): each top-level directory contains `ansible/` (playbooks and roles) and `containers/` (Docker Compose stacks).
+**Ansible hosts** (`mx1`, `web1`, `web2`, `web3`): each top-level directory contains `ansible/` (playbooks and roles) and `containers/` (Docker Compose stacks).
 
 **OpenTofu hosts** (`tower`): each top-level directory contains `terraform/` (`.tf` files) and `docs/` (node-specific setup guide). Run `tofu` commands from the `terraform/` subdirectory. Variables are passed via `TF_VAR_*` env vars; the S3 backend requires `-backend-config` flags at `init` time — see `tower/docs/setup.md`. OpenTofu version: **1.11.x** (pinned in `.github/workflows/tower-tofu-apply.yml`). Note: `error()` in expressions requires ≥ 1.9. When updating providers, regenerate the lock file with `tofu providers lock -platform=linux_amd64` so CI hashes are included.
 

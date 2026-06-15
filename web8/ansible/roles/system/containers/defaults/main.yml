@@ -1,8 +1,0 @@
----
-docker_stacks:
-  cloudflared:
-    env_file: true
-    state: present
-  stalwart:
-    env_file: true
-    state: present

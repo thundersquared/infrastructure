@@ -29,7 +29,6 @@ The repository currently manages the following hosts:
 | `web1` | Ansible + Docker | Web/app services |
 | `web2` | Ansible + Docker | Web/app services |
 | `web3` | Ansible + Docker | Web/app services |
-| `web8` | Ansible + Docker | Web/app services |
 | `tower` | OpenTofu | ARM VM on OCI — WireGuard VPN endpoint and SSH bastion |
 
 See [`tower/docs/setup.md`](tower/docs/setup.md) for the one-time bootstrap steps for the tower node.
