@@ -38,7 +38,7 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "127.0.0.1:3007:3000"
+      - "127.0.0.1:3006:3000"
     env_file:
       - .env
     environment:

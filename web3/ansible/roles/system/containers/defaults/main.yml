@@ -18,9 +18,6 @@ docker_stacks:
   1min-relay:
     env_file: true
     state: present
-  domain-locker:
-    env_file: true
-    state: present
   twenty:
     env_file: true
     state: present
