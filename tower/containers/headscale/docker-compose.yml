@@ -1,6 +1,6 @@
 services:
   headscale:
-    image: headscale/headscale:v0.29.0
+    image: headscale/headscale:v0.29.1
     command: serve
     restart: unless-stopped
     ports:
