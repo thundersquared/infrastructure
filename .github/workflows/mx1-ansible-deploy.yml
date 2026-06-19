@@ -28,7 +28,7 @@ jobs:
     environment: mx1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
       - name: Set up inventory, Python version, and SSH key
         run: |
           echo "PYTHON_VERSION=$(cat .python-version)" >> "$GITHUB_ENV"
