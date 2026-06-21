@@ -1,0 +1,22 @@
+# Monit email / alert configuration.
+# Deployed to /etc/monit.d/mail.cfg ONLY IF ABSENT (force: no), so your
+# hand-edited SMTP credentials survive Ansible re-runs. Keep mode 0600.
+#
+# SMTP credentials are intentionally NOT stored in git or Ansible vars.
+# Uncomment and fill the lines below on the node, then run: monit reload
+#
+# set mailserver smtp.example.com port 587
+#   username "alerts@example.com" password "CHANGE_ME"
+#   using tlsv12
+#   with timeout 15 seconds
+#
+# Recipient(s) of all alerts (add one line per address):
+# set alert ops@example.com
+#
+# Optional: customise the message format.
+# set mail-format {
+#   from:    monit@example.com
+#   subject: monit alert -- $SERVICE $EVENT
+#   message: $SERVICE $EVENT on $HOST at $DATE.
+#            $DESCRIPTION
+# }

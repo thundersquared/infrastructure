@@ -49,6 +49,37 @@ docker_stacks:
       external: true
   ```
 
+## Monitoring (monit)
+
+The `system/monit` role (first-party; runs on every deploy) installs and
+configures [monit](https://mmonit.com/monit/) on the Ansible hosts (`mx1`,
+`web1`, `web2`, `web3`). It monitors filesystem space usage and alerts at two
+thresholds (defaults `80%` and `90%`, set in the role's `defaults/main.yml`).
+
+- **Base config**: `/etc/monitrc` (Ansible-managed, overwritten). monit's CLI
+  is bound to a **localhost unix socket** (`/run/monit.sock`) — no TCP exposure.
+- **Disk checks**: `/etc/monit.d/disk.cfg` (Ansible-managed). Filesystems are
+  declared via `monit_disk_filesystems` in the role defaults (default: `/`;
+  uncomment the `/var/lib/docker` entry on hosts where it is a separate mount).
+- **Both thresholds fire email *and* a chat push.**
+
+Two files are deployed **only if absent** (`force: no`), so hand-edited secrets
+survive re-runs — they are intentionally kept out of git and Ansible vars:
+
+- `/etc/monit.d/mail.cfg` — hand-edit SMTP server + `set alert <addr>` for email
+  notifications (see the committed `mail.cfg.example`).
+- `/etc/monit/notify-chat.env` — hand-fill `TELEGRAM_BOT_TOKEN` /
+  `TELEGRAM_CHAT_ID` and/or `SLACK_WEBHOOK_URL` for chat notifications. The
+  `/etc/monit/notify-chat.sh` helper curls whichever channel is configured and
+  is a silent no-op otherwise.
+
+After editing either file on a node: `monit reload`.
+
+> Role selection note: `pgolm.monit` (MIT, Galaxy) was evaluated as the best
+> community option (supports `filesystem` checks + mail templating), but a thin
+> first-party role was chosen to avoid a stale dependency and because SMTP/chat
+> secrets are hand-edited on the node rather than templated by Ansible.
+
 ## Container Security
 
 Every service must have these two options by default:

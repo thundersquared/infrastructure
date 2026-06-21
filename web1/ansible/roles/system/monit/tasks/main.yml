@@ -1,0 +1,103 @@
+---
+- name: Install monit
+  ansible.builtin.apt:
+    name: monit
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Ensure monit config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/monit
+    - /etc/monit.d
+  become: true
+
+- name: Deploy base monit configuration
+  ansible.builtin.template:
+    src: monitrc.j2
+    dest: /etc/monitrc
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Reload monit
+  become: true
+
+- name: Deploy disk space checks
+  ansible.builtin.template:
+    src: disk.cfg.j2
+    dest: /etc/monit.d/disk.cfg
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Reload monit
+  become: true
+
+- name: Deploy chat notifier script
+  ansible.builtin.copy:
+    src: notify-chat.sh
+    dest: /etc/monit/notify-chat.sh
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Reload monit
+  become: true
+
+- name: Deploy docker stack check script
+  ansible.builtin.copy:
+    src: check-docker-stack.sh
+    dest: /etc/monit/check-docker-stack.sh
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Reload monit
+  become: true
+
+- name: Deploy docker container checks
+  ansible.builtin.template:
+    src: containers.cfg.j2
+    dest: /etc/monit.d/containers.cfg
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Reload monit
+  become: true
+
+- name: Deploy chat notifier credentials placeholder (only if absent)
+  ansible.builtin.copy:
+    src: notify-chat.env.example
+    dest: /etc/monit/notify-chat.env
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+  become: true
+
+- name: Deploy mail configuration placeholder (only if absent)
+  ansible.builtin.copy:
+    src: mail.cfg.example
+    dest: /etc/monit.d/mail.cfg
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+  become: true
+
+- name: Validate monit configuration
+  ansible.builtin.command:
+    cmd: monit -t -c /etc/monitrc
+  changed_when: false
+  become: true
+
+- name: Ensure monit is enabled and running
+  ansible.builtin.systemd_service:
+    name: monit
+    enabled: true
+    state: started
+  become: true

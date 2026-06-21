@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+# Docker container health checks. Managed by Ansible (system/monit role).
+# Each stack is checked every cycle; alerts fire after
+# {{ monit_container_down_cycles }} consecutive failed cycles
+# (~{{ (monit_container_down_cycles * monit_cycle) // 60 }} min with {{ monit_cycle }}s cycle).
+# Email alerts require /etc/monit.d/mail.cfg to be configured on the node.
+# Chat pushes require /etc/monit/notify-chat.env to be filled on the node.
+{% for stack_name in docker_stacks %}
+{% set stack_dir = monit_containers_base_dir + '/' + stack_name %}
+{% set safe_name = stack_name | replace('-', '_') | replace('.', '_') %}
+
+check program docker_{{ safe_name }} with path "/etc/monit/check-docker-stack.sh {{ stack_dir }}"
+  if status != 0 for {{ monit_container_down_cycles }} cycles then exec "/etc/monit/notify-chat.sh 'ALERT: {{ inventory_hostname }} docker/{{ stack_name }} container down'"
+  if status != 0 for {{ monit_container_down_cycles }} cycles then alert
+{% endfor %}

@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+# Base monit configuration. Managed by Ansible (system/monit role).
+# Service checks live in /etc/monit.d/*.cfg
+# SMTP / alert recipients are hand-edited in /etc/monit.d/mail.cfg on the node.
+
+set daemon {{ monit_cycle }}
+  with start delay 60
+
+set log syslog
+
+set pidfile /run/monit.pid
+set idfile /var/lib/monit/id
+set statefile /var/lib/monit/state
+
+# CLI access over a localhost-only unix socket (no TCP exposure).
+set httpd unixsocket /run/monit.sock
+  uid root
+  gid root
+  permission 0660
+  allow root
+
+include /etc/monit.d/*.cfg

@@ -1,0 +1,6 @@
+---
+- name: Reload monit
+  ansible.builtin.command:
+    cmd: monit reload
+  changed_when: false
+  become: true

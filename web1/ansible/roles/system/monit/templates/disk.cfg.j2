@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+# Disk space monitoring. Managed by Ansible (system/monit role).
+# Email alerts require /etc/monit.d/mail.cfg to be configured on the node.
+# Chat pushes require /etc/monit/notify-chat.env to be filled on the node.
+{% for fs in monit_disk_filesystems %}
+
+check filesystem {{ fs.name }} with path {{ fs.path }}
+  if space usage > {{ monit_disk_warn_pct }}% then exec "/etc/monit/notify-chat.sh '{{ inventory_hostname }} {{ fs.path }} disk usage > {{ monit_disk_warn_pct }}%'"
+  if space usage > {{ monit_disk_warn_pct }}% then alert
+  if space usage > {{ monit_disk_crit_pct }}% then exec "/etc/monit/notify-chat.sh 'CRITICAL: {{ inventory_hostname }} {{ fs.path }} disk usage > {{ monit_disk_crit_pct }}%'"
+  if space usage > {{ monit_disk_crit_pct }}% then alert
+{% endfor %}

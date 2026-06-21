@@ -1,0 +1,21 @@
+---
+# Monit poll cycle in seconds
+monit_cycle: 120
+
+# Disk space alert thresholds (percent of space used)
+monit_disk_warn_pct: 80
+monit_disk_crit_pct: 90
+
+# Filesystems to monitor for space usage.
+# Each entry: name (unique monit id) + path (mount point / device).
+monit_disk_filesystems:
+  - name: rootfs
+    path: /
+    # - name: docker
+    #   path: /var/lib/docker
+
+# Docker container monitoring.
+# Number of consecutive failed cycles before alerting (~5 min at 120s cycle).
+monit_container_down_cycles: 3
+# Base directory where Ansible deploys container stacks on the remote host.
+monit_containers_base_dir: /opt/containers
