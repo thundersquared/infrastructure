@@ -13,10 +13,10 @@ set idfile /var/lib/monit/id
 set statefile /var/lib/monit/state
 
 # CLI access over a localhost-only unix socket (no TCP exposure).
+# Auth is handled by filesystem permissions (uid/gid/permission) -- no allow needed.
 set httpd unixsocket /run/monit.sock
   uid root
   gid root
   permission 0660
-  allow root
 
 include /etc/monit.d/*.cfg
