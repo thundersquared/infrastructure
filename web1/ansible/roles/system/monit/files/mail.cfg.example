@@ -10,8 +10,9 @@
 #   using tlsv12
 #   with timeout 15 seconds
 #
-# Recipient(s) of all alerts (add one line per address):
-# set alert ops@example.com
+# Recipient(s) of all alerts (add one line per address).
+# 'instance' covers monit start/stop/reload -- exclude to avoid noise.
+# set alert ops@example.com but not on { instance }
 #
 # Optional: customise the message format.
 # set mail-format {
