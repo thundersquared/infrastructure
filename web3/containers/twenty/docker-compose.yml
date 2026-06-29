@@ -31,7 +31,7 @@ services:
       - twenty
 
   server:
-    image: ghcr.io/thundersquared/twentycrm:v2.16.1
+    image: ghcr.io/thundersquared/twentycrm:v2.17.0
     restart: unless-stopped
     cap_drop:
       - ALL
@@ -64,7 +64,7 @@ services:
       - app-infra
 
   worker:
-    image: ghcr.io/thundersquared/twentycrm:v2.16.1
+    image: ghcr.io/thundersquared/twentycrm:v2.17.0
     restart: unless-stopped
     cap_drop:
       - ALL
