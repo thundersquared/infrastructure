@@ -3,12 +3,21 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    ":rebaseStalePrs"
+    ":semanticCommits",
+    ":rebaseStalePrs",
+    "helpers:pinGitHubActionDigests"
   ],
   "dependencyDashboardTitle": "Renovate Dashboard",
-  "labels": [
-    "renovatebot"
-  ],
+  "timezone": "Europe/Rome",
+  "labels": ["dependencies"],
+  "reviewers": ["anatolinicolae"],
+  "minimumReleaseAge": "6 hours",
+  "prConcurrentLimit": 10,
+  "rangeStrategy": "pin",
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  },
   "rebaseWhen": "conflicted",
   "commitBodyTable": true,
   "packageRules": [
