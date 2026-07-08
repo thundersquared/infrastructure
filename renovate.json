@@ -24,6 +24,31 @@
     {
       "matchDatasources": ["terraform-provider"],
       "registryUrls": ["https://registry.opentofu.org"]
+    },
+    {
+      "description": "required_version in *.tf files is OpenTofu, not Terraform (this repo has no Terraform hosts) — redirect the Terraform manager's hardcoded hashicorp/terraform lookup to opentofu/opentofu so version bumps stay valid for the actual CLI in use. Both required_version and the CI tofu_version below are pinned to the exact same version and grouped so Renovate always bumps them together in one PR, never independently.",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["hashicorp/terraform"],
+      "overridePackageName": "opentofu/opentofu",
+      "groupName": "OpenTofu core version"
+    },
+    {
+      "description": "Pairs with the rule above: groups the customManager-tracked tofu_version (CI) with required_version (versions.tf) into a single PR whenever OpenTofu releases a new version.",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["opentofu/opentofu"],
+      "groupName": "OpenTofu core version"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track the tofu_version pinned in setup-opentofu GitHub Actions steps against real OpenTofu releases, so it can be bumped alongside required_version in versions.tf.",
+      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
+      "matchStrings": ["tofu_version:\\s*[\"'](?<currentValue>[^\"']+)[\"']"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "opentofu/opentofu",
+      "packageNameTemplate": "opentofu/opentofu",
+      "versioningTemplate": "semver"
     }
   ],
   "hostRules": [
