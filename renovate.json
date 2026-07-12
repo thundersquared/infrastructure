@@ -3,23 +3,30 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    ":semanticCommits",
-    ":rebaseStalePrs",
+    ":semanticPrefixFixDepsChoreOthers",
+    "group:monorepos",
+    "group:recommended",
+    "workarounds:all",
+    "docker:pinDigests",
     "helpers:pinGitHubActionDigests"
   ],
-  "dependencyDashboardTitle": "Renovate Dashboard",
-  "timezone": "Europe/Rome",
   "labels": ["dependencies"],
   "minimumReleaseAge": "6 hours",
-  "prConcurrentLimit": 10,
+  "prConcurrentLimit": 5,
   "rangeStrategy": "pin",
+  "rebaseWhen": "conflicted",
+  "commitBodyTable": true,
   "vulnerabilityAlerts": {
     "labels": ["security"],
     "automerge": true
   },
-  "rebaseWhen": "conflicted",
-  "commitBodyTable": true,
   "packageRules": [
+    {
+      "description": "Group GitHub Actions updates",
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "addLabels": ["github-actions"]
+    },
     {
       "matchDatasources": ["terraform-provider"],
       "registryUrls": ["https://registry.opentofu.org"]
