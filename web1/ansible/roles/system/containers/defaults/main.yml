@@ -2,7 +2,7 @@
 docker_stacks:
   webmail:
     env_file: false
-    state: present
+    state: stopped
   roundcube:
     env_file: true
     state: present
