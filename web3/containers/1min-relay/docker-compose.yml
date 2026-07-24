@@ -1,6 +1,6 @@
 services:
   1min-relay:
-    image: ghcr.io/thundersquared/1min-relay:v1.1.0
+    image: ghcr.io/thundersquared/1min-relay:v1.1.0@sha256:37e09c2a8db5443d160ae983d0f21433d0aee2d3479409e02dd5aacf1332114a
     restart: unless-stopped
     cap_drop:
       - ALL

@@ -1,7 +1,7 @@
 ---
 services:
   postgres:
-    image: docker.io/library/postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -21,7 +21,7 @@ services:
       - app-infra
 
   keydb:
-    image: docker.io/eqalpha/keydb:x86_64_v0.9.6
+    image: docker.io/eqalpha/keydb:x86_64_v0.9.6@sha256:3ba477d222fa893fc948dc9293f513483ab2d6fa5abb82d8d68485056faf1261
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "keydb-cli ping | grep PONG"]
@@ -36,7 +36,7 @@ services:
       - app-infra
 
   opensearch:
-    image: opensearchproject/opensearch:3.7.0
+    image: opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
     restart: unless-stopped
     environment:
       discovery.type: single-node
@@ -63,7 +63,7 @@ services:
       - app-infra
 
   stalwart:
-    image: ghcr.io/thundersquared/stalwart:0.15.5
+    image: ghcr.io/thundersquared/stalwart:0.15.5@sha256:a930aca74de3fef2026a04fc2200ba5126d5712d9e52248e863d165acc338e4b
     restart: unless-stopped
     cap_drop:
       - ALL

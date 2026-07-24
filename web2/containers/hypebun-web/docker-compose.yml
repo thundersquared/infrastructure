@@ -55,7 +55,7 @@ services:
       - /app/test/uploads/cache
 
   db:
-    image: mariadb:12.3.2
+    image: mariadb:12.3.2@sha256:628f228f0fd5913a220438693576b29b6fe4dc1fa0a1298c0e98579fae28635f
     container_name: hypebun-db
     restart: unless-stopped
     # Data-store image: exempt from cap_drop / no-new-privileges. The
