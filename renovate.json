@@ -13,6 +13,7 @@
   "labels": ["dependencies"],
   "minimumReleaseAge": "6 hours",
   "prConcurrentLimit": 5,
+  "prHourlyLimit": 10,
   "rangeStrategy": "pin",
   "rebaseWhen": "conflicted",
   "commitBodyTable": true,
