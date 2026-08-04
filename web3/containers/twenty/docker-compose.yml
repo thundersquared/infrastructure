@@ -1,7 +1,7 @@
 ---
 services:
   db:
-    image: postgres:18.4-alpine3.23
+    image: postgres:18.4-alpine3.23@sha256:996d0920e4ff9df1fc19dacb904492f3c1ec0ec1cc338f0ad7123be7731c5f5e
     restart: unless-stopped
     env_file:
       - .env.postgres
@@ -19,7 +19,7 @@ services:
       - twenty
 
   redis:
-    image: valkey/valkey:9.1-alpine3.23
+    image: valkey/valkey:9.1-alpine3.23@sha256:c9b77919daeba2c02ad954d0c844cc4e7142069d177b89c5fd771f405daf9e02
     restart: unless-stopped
     command: ["valkey-server", "--maxmemory-policy", "noeviction"]
     healthcheck:
