@@ -39,7 +39,7 @@ services:
       - app-infra
 
   runner:
-    image: n8nio/runners:2.35.2@sha256:9a64b14c2cb65a73f0ec962e950b340f67dfbe1db15d3625d8b88acabc04d6b6
+    image: n8nio/runners:2.35.3@sha256:7d82081c362e1b5c3b73fb220f8a9e0621393f0ba79699fc1282447361ce20ba
     restart: unless-stopped
     cap_drop:
       - ALL
