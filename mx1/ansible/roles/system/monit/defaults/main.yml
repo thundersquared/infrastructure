@@ -11,6 +11,10 @@ monit_disk_crit_pct: 90
 monit_disk_filesystems:
   - name: rootfs
     path: /
+  - name: data
+    path: /data
+  - name: varlib
+    path: /var/lib
     # - name: docker
     #   path: /var/lib/docker
 
