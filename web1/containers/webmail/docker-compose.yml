@@ -1,6 +1,6 @@
 services:
   webmail:
-    image: ghcr.io/linagora/tmail-web:release
+    image: ghcr.io/linagora/tmail-web:release@sha256:88f46d5a9ab2a38ab4d6a0d808c96637586806188dcb08684a3927806449304e
     container_name: webmail
     restart: unless-stopped
     cap_drop:
