@@ -1,6 +1,6 @@
 services:
   database:
-    image: mysql:8.4
+    image: mysql:8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
     env_file: .env
     cap_add:
       - SYS_NICE
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   kv:
-    image: valkey/valkey:9-alpine
+    image: valkey/valkey:9-alpine@sha256:ccfa19b0d743e48927e1c8c14e39e0acb97b5cea347fef0bfe340247fea920cd
     command: ["valkey-server", "--appendonly", "yes"]
     networks:
       - fleet
@@ -30,7 +30,7 @@ services:
       retries: 12
 
   fleet-init:
-    image: alpine:3.24
+    image: alpine:3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
     volumes:
       - logs:/logs
       - data:/fleet
