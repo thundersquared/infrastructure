@@ -19,3 +19,6 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# LiteLLM runtime configuration is managed on web3 alongside its .env file.
+/web3/containers/litellm/config.yaml
