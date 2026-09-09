@@ -1,0 +1,20 @@
+---
+global:
+  scrape_interval: 15s
+
+storage:
+  tsdb:
+    retention:
+      time: 30d
+      size: 5GB
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - prometheus:9090
+  - job_name: litellm
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - litellm:4000
