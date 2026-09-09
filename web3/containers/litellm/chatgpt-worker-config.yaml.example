@@ -1,0 +1,39 @@
+---
+# Copy this file to chatgpt-worker-config.yaml on web3. Keep the runtime copy
+# on the server and authenticate each worker against a different subscription.
+# Model availability depends on the subscription; validate every ID on both
+# workers before enabling gateway traffic.
+#
+# OAuth bootstrap:
+# 1. Deploy the stack, then follow `docker compose logs -f chatgpt-account-1`.
+# 2. Trigger a request to one of the models from inside that worker so LiteLLM
+#    prints its device URL and code. Complete login for account 1 only.
+# 3. Repeat the process for `chatgpt-account-2` using account 2 only.
+# 4. Confirm all four model IDs work on each worker before using the gateway.
+model_list:
+  - model_name: gpt-5.6-luna
+    model_info:
+      mode: responses
+    litellm_params:
+      model: chatgpt/gpt-5.6-luna
+
+  - model_name: gpt-5.6-terra
+    model_info:
+      mode: responses
+    litellm_params:
+      model: chatgpt/gpt-5.6-terra
+
+  - model_name: gpt-5.6-sol
+    model_info:
+      mode: responses
+    litellm_params:
+      model: chatgpt/gpt-5.6-sol
+
+  - model_name: gpt-6-astra
+    model_info:
+      mode: responses
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+
+litellm_settings:
+  telemetry: false

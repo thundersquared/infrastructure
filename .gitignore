@@ -22,3 +22,4 @@ override.tf.json
 
 # LiteLLM runtime configuration is managed on web3 alongside its .env file.
 /web3/containers/litellm/config.yaml
+/web3/containers/litellm/chatgpt-worker-config.yaml
