@@ -34,6 +34,7 @@ services:
       - "127.0.0.1:3007:4000"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      - providers-auth:/app/providers-auth
     env_file:
       - .env
     depends_on:
@@ -89,6 +90,7 @@ services:
 volumes:
   postgres:
   prometheus:
+  providers-auth:
 
 networks:
   default:
