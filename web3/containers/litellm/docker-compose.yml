@@ -74,6 +74,7 @@ services:
       - chatgpt-account-1-tokens:/app/chatgpt-tokens
     environment:
       CHATGPT_TOKEN_DIR: /app/chatgpt-tokens
+      CHATGPT_DEFAULT_INSTRUCTIONS: "You are a helpful assistant."
     command:
       - "--config=/app/chatgpt-worker-config.yaml"
       - "--port=4000"
@@ -107,6 +108,7 @@ services:
       - chatgpt-account-2-tokens:/app/chatgpt-tokens
     environment:
       CHATGPT_TOKEN_DIR: /app/chatgpt-tokens
+      CHATGPT_DEFAULT_INSTRUCTIONS: "You are a helpful assistant."
     command:
       - "--config=/app/chatgpt-worker-config.yaml"
       - "--port=4000"

@@ -14,24 +14,36 @@ model_list:
   - model_name: gpt-5.6-luna
     model_info:
       mode: responses
+      supported_endpoints:
+        - /v1/chat/completions
+        - /v1/responses
     litellm_params:
       model: chatgpt/gpt-5.6-luna
 
   - model_name: gpt-5.6-terra
     model_info:
       mode: responses
+      supported_endpoints:
+        - /v1/chat/completions
+        - /v1/responses
     litellm_params:
       model: chatgpt/gpt-5.6-terra
 
   - model_name: gpt-5.6-sol
     model_info:
       mode: responses
+      supported_endpoints:
+        - /v1/chat/completions
+        - /v1/responses
     litellm_params:
       model: chatgpt/gpt-5.6-sol
 
   - model_name: gpt-6-astra
     model_info:
       mode: responses
+      supported_endpoints:
+        - /v1/chat/completions
+        - /v1/responses
     litellm_params:
       model: chatgpt/gpt-6-astra
 
