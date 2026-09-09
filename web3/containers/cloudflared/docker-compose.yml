@@ -10,6 +10,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    extra_hosts:
+      - host.docker.internal:host-gateway
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_METRICS=localhost:60123
