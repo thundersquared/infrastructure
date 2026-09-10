@@ -8,30 +8,51 @@
     dest: /usr/share/keyrings/crowdsec.asc
     mode: '0644'
 
-- name: Add CrowdSec repository
-  apt_repository:
-    repo: deb [signed-by=/usr/share/keyrings/crowdsec.asc] https://packagecloud.io/crowdsec/crowdsec/ubuntu/ {{ ansible_facts.distribution_release }} main
+- name: Install deb822 repository dependency
+  ansible.builtin.apt:
+    name: python3-debian
     state: present
-    filename: crowdsec
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Remove legacy CrowdSec repository definition
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/crowdsec.list
+    state: absent
+  register: crowdsec_legacy_repo
+
+- name: Add CrowdSec repository
+  ansible.builtin.deb822_repository:
+    name: crowdsec
+    types:
+      - deb
+    uris:
+      - https://packagecloud.io/crowdsec/crowdsec/ubuntu/
+    suites:
+      - "{{ ansible_facts.distribution_release }}"
+    components:
+      - main
+    signed_by: /usr/share/keyrings/crowdsec.asc
+    state: present
   register: crowdsec_repo
 
 - name: Update apt cache
-  apt:
+  ansible.builtin.apt:
     update_cache: yes
   when: crowdsec_repo.changed
 
 - name: Install CrowdSec
-  apt:
+  ansible.builtin.apt:
     name: crowdsec
     state: present
 
 - name: Install CrowdSec nftables firewall bouncer
-  apt:
+  ansible.builtin.apt:
     name: crowdsec-firewall-bouncer-nftables
     state: present
 
 - name: Install CrowdSec nginx bouncer
-  apt:
+  ansible.builtin.apt:
     name: crowdsec-nginx-bouncer
     state: present
 

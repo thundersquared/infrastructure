@@ -8,7 +8,7 @@
 # Solution: purge the nginx bouncer + nginx packages and their leftover config.
 
 - name: Remove CrowdSec nginx bouncer and nginx packages
-  apt:
+  ansible.builtin.apt:
     name:
       - crowdsec-nginx-bouncer
       - nginx

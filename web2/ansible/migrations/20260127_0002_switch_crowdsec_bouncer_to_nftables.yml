@@ -3,12 +3,12 @@
 # Description: Switch CrowdSec firewall bouncer from iptables to nftables
 
 - name: Remove CrowdSec iptables firewall bouncer
-  apt:
+  ansible.builtin.apt:
     name: crowdsec-firewall-bouncer-iptables
     state: absent
 
 - name: Install CrowdSec nftables firewall bouncer
-  apt:
+  ansible.builtin.apt:
     name: crowdsec-firewall-bouncer-nftables
     state: present
 
