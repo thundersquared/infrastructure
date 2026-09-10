@@ -14,6 +14,7 @@
     - role: system/monit
     - role: system/docker-login
     - role: system/containers
+    - role: system/envoy
   collections:
     - devsec.hardening
   tasks:
