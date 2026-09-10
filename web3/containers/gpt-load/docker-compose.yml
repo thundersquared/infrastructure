@@ -9,7 +9,7 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "127.0.0.1:3007:3007"
+      - "127.0.0.1:3007:3000"
     env_file:
       - .env
     volumes:
@@ -17,7 +17,7 @@ services:
     stop_grace_period: "${CONTAINER_STOP_GRACE_PERIOD}"
     healthcheck:
       test: >-
-        wget -q --spider -T 10 -O /dev/null http://localhost:${PORT}/health
+        wget -q --spider -T 10 -O /dev/null http://localhost:3000/health
       interval: 30s
       timeout: 10s
       retries: 3
