@@ -21,3 +21,11 @@ sysctl_overwrite:
   net.netfilter.nf_conntrack_max: 262144
   net.netfilter.nf_conntrack_tcp_timeout_established: 86400
   net.netfilter.nf_conntrack_tcp_timeout_time_wait: 30
+
+# Bound Docker's default json-file logs for containers that do not override the
+# driver in their Compose project.
+docker_daemon_options:
+  log-driver: json-file
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
