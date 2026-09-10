@@ -21,6 +21,6 @@ docker_stacks:
   twenty:
     env_file: true
     state: present
-  litellm:
+  gpt-load:
     env_file: true
     state: present

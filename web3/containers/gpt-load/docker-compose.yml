@@ -1,0 +1,33 @@
+---
+services:
+  gpt-load:
+    image: ghcr.io/tbphp/gpt-load:2.0.0-rc.11@sha256:09f65026beb1eae51d464c7b786b6c4dfefb025c0e0c194122b675fe480cc642  # yamllint disable-line rule:line-length
+    restart: unless-stopped
+    init: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3007:3007"
+    env_file:
+      - .env
+    volumes:
+      - gpt-load-data:/app/data
+    stop_grace_period: "${CONTAINER_STOP_GRACE_PERIOD}"
+    healthcheck:
+      test: >-
+        wget -q --spider -T 10 -O /dev/null http://localhost:${PORT}/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-infra
+
+volumes:
+  gpt-load-data:
+
+networks:
+  app-infra:
+    external: true

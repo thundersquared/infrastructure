@@ -1,0 +1,11 @@
+---
+- name: Check for the legacy LiteLLM Compose file
+  ansible.builtin.stat:
+    path: /opt/containers/litellm/docker-compose.yml
+  register: litellm_compose_file
+
+- name: Stop the legacy LiteLLM Compose project
+  community.docker.docker_compose_v2:
+    project_src: /opt/containers/litellm
+    state: absent
+  when: litellm_compose_file.stat.exists
