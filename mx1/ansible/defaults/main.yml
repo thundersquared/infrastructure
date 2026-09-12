@@ -26,6 +26,7 @@ sysctl_overwrite:
 # Bound Docker's default json-file logs for containers that do not override the
 # driver in their Compose project.
 docker_daemon_options:
+  data-root: "/data/docker"
   log-driver: json-file
   log-opts:
     max-size: "10m"
