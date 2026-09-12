@@ -31,7 +31,7 @@ services:
       - twenty
 
   server:
-    image: ghcr.io/thundersquared/twentycrm:v2.38.1@sha256:6231611534fa42e20177c28f5ba54f4a13ef29e16fc477e56474f6a2819ce0c6
+    image: ghcr.io/thundersquared/twentycrm:v2.39.5@sha256:37276be03d63093f275def53fd2755f2b6a18bdf2e7a6b36cc145c90baf94726
     restart: unless-stopped
     cap_drop:
       - ALL
@@ -64,7 +64,7 @@ services:
       - app-infra
 
   worker:
-    image: ghcr.io/thundersquared/twentycrm:v2.38.1@sha256:6231611534fa42e20177c28f5ba54f4a13ef29e16fc477e56474f6a2819ce0c6
+    image: ghcr.io/thundersquared/twentycrm:v2.39.5@sha256:37276be03d63093f275def53fd2755f2b6a18bdf2e7a6b36cc145c90baf94726
     restart: unless-stopped
     cap_drop:
       - ALL
