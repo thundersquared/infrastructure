@@ -57,14 +57,19 @@ run_user_probe() {
     test "$(cat "$PROBE_DIR/case-name")" = "lower"
     test "$(cat "$PROBE_DIR/CASE-NAME")" = "upper"
 
-    reserved_name="reserved-:<>*?|\\"
+    reserved_name="reserved-:<>*?|"
     printf "reserved" > "$PROBE_DIR/$reserved_name"
     test "$(cat "$PROBE_DIR/$reserved_name")" = "reserved"
 
     exec 9>"$PROBE_DIR/lock"
     flock -x 9
-    if flock -n "$PROBE_DIR/lock" true 2>/dev/null; then
+    if /bin/bash -c "exec 8>> \"\$1\"; flock -n -x 8" _ "$PROBE_DIR/lock" 2>/dev/null; then
       printf "%s\\n" "Exclusive advisory lock did not contend." >&2
+      exit 1
+    fi
+    lock_status=$?
+    if test "$lock_status" -ne 1; then
+      printf "%s\\n" "Exclusive advisory lock probe failed with status $lock_status." >&2
       exit 1
     fi
     exec 9>&-
