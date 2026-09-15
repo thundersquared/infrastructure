@@ -3,9 +3,9 @@
 OpenCloud runs under `opencloud.service`. Docker Compose stays in the foreground
 for systemd lifecycle control. User data uses OpenCloud DecomposedS3 with the
 private Garage S3 service. Garage metadata is stored in local named Docker
-volume `opencloud_garage_meta`; Garage object blocks use Storage Box CIFS at
-`/mnt/opencloud/garage`. OpenCloud configuration and system state stay local in
-`/var/lib/opencloud/config` and `/var/lib/opencloud/data`.
+volume `garage_meta`; Garage object blocks use Storage Box CIFS at
+`/mnt/opencloud/garage`. OpenCloud configuration and system state use local
+named volumes `opencloud_config` and `opencloud_data`.
 
 ## Compatibility status
 
@@ -99,7 +99,7 @@ Before changing Storage Box endpoint, stop `opencloud.service`, stop the mount
 service, update host configuration, start the mount service, verify its probes,
 then start OpenCloud. Never remount while OpenCloud runs.
 
-Single-node Garage has no redundancy. Back up local
-`/var/lib/opencloud/config`, local `/var/lib/opencloud/data`, named volume
-`opencloud_garage_meta`, and Storage Box Garage data blocks together. Stop
-OpenCloud and Garage before coordinated restore or backup.
+Single-node Garage has no redundancy. Back up named volumes
+`opencloud_config`, `opencloud_data`, and `garage_meta` with Storage Box Garage
+data blocks together. Stop OpenCloud and Garage before coordinated restore or
+backup.

@@ -7,7 +7,7 @@ readonly SEMANTICS_ERROR=66
 readonly TEMPORARY_FAILURE=75
 readonly MOUNTPOINT=/mnt/opencloud
 readonly DATA_DIR="$MOUNTPOINT/garage"
-readonly MARKER=/var/lib/opencloud/data/.garage-storagebox-compatibility-passed
+readonly MARKER=/var/lib/opencloud/.garage-storagebox-compatibility-passed
 readonly REMOTE="${OPENCLOUD_STORAGEBOX_REMOTE:-}"
 
 fail() {
