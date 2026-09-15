@@ -1,5 +1,24 @@
 ---
 services:
+  garage:
+    image: dxflrs/garage:v2.4.1
+    command:
+      - /garage
+      - server
+      - --single-node
+      - --default-bucket
+    restart: "no"
+    # Garage is a data store. It writes both persistent volumes as root.
+    # It is exempt from the default capability drop.
+    env_file:
+      - garage.env
+    volumes:
+      - garage_meta:/var/lib/garage/meta
+      - /mnt/opencloud/garage:/var/lib/garage/data
+      - ./garage.toml:/etc/garage.toml:ro
+    networks:
+      - garage
+
   opencloud:
     # yamllint disable-line rule:line-length
     image: opencloudeu/opencloud:7.2.4@sha256:6d992ccc5f1cbc7b2a9b272ba25f879b1b159c2d7ed7f5527e09059f16295697
@@ -18,15 +37,22 @@ services:
       - "127.0.0.1:3006:9200"
     env_file:
       - .env
+    depends_on:
+      - garage
     volumes:
       - /var/lib/opencloud/config:/etc/opencloud
       - /var/lib/opencloud/data:/var/lib/opencloud
-      - /mnt/opencloud:/mnt/opencloud
       - ./csp.yaml:/etc/opencloud/csp.yaml:ro
       - ./banned-password-list.txt:/etc/opencloud/banned-password-list.txt:ro
     networks:
       - app-infra
+      - garage
+
+volumes:
+  garage_meta:
 
 networks:
   app-infra:
     external: true
+  garage:
+    internal: true

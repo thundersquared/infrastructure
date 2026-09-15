@@ -1,0 +1,17 @@
+metadata_dir = "/var/lib/garage/meta"
+metadata_snapshots_dir = "/var/lib/garage/meta/snapshots"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+metadata_fsync = true
+data_fsync = true
+metadata_auto_snapshot_interval = "6h"
+
+replication_factor = 1
+consistency_mode = "consistent"
+
+rpc_bind_addr = "127.0.0.1:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+[s3_api]
+api_bind_addr = "[::]:3900"
+s3_region = "garage"

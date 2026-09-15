@@ -6,12 +6,20 @@ readonly UNSAFE_MOUNTPOINT=65
 readonly SEMANTICS_ERROR=66
 readonly TEMPORARY_FAILURE=75
 readonly MOUNTPOINT=/mnt/opencloud
-readonly MARKER=/var/lib/opencloud/data/.storagebox-compatibility-passed
+readonly DATA_DIR="$MOUNTPOINT/garage"
+readonly MARKER=/var/lib/opencloud/data/.garage-storagebox-compatibility-passed
 readonly REMOTE="${OPENCLOUD_STORAGEBOX_REMOTE:-}"
 
 fail() {
   printf '%s\n' "$1" >&2
   exit "$2"
+}
+
+cleanup_probe() {
+  local probe_dir=$1
+  if [[ -n "$probe_dir" && -d "$probe_dir" ]]; then
+    /usr/bin/rm -rf -- "$probe_dir"
+  fi
 }
 
 verify_mount() {
@@ -27,163 +35,76 @@ verify_mount() {
   if [[ "$filesystem" != cifs ]]; then
     fail "Expected cifs filesystem at $MOUNTPOINT, found $filesystem." "$CONFIG_ERROR"
   fi
-  if [[ -n "$REMOTE" && "$source" != "$REMOTE" ]]; then
+  if [[ "$source" != "$REMOTE" ]]; then
     fail "Expected $REMOTE at $MOUNTPOINT, found $source." "$CONFIG_ERROR"
   fi
+  if [[ ! -d "$DATA_DIR" ]]; then
+    fail "Missing Garage data directory $DATA_DIR." "$CONFIG_ERROR"
+  fi
 }
 
-run_user_probe() {
-  local probe_dir=$1
+run_probe() {
+  local probe_dir
 
-  /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups "$0" --user-probe "$probe_dir"
-}
+  if ! probe_dir=$(mktemp -d "$DATA_DIR/.opencloud-garage-probe.XXXXXX"); then
+    fail 'Cannot create Garage Storage Box probe.' "$SEMANTICS_ERROR"
+  fi
+  trap 'cleanup_probe "$probe_dir"' RETURN
 
-run_user_probe_as_user() {
-  local probe_dir=$1
-  local lock_status
-  local grant_xattr='user.oc.grant.u:28a81765-661c-4502-a31d-def441c81175'
-  local reserved_name='reserved-:<>*?|'
-  local value
-
-  umask 007
-  value=$(printf '%*s' 4096 '' | tr ' ' x)
-
-  printf '%s' 'opencloud-storagebox-content' > "$probe_dir/content"
-  test "$(cat "$probe_dir/content")" = 'opencloud-storagebox-content'
+  printf '%s' 'opencloud-garage-storagebox-content' > "$probe_dir/content"
+  /usr/bin/sync -f "$probe_dir/content"
   mv "$probe_dir/content" "$probe_dir/renamed-content"
+  /usr/bin/sync -f "$probe_dir"
+  test "$(cat "$probe_dir/renamed-content")" = 'opencloud-garage-storagebox-content'
 
-  setfattr -n user.opencloud-storagebox -v "$value" "$probe_dir/renamed-content"
-  test "$(getfattr --only-values -n user.opencloud-storagebox "$probe_dir/renamed-content" 2>/dev/null)" = "$value"
-  setfattr -x user.opencloud-storagebox "$probe_dir/renamed-content"
-
-  mkdir "$probe_dir/directory"
-  setfattr -n user.opencloud-storagebox-directory -v 'directory-xattr' "$probe_dir/directory"
-  test "$(getfattr --only-values -n user.opencloud-storagebox-directory "$probe_dir/directory" 2>/dev/null)" = 'directory-xattr'
-  setfattr -x user.opencloud-storagebox-directory "$probe_dir/directory"
-
-  # OpenCloud stores project grants in xattrs whose name contains a colon.
-  setfattr -n "$grant_xattr" -v 'grant-xattr' "$probe_dir/directory"
-  test "$(getfattr --only-values -n "$grant_xattr" "$probe_dir/directory" 2>/dev/null)" = 'grant-xattr'
-  setfattr -x "$grant_xattr" "$probe_dir/directory"
-
-  printf '%s' 'lower' > "$probe_dir/case-name"
-  printf '%s' 'upper' > "$probe_dir/CASE-NAME"
-  test "$(cat "$probe_dir/case-name")" = 'lower'
-  test "$(cat "$probe_dir/CASE-NAME")" = 'upper'
-
-  printf '%s' 'reserved' > "$probe_dir/$reserved_name"
-  test "$(cat "$probe_dir/$reserved_name")" = 'reserved'
-
-  exec 9>"$probe_dir/lock"
-  /usr/bin/flock -x 9
-  if /bin/bash -c 'exec 8>> "$1"; /usr/bin/flock -n -x -E 75 8' _ "$probe_dir/lock" 2>/dev/null; then
-    fail 'Exclusive advisory lock did not contend.' "$SEMANTICS_ERROR"
-  else
-    lock_status=$?
-    case "$lock_status" in
-      65|75)
-        ;;
-      *)
-        fail "Exclusive advisory lock probe failed with status $lock_status." "$SEMANTICS_ERROR"
-        ;;
-    esac
-  fi
-  exec 9>&-
-}
-
-cleanup_probe() {
-  local probe_dir=$1
-  if [[ -n "$probe_dir" && -d "$probe_dir" ]]; then
-    /usr/bin/rm -rf -- "$probe_dir"
-  fi
+  cleanup_probe "$probe_dir"
+  trap - RETURN
 }
 
 run_persistence_probe() {
   local after_inode
   local before_inode
   local probe_dir
-
   local running
-  running=$(/usr/bin/docker ps -q --filter label=com.docker.compose.project=opencloud --filter label=com.docker.compose.service=opencloud)
+
+  running=$(/usr/bin/docker ps -q --filter label=com.docker.compose.project=opencloud)
   if [[ -n "$running" ]]; then
-    fail 'OpenCloud container is running; refusing Storage Box remount.' "$UNSAFE_MOUNTPOINT"
+    fail 'OpenCloud or Garage container is running; refusing Storage Box remount.' "$UNSAFE_MOUNTPOINT"
   fi
 
-  if ! probe_dir=$(mktemp -d "$MOUNTPOINT/.opencloud-storagebox-persistence.XXXXXX"); then
-    fail 'Cannot create Storage Box persistence probe.' "$SEMANTICS_ERROR"
+  if ! probe_dir=$(mktemp -d "$DATA_DIR/.opencloud-garage-persistence.XXXXXX"); then
+    fail 'Cannot create Garage Storage Box persistence probe.' "$SEMANTICS_ERROR"
   fi
-  trap 'cleanup_probe "$probe_dir"' RETURN
-  trap 'cleanup_probe "$probe_dir"' EXIT
-  if ! /usr/bin/chown 1000:1000 "$probe_dir" || ! /usr/bin/chmod 0770 "$probe_dir"; then
-    fail 'Storage Box does not provide expected UID/GID mapping.' "$SEMANTICS_ERROR"
-  fi
+  trap 'cleanup_probe "$probe_dir"' RETURN EXIT
 
-  if ! PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
-      value=$(printf "%*s" 4096 "" | tr " " p)
-      grant_xattr="user.oc.grant.u:28a81765-661c-4502-a31d-def441c81175"
-      printf "%s" "opencloud-storagebox-persistence" > "$PROBE_DIR/content"
-      setfattr -n user.opencloud-storagebox-persistence -v "$value" "$PROBE_DIR/content"
-      setfattr -n "$grant_xattr" -v "grant-xattr" "$PROBE_DIR/content"
-    '; then
-    fail 'Storage Box persistence probe setup failed.' "$SEMANTICS_ERROR"
-  fi
-  if ! before_inode=$(/usr/bin/stat -c '%i' "$probe_dir/content"); then
-    fail 'Cannot read Storage Box persistence probe inode.' "$SEMANTICS_ERROR"
-  fi
+  printf '%s' 'opencloud-garage-storagebox-persistence' > "$probe_dir/content"
+  /usr/bin/sync -f "$probe_dir/content"
+  mv "$probe_dir/content" "$probe_dir/renamed-content"
+  /usr/bin/sync -f "$probe_dir"
+  before_inode=$(/usr/bin/stat -c '%i' "$probe_dir/renamed-content")
 
   if ! /usr/bin/systemctl restart opencloud-storagebox.service; then
     fail 'Storage Box remount failed.' "$TEMPORARY_FAILURE"
   fi
   verify_mount
-
-  if ! PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
-      value=$(printf "%*s" 4096 "" | tr " " p)
-      grant_xattr="user.oc.grant.u:28a81765-661c-4502-a31d-def441c81175"
-      test "$(cat "$PROBE_DIR/content")" = "opencloud-storagebox-persistence"
-      test "$(getfattr --only-values -n user.opencloud-storagebox-persistence "$PROBE_DIR/content")" = "$value"
-      test "$(getfattr --only-values -n "$grant_xattr" "$PROBE_DIR/content")" = "grant-xattr"
-    '; then
-    fail 'Storage Box did not preserve persistence probe content or xattr.' "$SEMANTICS_ERROR"
-  fi
-  if ! after_inode=$(/usr/bin/stat -c '%i' "$probe_dir/content"); then
-    fail 'Cannot read remounted Storage Box persistence probe inode.' "$SEMANTICS_ERROR"
-  fi
-  printf 'Storage Box persistence probe passed; inode before=%s after=%s.\n' "$before_inode" "$after_inode"
+  test "$(cat "$probe_dir/renamed-content")" = 'opencloud-garage-storagebox-persistence'
+  after_inode=$(/usr/bin/stat -c '%i' "$probe_dir/renamed-content")
+  printf 'Garage Storage Box persistence probe passed; inode before=%s after=%s.\n' "$before_inode" "$after_inode"
 
   cleanup_probe "$probe_dir"
   trap - RETURN EXIT
   /usr/bin/touch "$MARKER"
 }
 
-if [[ "${1:-}" == --user-probe ]]; then
-  if [[ -z "${2:-}" ]]; then
-    fail 'Missing Storage Box user probe directory.' "$SEMANTICS_ERROR"
-  fi
-  run_user_probe_as_user "$2"
-  exit
-fi
-
 if [[ -z "$REMOTE" ]]; then
   fail 'Missing OPENCLOUD_STORAGEBOX_REMOTE.' "$CONFIG_ERROR"
 fi
 
 verify_mount
-
-if ! probe_dir=$(mktemp -d "$MOUNTPOINT/.opencloud-storagebox-probe.XXXXXX"); then
-  fail 'Cannot create Storage Box compatibility probe.' "$SEMANTICS_ERROR"
-fi
-trap 'cleanup_probe "$probe_dir"' EXIT
-if ! /usr/bin/chown 1000:1000 "$probe_dir" || ! /usr/bin/chmod 0770 "$probe_dir"; then
-  fail 'Storage Box does not provide expected UID/GID mapping.' "$SEMANTICS_ERROR"
-fi
-if ! run_user_probe "$probe_dir"; then
-  fail 'Storage Box compatibility probe failed.' "$SEMANTICS_ERROR"
-fi
-cleanup_probe "$probe_dir"
-trap - EXIT
+run_probe
 
 if [[ "${1:-}" == --initialize && ! -e "$MARKER" ]]; then
   run_persistence_probe
 fi
 
-printf '%s\n' 'Storage Box compatibility probe passed.'
+printf '%s\n' 'Garage Storage Box compatibility probe passed.'

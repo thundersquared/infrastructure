@@ -1,23 +1,24 @@
 # OpenCloud on Storage Box
 
 OpenCloud runs under `opencloud.service`. Docker Compose stays in the foreground
-for systemd lifecycle control. User files live only on the CIFS-mounted Storage
-Box at `/mnt/opencloud`; OpenCloud configuration and system state stay local in
+for systemd lifecycle control. User data uses OpenCloud DecomposedS3 with the
+private Garage S3 service. Garage metadata is stored in local named Docker
+volume `opencloud_garage_meta`; Garage object blocks use Storage Box CIFS at
+`/mnt/opencloud/garage`. OpenCloud configuration and system state stay local in
 `/var/lib/opencloud/config` and `/var/lib/opencloud/data`.
 
 ## Compatibility status
 
-Hetzner Storage Box CIFS rejects OpenCloud grant xattr names such as
-`user.oc.grant.u:<UUID>` with `EINVAL`. OpenCloud cannot create spaces without
-this metadata. Do not deploy OpenCloud PosixFS on this Storage Box mount; use a
-filesystem that supports these xattr names for user data. The compatibility gate
-checks this before OpenCloud starts.
+Hetzner Storage Box CIFS rejects OpenCloud PosixFS grant xattr names such as
+`user.oc.grant.u:<UUID>` with `EINVAL`. Do not use `STORAGE_USERS_DRIVER=posix`
+on this mount. Garage isolates OpenCloud from these xattrs: its metadata and
+object index stay local while Storage Box receives only Garage data blocks.
 
 `opencloud-storagebox.service` mounts the Storage Box. Every OpenCloud start
-checks the exact mountpoint, UID/GID `1000:1000` access, rename, advisory lock,
-xattrs, case-distinct names, and SMB-reserved names. Initial provisioning also
-remounts once to verify content and xattr persistence. Failed checks block
-OpenCloud; no local-storage fallback exists.
+checks the exact mountpoint plus Garage data-directory write, sync, read, and
+rename behavior. Initial provisioning flushes a renamed block, remounts once,
+and verifies its content persists. Failed checks block OpenCloud; no
+local-storage fallback exists.
 
 ## Initial setup
 
@@ -25,9 +26,13 @@ OpenCloud; no local-storage fallback exists.
 2. Run `ansible-playbook web1/ansible/playbook.yml` once. It installs tools,
    services, local directories, and host-only placeholder files. OpenCloud
    remains stopped until configuration exists.
-3. On web1, create `/opt/containers/opencloud/.env` from
-   `/opt/containers/opencloud/.env.example`. Set real HTTPS `OC_URL`,
-   `IDM_ADMIN_PASSWORD`, `IDP_DOMAIN`, and `OC_OIDC_ISSUER`.
+3. On web1, create `/opt/containers/opencloud/.env` and `garage.env` from
+   their `.example` files. Set real HTTPS `OC_URL`,
+   `IDM_ADMIN_PASSWORD`, `IDP_DOMAIN`, `OC_OIDC_ISSUER`, all
+   `STORAGE_USERS_DECOMPOSEDS3_*` values, and all `GARAGE_*` values in
+   `garage.env`. Garage access key, secret key, and bucket values must exactly
+   match their `STORAGE_USERS_DECOMPOSEDS3_*` counterparts. Generate
+   `GARAGE_RPC_SECRET` as 64 random hexadecimal characters.
 4. Fill `/etc/opencloud-storagebox.env` with the dedicated share:
    ```env
    OPENCLOUD_STORAGEBOX_REMOTE=//uXXXXX-subN.your-storagebox.de/uXXXXX-subN
@@ -37,11 +42,17 @@ OpenCloud; no local-storage fallback exists.
    username=uXXXXX-subN
    password=CHANGE_ME
    ```
-6. Run the playbook again. It mounts the share, runs the persistence gate,
-   enables both services, then waits for `http://127.0.0.1:3006/`.
+6. Run the playbook again. It mounts the share, creates `/mnt/opencloud/garage`,
+   runs the persistence gate, bootstraps single-node Garage and its bucket,
+   enables OpenCloud, then waits for `http://127.0.0.1:3006/`.
 
 Ansible never reads configuration or credential contents. Manual `.env` edits
 need `systemctl restart opencloud.service`.
+
+Before storing production data, upload a file larger than 4 KiB through
+OpenCloud, stop `opencloud.service`, remount Storage Box, restart OpenCloud,
+then download and checksum the file. Simulate a temporary CIFS outage and
+confirm Garage and OpenCloud recover after remount.
 
 ## Authentik
 
@@ -82,11 +93,13 @@ Proxy dedicated OpenCloud HTTPS hostname rooted at `/` to
 large resumable uploads. Disable request buffering or use equivalent streaming
 behavior.
 
-Check state with `systemctl status opencloud-storagebox.service opencloud.service`.
+Check state with `systemctl status opencloud-storagebox.service opencloud.service`
+and `docker compose exec garage /garage status`.
 Before changing Storage Box endpoint, stop `opencloud.service`, stop the mount
 service, update host configuration, start the mount service, verify its probes,
 then start OpenCloud. Never remount while OpenCloud runs.
 
-Storage Box snapshots alone are insufficient. Consistent backups include local
-`/var/lib/opencloud/config`, local `/var/lib/opencloud/data`, and Storage Box
-user data; stop OpenCloud before coordinated restore or backup.
+Single-node Garage has no redundancy. Back up local
+`/var/lib/opencloud/config`, local `/var/lib/opencloud/data`, named volume
+`opencloud_garage_meta`, and Storage Box Garage data blocks together. Stop
+OpenCloud and Garage before coordinated restore or backup.

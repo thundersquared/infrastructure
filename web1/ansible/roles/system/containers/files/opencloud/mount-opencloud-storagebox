@@ -35,4 +35,4 @@ if (( ${#entries[@]} > 0 )); then
 fi
 
 /usr/bin/mount -t cifs "$REMOTE" "$MOUNTPOINT" \
-  -o "_netdev,seal,vers=3.1.1,credentials=$CREDENTIALS,uid=1000,gid=1000,forceuid,forcegid,file_mode=0660,dir_mode=0770,cache=none,mapposix,hard,serverino"
+  -o "_netdev,vers=3.1.1,credentials=$CREDENTIALS,uid=1000,gid=1000,forceuid,forcegid,file_mode=0660,dir_mode=0770,cache=none,mapposix,hard,serverino"
