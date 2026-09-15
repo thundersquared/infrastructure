@@ -64,7 +64,9 @@ immutable after first OpenCloud login.
 Create an Authentik OAuth2/OIDC provider and application:
 
 1. Client type: `Public`; client ID: `web`; scopes: `openid`, `profile`,
-   `email`.
+   `email`, `offline_access`. Enable the Refresh Token grant and
+   `offline_access` scope mapping. Set Access token validity to `hours=8` or
+   policy-approved equivalent; Authentik defaults to one hour.
 2. Add Strict Authorization redirects:
    `https://<OC_URL host>/oidc-callback.html`,
    `https://<OC_URL host>/oidc-silent-redirect.html`, and
