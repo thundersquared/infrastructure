@@ -66,11 +66,12 @@ run_user_probe() {
     if /bin/bash -c "exec 8>> \"\$1\"; flock -n -x 8" _ "$PROBE_DIR/lock" 2>/dev/null; then
       printf "%s\\n" "Exclusive advisory lock did not contend." >&2
       exit 1
-    fi
-    lock_status=$?
-    if test "$lock_status" -ne 1; then
-      printf "%s\\n" "Exclusive advisory lock probe failed with status $lock_status." >&2
-      exit 1
+    else
+      lock_status=$?
+      if test "$lock_status" -ne 1; then
+        printf "%s\\n" "Exclusive advisory lock probe failed with status $lock_status." >&2
+        exit 1
+      fi
     fi
     exec 9>&-
   '
