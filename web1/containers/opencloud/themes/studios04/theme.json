@@ -1,48 +1,122 @@
 {
-  "common": {
-    "name": "studios04 Cloud",
-    "slogan": "Private files. Shared simply."
-  },
   "clients": {
+    "android": {},
+    "desktop": {},
+    "ios": {},
     "web": {
+      "defaults": {
+        "favicon": "themes/studios04/assets/icon.png",
+        "logo": "themes/studios04/assets/logo-light.svg",
+        "logoMobile": "themes/studios04/assets/icon.png"
+      },
       "themes": [
         {
-          "isDark": false,
-          "label": "studios04 Light",
           "designTokens": {
             "roles": {
-              "primary": "#5b21b6",
+              "background": "#ffffff",
+              "error": "#ba1a1a",
+              "errorContainer": "#ffdad6",
+              "inverseOnSurface": "#eff1f2",
+              "inversePrimary": "#5cd5fb",
+              "inverseSurface": "#2e3132",
+              "onBackground": "#191c1d",
+              "onError": "#ffffff",
+              "onErrorContainer": "#410002",
               "onPrimary": "#ffffff",
-              "primaryContainer": "#e9ddff",
-              "onPrimaryContainer": "#21005d",
-              "secondary": "#006b78",
+              "onPrimaryContainer": "#001f28",
+              "onPrimaryFixed": "#001f28",
               "onSecondary": "#ffffff",
-              "secondaryContainer": "#b7f3ff",
-              "onSecondaryContainer": "#001f25",
-              "chrome": "#312e81",
-              "onChrome": "#ffffff"
+              "onSecondaryContainer": "#071e26",
+              "onSecondaryFixed": "#071e26",
+              "onSurface": "#191c1d",
+              "onSurfaceVariant": "#40484c",
+              "onTertiary": "#ffffff",
+              "onTertiaryContainer": "#171937",
+              "onTertiaryFixed": "#171937",
+              "outline": "#70787c",
+              "outlineVariant": "#bfc8cc",
+              "primary": "#00677f",
+              "primaryContainer": "#b7eaff",
+              "primaryFixed": "#b7eaff",
+              "scrim": "#000000",
+              "secondary": "#20434f",
+              "secondaryContainer": "#cfe6f1",
+              "secondaryFixed": "#cfe6f1",
+              "shadow": "#000000",
+              "surface": "#ffffff",
+              "surfaceBright": "#f8f9fb",
+              "surfaceContainer": "#f6f8fa",
+              "surfaceContainerHigh": "#f2f4f5",
+              "surfaceContainerHighest": "#eceef0",
+              "surfaceContainerLow": "#fbfcfe",
+              "surfaceContainerLowest": "#ffffff",
+              "surfaceDim": "#d8dadc",
+              "surfaceVariant": "#dbe4e8",
+              "tertiary": "#5a5c7e",
+              "tertiaryContainer": "#e0e0ff",
+              "tertiaryFixed": "#e0e0ff"
             }
-          }
+          },
+          "isDark": false,
+          "label": "Light Theme"
         },
         {
-          "isDark": true,
-          "label": "studios04 Dark",
           "designTokens": {
             "roles": {
-              "primary": "#d0bcff",
-              "onPrimary": "#381e72",
-              "primaryContainer": "#4f378b",
-              "onPrimaryContainer": "#e9ddff",
-              "secondary": "#6ce5f5",
-              "onSecondary": "#00363e",
-              "secondaryContainer": "#004f5a",
-              "onSecondaryContainer": "#b7f3ff",
-              "chrome": "#d0bcff",
-              "onChrome": "#312e81"
+              "background": "#191c1d",
+              "error": "#ffb4ab",
+              "errorContainer": "#93000a",
+              "inverseOnSurface": "#2e3132",
+              "inversePrimary": "#00677f",
+              "inverseSurface": "#e1e3e4",
+              "onBackground": "#e1e3e4",
+              "onError": "#690005",
+              "onErrorContainer": "#ffb4ab",
+              "onPrimary": "#003543",
+              "onPrimaryContainer": "#b7eaff",
+              "onPrimaryFixed": "#001f28",
+              "onSecondary": "#1e333b",
+              "onSecondaryContainer": "#cfe6f1",
+              "onSecondaryFixed": "#071e26",
+              "onSurface": "#e1e3e4",
+              "onSurfaceVariant": "#bfc8cc",
+              "onTertiary": "#2c2e4d",
+              "onTertiaryContainer": "#e0e0ff",
+              "onTertiaryFixed": "#171937",
+              "outline": "#8a9296",
+              "outlineVariant": "#40484c",
+              "primary": "#5cd5fb",
+              "primaryContainer": "#004e60",
+              "primaryFixed": "#b7eaff",
+              "scrim": "#000000",
+              "secondary": "#b3cad4",
+              "secondaryContainer": "#344a52",
+              "secondaryFixed": "#cfe6f1",
+              "shadow": "#000000",
+              "surface": "#191c1d",
+              "surfaceBright": "#373a3b",
+              "surfaceContainer": "#1d2021",
+              "surfaceContainerHigh": "#272a2c",
+              "surfaceContainerHighest": "#323537",
+              "surfaceContainerLow": "#191c1d",
+              "surfaceContainerLowest": "#0c0f10",
+              "surfaceDim": "#111415",
+              "surfaceVariant": "#40484c",
+              "tertiary": "#c3c3eb",
+              "tertiaryContainer": "#424465",
+              "tertiaryFixed": "#e0e0ff"
             }
-          }
+          },
+          "isDark": true,
+          "label": "Dark Theme",
+          "logo": "themes/studios04/assets/logo-dark.svg",
+          "logoMobile": "themes/studios04/assets/icon.png"
         }
       ]
     }
+  },
+  "common": {
+    "logo": "themes/studios04/assets/logo-light.svg",
+    "name": "studios04"
   }
 }
