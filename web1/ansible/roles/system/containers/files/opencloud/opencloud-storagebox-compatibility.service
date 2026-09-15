@@ -1,0 +1,8 @@
+[Unit]
+Description=Validate OpenCloud Storage Box compatibility
+After=opencloud-storagebox.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/opencloud-storagebox.env
+ExecStart=/usr/local/sbin/check-opencloud-storagebox --initialize

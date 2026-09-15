@@ -1,0 +1,23 @@
+[Unit]
+Description=OpenCloud
+Wants=docker.service network-online.target opencloud-storagebox.service
+After=docker.service network-online.target opencloud-storagebox.service
+PartOf=docker.service opencloud-storagebox.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=exec
+EnvironmentFile=/etc/opencloud-storagebox.env
+WorkingDirectory=/opt/containers/opencloud
+ExecCondition=/usr/local/sbin/check-opencloud-storagebox-condition
+ExecStartPre=/usr/local/sbin/check-opencloud-storagebox
+ExecStart=/usr/bin/docker compose up --no-color --remove-orphans
+ExecStop=/usr/bin/docker compose stop --timeout 30
+TimeoutStartSec=0
+TimeoutStopSec=45
+Restart=always
+RestartSec=30
+RestartPreventExitStatus=64 65 66
+
+[Install]
+WantedBy=multi-user.target

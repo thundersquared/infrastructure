@@ -1,0 +1,32 @@
+---
+services:
+  opencloud:
+    # yamllint disable-line rule:line-length
+    image: opencloudeu/opencloud:7.2.4@sha256:6d992ccc5f1cbc7b2a9b272ba25f879b1b159c2d7ed7f5527e09059f16295697
+    user: "1000:1000"
+    entrypoint:
+      - /bin/sh
+    command:
+      - -c
+      - opencloud init || true; opencloud server
+    restart: "no"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3006:9200"
+    env_file:
+      - .env
+    volumes:
+      - /var/lib/opencloud/config:/etc/opencloud
+      - /var/lib/opencloud/data:/var/lib/opencloud
+      - /mnt/opencloud:/mnt/opencloud
+      - ./csp.yaml:/etc/opencloud/csp.yaml:ro
+      - ./banned-password-list.txt:/etc/opencloud/banned-password-list.txt:ro
+    networks:
+      - app-infra
+
+networks:
+  app-infra:
+    external: true

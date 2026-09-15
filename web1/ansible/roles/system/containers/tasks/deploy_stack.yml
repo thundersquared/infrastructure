@@ -2,11 +2,16 @@
 - name: Check .env file existence
   ansible.builtin.stat:
     path: "/opt/containers/{{ item.key }}/.env"
+    get_checksum: false
+    get_mime: false
   register: env_stat
+  when: not (item.value.systemd_managed | default(false))
 
 - name: Deploy stack
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item.key }}"
     state: "{{ item.value.state }}"
-  when: not item.value.env_file or (item.value.env_file and env_stat.stat.exists)
+  when:
+    - not (item.value.systemd_managed | default(false))
+    - not item.value.env_file or (item.value.env_file and env_stat.stat.exists)
   register: compose_result

@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly CONFIG_ERROR=64
+readonly UNSAFE_MOUNTPOINT=65
+readonly SEMANTICS_ERROR=66
+readonly TEMPORARY_FAILURE=75
+readonly MOUNTPOINT=/mnt/opencloud
+readonly MARKER=/var/lib/opencloud/data/.storagebox-compatibility-passed
+readonly REMOTE="${OPENCLOUD_STORAGEBOX_REMOTE:-}"
+
+fail() {
+  printf '%s\n' "$1" >&2
+  exit "$2"
+}
+
+verify_mount() {
+  local filesystem
+  local mount_info
+  local source
+
+  if ! mount_info=$(/usr/bin/findmnt --mountpoint "$MOUNTPOINT" --noheadings --output SOURCE,FSTYPE 2>/dev/null); then
+    fail "No filesystem mounted at $MOUNTPOINT." "$TEMPORARY_FAILURE"
+  fi
+
+  read -r source filesystem <<<"$mount_info"
+  if [[ "$filesystem" != cifs ]]; then
+    fail "Expected cifs filesystem at $MOUNTPOINT, found $filesystem." "$CONFIG_ERROR"
+  fi
+  if [[ -n "$REMOTE" && "$source" != "$REMOTE" ]]; then
+    fail "Expected $REMOTE at $MOUNTPOINT, found $source." "$CONFIG_ERROR"
+  fi
+}
+
+run_user_probe() {
+  local probe_dir=$1
+
+  PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
+    umask 007
+    value=$(printf "%*s" 4096 "" | tr " " x)
+
+    printf "%s" "opencloud-storagebox-content" > "$PROBE_DIR/content"
+    test "$(cat "$PROBE_DIR/content")" = "opencloud-storagebox-content"
+    mv "$PROBE_DIR/content" "$PROBE_DIR/renamed-content"
+
+    setfattr -n user.opencloud-storagebox -v "$value" "$PROBE_DIR/renamed-content"
+    test "$(getfattr --only-values -n user.opencloud-storagebox "$PROBE_DIR/renamed-content")" = "$value"
+    setfattr -x user.opencloud-storagebox "$PROBE_DIR/renamed-content"
+
+    mkdir "$PROBE_DIR/directory"
+    setfattr -n user.opencloud-storagebox-directory -v "directory-xattr" "$PROBE_DIR/directory"
+    test "$(getfattr --only-values -n user.opencloud-storagebox-directory "$PROBE_DIR/directory")" = "directory-xattr"
+    setfattr -x user.opencloud-storagebox-directory "$PROBE_DIR/directory"
+
+    printf "lower" > "$PROBE_DIR/case-name"
+    printf "upper" > "$PROBE_DIR/CASE-NAME"
+    test "$(cat "$PROBE_DIR/case-name")" = "lower"
+    test "$(cat "$PROBE_DIR/CASE-NAME")" = "upper"
+
+    reserved_name="reserved-:<>*?|\\"
+    printf "reserved" > "$PROBE_DIR/$reserved_name"
+    test "$(cat "$PROBE_DIR/$reserved_name")" = "reserved"
+
+    exec 9>"$PROBE_DIR/lock"
+    flock -x 9
+    if flock -n "$PROBE_DIR/lock" true 2>/dev/null; then
+      printf "%s\\n" "Exclusive advisory lock did not contend." >&2
+      exit 1
+    fi
+    exec 9>&-
+  '
+}
+
+cleanup_probe() {
+  local probe_dir=$1
+  if [[ -n "$probe_dir" && -d "$probe_dir" ]]; then
+    /usr/bin/rm -rf -- "$probe_dir"
+  fi
+}
+
+run_persistence_probe() {
+  local after_inode
+  local before_inode
+  local probe_dir
+
+  local running
+  running=$(/usr/bin/docker ps -q --filter label=com.docker.compose.project=opencloud --filter label=com.docker.compose.service=opencloud)
+  if [[ -n "$running" ]]; then
+    fail 'OpenCloud container is running; refusing Storage Box remount.' "$UNSAFE_MOUNTPOINT"
+  fi
+
+  if ! probe_dir=$(mktemp -d "$MOUNTPOINT/.opencloud-storagebox-persistence.XXXXXX"); then
+    fail 'Cannot create Storage Box persistence probe.' "$SEMANTICS_ERROR"
+  fi
+  trap 'cleanup_probe "$probe_dir"' RETURN
+  trap 'cleanup_probe "$probe_dir"' EXIT
+  if ! /usr/bin/chown 1000:1000 "$probe_dir" || ! /usr/bin/chmod 0770 "$probe_dir"; then
+    fail 'Storage Box does not provide expected UID/GID mapping.' "$SEMANTICS_ERROR"
+  fi
+
+  if ! PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
+      value=$(printf "%*s" 4096 "" | tr " " p)
+      printf "%s" "opencloud-storagebox-persistence" > "$PROBE_DIR/content"
+      setfattr -n user.opencloud-storagebox-persistence -v "$value" "$PROBE_DIR/content"
+    '; then
+    fail 'Storage Box persistence probe setup failed.' "$SEMANTICS_ERROR"
+  fi
+  if ! before_inode=$(/usr/bin/stat -c '%i' "$probe_dir/content"); then
+    fail 'Cannot read Storage Box persistence probe inode.' "$SEMANTICS_ERROR"
+  fi
+
+  if ! /usr/bin/systemctl restart opencloud-storagebox.service; then
+    fail 'Storage Box remount failed.' "$TEMPORARY_FAILURE"
+  fi
+  verify_mount
+
+  if ! PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
+      value=$(printf "%*s" 4096 "" | tr " " p)
+      test "$(cat "$PROBE_DIR/content")" = "opencloud-storagebox-persistence"
+      test "$(getfattr --only-values -n user.opencloud-storagebox-persistence "$PROBE_DIR/content")" = "$value"
+    '; then
+    fail 'Storage Box did not preserve persistence probe content or xattr.' "$SEMANTICS_ERROR"
+  fi
+  if ! after_inode=$(/usr/bin/stat -c '%i' "$probe_dir/content"); then
+    fail 'Cannot read remounted Storage Box persistence probe inode.' "$SEMANTICS_ERROR"
+  fi
+  printf 'Storage Box persistence probe passed; inode before=%s after=%s.\n' "$before_inode" "$after_inode"
+
+  cleanup_probe "$probe_dir"
+  trap - RETURN EXIT
+  /usr/bin/touch "$MARKER"
+}
+
+if [[ -z "$REMOTE" ]]; then
+  fail 'Missing OPENCLOUD_STORAGEBOX_REMOTE.' "$CONFIG_ERROR"
+fi
+
+verify_mount
+
+if ! probe_dir=$(mktemp -d "$MOUNTPOINT/.opencloud-storagebox-probe.XXXXXX"); then
+  fail 'Cannot create Storage Box compatibility probe.' "$SEMANTICS_ERROR"
+fi
+trap 'cleanup_probe "$probe_dir"' EXIT
+if ! /usr/bin/chown 1000:1000 "$probe_dir" || ! /usr/bin/chmod 0770 "$probe_dir"; then
+  fail 'Storage Box does not provide expected UID/GID mapping.' "$SEMANTICS_ERROR"
+fi
+if ! run_user_probe "$probe_dir"; then
+  fail 'Storage Box compatibility probe failed.' "$SEMANTICS_ERROR"
+fi
+cleanup_probe "$probe_dir"
+trap - EXIT
+
+if [[ "${1:-}" == --initialize && ! -e "$MARKER" ]]; then
+  run_persistence_probe
+fi
+
+printf '%s\n' 'Storage Box compatibility probe passed.'

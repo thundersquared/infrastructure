@@ -4,3 +4,12 @@
     project_src: "/opt/containers/{{ item }}"
     state: restarted
   loop: "{{ compose_files | default([]) }}"
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Restart OpenCloud
+  ansible.builtin.command:
+    cmd: systemctl try-restart opencloud.service
+  changed_when: false

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly CONFIG_ERROR=64
+readonly UNSAFE_MOUNTPOINT=65
+readonly MOUNTPOINT=/mnt/opencloud
+readonly CREDENTIALS=/etc/opencloud-storagebox.credentials
+readonly REMOTE="${OPENCLOUD_STORAGEBOX_REMOTE:-}"
+
+fail() {
+  printf '%s\n' "$1" >&2
+  exit "$2"
+}
+
+if [[ ! "$REMOTE" =~ ^//[A-Za-z0-9][A-Za-z0-9.-]*/[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  fail 'Invalid OPENCLOUD_STORAGEBOX_REMOTE; expected //host/share.' "$CONFIG_ERROR"
+fi
+
+if [[ ! -s "$CREDENTIALS" ]]; then
+  fail 'Missing or empty /etc/opencloud-storagebox.credentials.' "$CONFIG_ERROR"
+fi
+
+if mount_info=$(/usr/bin/findmnt --mountpoint "$MOUNTPOINT" --noheadings --output SOURCE,FSTYPE 2>/dev/null); then
+  read -r source filesystem <<<"$mount_info"
+  if [[ "$filesystem" == cifs && "$source" == "$REMOTE" ]]; then
+    exit 0
+  fi
+  fail "Unexpected existing mount at $MOUNTPOINT: $mount_info" "$UNSAFE_MOUNTPOINT"
+fi
+
+shopt -s dotglob nullglob
+entries=("$MOUNTPOINT"/*)
+if (( ${#entries[@]} > 0 )); then
+  fail "Refusing to mount over non-empty unmounted $MOUNTPOINT." "$UNSAFE_MOUNTPOINT"
+fi
+
+/usr/bin/mount -t cifs "$REMOTE" "$MOUNTPOINT" \
+  -o "_netdev,seal,vers=3.1.1,credentials=$CREDENTIALS,uid=1000,gid=1000,forceuid,forcegid,file_mode=0660,dir_mode=0770,cache=none,mapposix,hard,serverino"

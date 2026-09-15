@@ -7,6 +7,15 @@
     group: root
     mode: '0755'
 
+- name: Copy OpenCloud Compose project to remote node
+  copy:
+    src: "{{ playbook_dir }}/../containers/opencloud/"
+    dest: /opt/containers/opencloud/
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart OpenCloud
+
 - name: Copy containers directory to remote node
   copy:
     src: "{{ playbook_dir }}/../containers/"
@@ -14,13 +23,15 @@
     owner: root
     group: root
     mode: '0755'
-  notify: Restart containers
 
 - name: Create shared app-infra Docker network
   community.docker.docker_network:
     name: app-infra
-    enable_ipv6: "{{ (lookup('env', 'DOCKER_IPV6_SUBNET') | length > 0) | bool }}"
-    ipam_config: "{{ [{'subnet': lookup('env', 'DOCKER_IPV6_SUBNET')}] if (lookup('env', 'DOCKER_IPV6_SUBNET') | length > 0) else omit }}"
+    enable_ipv6: >-
+      {{ (lookup('env', 'DOCKER_IPV6_SUBNET') | length > 0) | bool }}
+    ipam_config: >-
+      {{ [{'subnet': lookup('env', 'DOCKER_IPV6_SUBNET')}] if
+         (lookup('env', 'DOCKER_IPV6_SUBNET') | length > 0) else omit }}
     internal: false
     scope: "global"
     state: present
@@ -45,6 +56,9 @@
 - name: Deploy docker-compose projects
   include_tasks: deploy_stack.yml
   loop: "{{ docker_stacks | dict2items }}"
+
+- name: Configure OpenCloud Storage Box and systemd services
+  include_tasks: opencloud.yml
 
 - name: Clean up Docker system
   community.docker.docker_prune:

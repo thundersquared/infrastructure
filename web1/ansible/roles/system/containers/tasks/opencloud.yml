@@ -1,0 +1,204 @@
+---
+- name: Install OpenCloud Storage Box dependencies
+  ansible.builtin.apt:
+    name:
+      - attr
+      - cifs-utils
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create OpenCloud local state directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: /mnt/opencloud
+      owner: root
+      group: root
+      mode: '0755'
+    - path: /var/lib/opencloud/config
+      owner: '1000'
+      group: '1000'
+      mode: '0750'
+    - path: /var/lib/opencloud/data
+      owner: '1000'
+      group: '1000'
+      mode: '0750'
+
+- name: Create Storage Box remote placeholder when absent
+  ansible.builtin.copy:
+    src: opencloud/opencloud-storagebox.env.example
+    dest: /etc/opencloud-storagebox.env
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+
+- name: Create Storage Box credentials placeholder when absent
+  ansible.builtin.copy:
+    src: opencloud/opencloud-storagebox.credentials.example
+    dest: /etc/opencloud-storagebox.credentials
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+
+- name: Deploy OpenCloud Storage Box mount helper
+  ansible.builtin.copy:
+    src: opencloud/mount-opencloud-storagebox
+    dest: /usr/local/sbin/mount-opencloud-storagebox
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart OpenCloud
+
+- name: Deploy OpenCloud Storage Box compatibility helper
+  ansible.builtin.copy:
+    src: opencloud/check-opencloud-storagebox
+    dest: /usr/local/sbin/check-opencloud-storagebox
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart OpenCloud
+
+- name: Deploy OpenCloud Storage Box start condition helper
+  ansible.builtin.copy:
+    src: opencloud/check-opencloud-storagebox-condition
+    dest: /usr/local/sbin/check-opencloud-storagebox-condition
+    owner: root
+    group: root
+    mode: '0755'
+  notify: Restart OpenCloud
+
+- name: Deploy OpenCloud Storage Box systemd unit
+  ansible.builtin.copy:
+    src: opencloud/opencloud-storagebox.service
+    dest: /etc/systemd/system/opencloud-storagebox.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd daemon
+    - Restart OpenCloud
+
+- name: Deploy OpenCloud systemd unit
+  ansible.builtin.copy:
+    src: opencloud/opencloud.service
+    dest: /etc/systemd/system/opencloud.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd daemon
+    - Restart OpenCloud
+
+- name: Deploy OpenCloud Storage Box compatibility systemd unit
+  ansible.builtin.copy:
+    src: opencloud/opencloud-storagebox-compatibility.service
+    dest: /etc/systemd/system/opencloud-storagebox-compatibility.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload systemd daemon
+
+- name: Reload systemd before OpenCloud service management
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  changed_when: false
+
+- name: Apply pending OpenCloud restart before validation
+  ansible.builtin.meta: flush_handlers
+
+- name: Check OpenCloud host configuration metadata
+  ansible.builtin.stat:
+    path: "{{ item }}"
+    get_checksum: false
+    get_mime: false
+  loop:
+    - /opt/containers/opencloud/.env
+    - /etc/opencloud-storagebox.env
+    - /etc/opencloud-storagebox.credentials
+  register: opencloud_host_config_stats
+
+- name: Determine whether OpenCloud host configuration is ready
+  ansible.builtin.set_fact:
+    opencloud_host_config_ready: >-
+      {{
+        opencloud_host_config_stats.results
+        | selectattr('stat.exists')
+        | selectattr('stat.size', 'defined')
+        | selectattr('stat.size', 'gt', 0)
+        | list
+        | length == 3
+      }}
+
+- name: Report missing OpenCloud host configuration
+  ansible.builtin.debug:
+    msg: >-
+      OpenCloud remains stopped. Fill /opt/containers/opencloud/.env,
+      /etc/opencloud-storagebox.env, and /etc/opencloud-storagebox.credentials.
+  when: not opencloud_host_config_ready
+
+- name: Stop and disable OpenCloud without host configuration
+  ansible.builtin.systemd_service:
+    name: opencloud.service
+    enabled: false
+    state: stopped
+  when: not opencloud_host_config_ready
+
+- name: Stop and disable Storage Box mount without host configuration
+  ansible.builtin.systemd_service:
+    name: opencloud-storagebox.service
+    enabled: false
+    state: stopped
+  when: not opencloud_host_config_ready
+
+- name: Check compatibility marker metadata
+  ansible.builtin.stat:
+    path: /var/lib/opencloud/data/.storagebox-compatibility-passed
+  register: opencloud_compatibility_marker
+  when: opencloud_host_config_ready
+
+- name: Stop OpenCloud before initial Storage Box remount probe
+  ansible.builtin.systemd_service:
+    name: opencloud.service
+    state: stopped
+  when:
+    - opencloud_host_config_ready
+    - not opencloud_compatibility_marker.stat.exists
+
+- name: Enable and start Storage Box mount
+  ansible.builtin.systemd_service:
+    name: opencloud-storagebox.service
+    enabled: true
+    state: started
+  when: opencloud_host_config_ready
+
+- name: Run initial Storage Box persistence probe
+  ansible.builtin.systemd_service:
+    name: opencloud-storagebox-compatibility.service
+    state: started
+  when:
+    - opencloud_host_config_ready
+    - not opencloud_compatibility_marker.stat.exists
+
+- name: Enable and start OpenCloud after successful compatibility probe
+  ansible.builtin.systemd_service:
+    name: opencloud.service
+    enabled: true
+    state: started
+  when: opencloud_host_config_ready
+
+- name: Wait for OpenCloud HTTP response
+  ansible.builtin.uri:
+    url: http://127.0.0.1:3006/
+    status_code: 200
+  register: opencloud_http
+  retries: 30
+  delay: 2
+  until: opencloud_http.status == 200
+  when: opencloud_host_config_ready

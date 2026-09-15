@@ -18,3 +18,7 @@ docker_stacks:
   twenty:
     env_file: true
     state: present
+  opencloud:
+    env_file: true
+    state: present
+    systemd_managed: true
