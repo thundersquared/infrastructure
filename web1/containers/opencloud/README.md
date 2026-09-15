@@ -5,6 +5,14 @@ for systemd lifecycle control. User files live only on the CIFS-mounted Storage
 Box at `/mnt/opencloud`; OpenCloud configuration and system state stay local in
 `/var/lib/opencloud/config` and `/var/lib/opencloud/data`.
 
+## Compatibility status
+
+Hetzner Storage Box CIFS rejects OpenCloud grant xattr names such as
+`user.oc.grant.u:<UUID>` with `EINVAL`. OpenCloud cannot create spaces without
+this metadata. Do not deploy OpenCloud PosixFS on this Storage Box mount; use a
+filesystem that supports these xattr names for user data. The compatibility gate
+checks this before OpenCloud starts.
+
 `opencloud-storagebox.service` mounts the Storage Box. Every OpenCloud start
 checks the exact mountpoint, UID/GID `1000:1000` access, rename, advisory lock,
 xattrs, case-distinct names, and SMB-reserved names. Initial provisioning also
@@ -38,8 +46,9 @@ need `systemctl restart opencloud.service`.
 ## Authentik
 
 OpenCloud uses Authentik as external OIDC provider. Built-in OpenCloud `idp` is
-disabled; built-in IDM LDAP remains local and autoprovisions users using stable
-Authentik `sub` claims.
+disabled; built-in IDM LDAP remains local and autoprovisions users using
+Authentik `preferred_username` claims. Authentik usernames must be unique and
+immutable after first OpenCloud login.
 
 Create an Authentik OAuth2/OIDC provider and application:
 
@@ -53,6 +62,14 @@ Create an Authentik OAuth2/OIDC provider and application:
    `https://<OC_URL host>/backchannel_logout`.
 4. Set `IDP_DOMAIN` without protocol. Set `OC_OIDC_ISSUER` to
    `https://<authentik host>/application/o/<application slug>/`.
+5. Ensure the Authentik `profile` scope mapping emits the `groups` claim.
+   Create `opencloudAdmin` and `opencloudUser` groups. Add initial operator to
+   both groups; add every standard user to `opencloudUser`. OpenCloud also
+   recognizes `opencloudSpaceAdmin` and `opencloudGuest`.
+
+OpenCloud maps those group values to roles on every login. An `opencloudAdmin`
+member signs in at the OpenCloud URL, then opens user menu and selects
+**Administration**. Users without a mapped group cannot sign in.
 
 This config supports browser login only. Desktop, Android, and iOS clients need
 their own Authentik public clients and matching `WEBFINGER_*` OIDC values.

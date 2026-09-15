@@ -41,6 +41,7 @@ run_user_probe() {
 run_user_probe_as_user() {
   local probe_dir=$1
   local lock_status
+  local grant_xattr='user.oc.grant.u:28a81765-661c-4502-a31d-def441c81175'
   local reserved_name='reserved-:<>*?|'
   local value
 
@@ -59,6 +60,11 @@ run_user_probe_as_user() {
   setfattr -n user.opencloud-storagebox-directory -v 'directory-xattr' "$probe_dir/directory"
   test "$(getfattr --only-values -n user.opencloud-storagebox-directory "$probe_dir/directory" 2>/dev/null)" = 'directory-xattr'
   setfattr -x user.opencloud-storagebox-directory "$probe_dir/directory"
+
+  # OpenCloud stores project grants in xattrs whose name contains a colon.
+  setfattr -n "$grant_xattr" -v 'grant-xattr' "$probe_dir/directory"
+  test "$(getfattr --only-values -n "$grant_xattr" "$probe_dir/directory" 2>/dev/null)" = 'grant-xattr'
+  setfattr -x "$grant_xattr" "$probe_dir/directory"
 
   printf '%s' 'lower' > "$probe_dir/case-name"
   printf '%s' 'upper' > "$probe_dir/CASE-NAME"
@@ -114,8 +120,10 @@ run_persistence_probe() {
 
   if ! PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
       value=$(printf "%*s" 4096 "" | tr " " p)
+      grant_xattr="user.oc.grant.u:28a81765-661c-4502-a31d-def441c81175"
       printf "%s" "opencloud-storagebox-persistence" > "$PROBE_DIR/content"
       setfattr -n user.opencloud-storagebox-persistence -v "$value" "$PROBE_DIR/content"
+      setfattr -n "$grant_xattr" -v "grant-xattr" "$PROBE_DIR/content"
     '; then
     fail 'Storage Box persistence probe setup failed.' "$SEMANTICS_ERROR"
   fi
@@ -130,8 +138,10 @@ run_persistence_probe() {
 
   if ! PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
       value=$(printf "%*s" 4096 "" | tr " " p)
+      grant_xattr="user.oc.grant.u:28a81765-661c-4502-a31d-def441c81175"
       test "$(cat "$PROBE_DIR/content")" = "opencloud-storagebox-persistence"
       test "$(getfattr --only-values -n user.opencloud-storagebox-persistence "$PROBE_DIR/content")" = "$value"
+      test "$(getfattr --only-values -n "$grant_xattr" "$PROBE_DIR/content")" = "grant-xattr"
     '; then
     fail 'Storage Box did not preserve persistence probe content or xattr.' "$SEMANTICS_ERROR"
   fi
