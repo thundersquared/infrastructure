@@ -63,15 +63,25 @@ run_user_probe() {
 
     exec 9>"$PROBE_DIR/lock"
     flock -x 9
-    if /bin/bash -c "exec 8>> \"\$1\"; flock -n -x 8" _ "$PROBE_DIR/lock" 2>/dev/null; then
+    if lock_output=$(/bin/bash -c "exec 8>> \"\$1\"; flock -n -x 8" _ "$PROBE_DIR/lock" 2>&1); then
       printf "%s\\n" "Exclusive advisory lock did not contend." >&2
       exit 1
     else
       lock_status=$?
-      if test "$lock_status" -ne 1; then
-        printf "%s\\n" "Exclusive advisory lock probe failed with status $lock_status." >&2
-        exit 1
-      fi
+      case "$lock_status" in
+        1)
+          ;;
+        65)
+          if [[ "$lock_output" != *'Permission denied'* ]]; then
+            printf '%s\\n' "Exclusive advisory lock probe failed: $lock_output" >&2
+            exit 1
+          fi
+          ;;
+        *)
+          printf '%s\\n' "Exclusive advisory lock probe failed: $lock_output" >&2
+          exit 1
+          ;;
+      esac
     fi
     exec 9>&-
   '
