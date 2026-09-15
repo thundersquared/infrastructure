@@ -9,7 +9,6 @@ StartLimitIntervalSec=0
 Type=exec
 EnvironmentFile=/etc/opencloud-storagebox.env
 WorkingDirectory=/opt/containers/opencloud
-ExecCondition=/usr/local/sbin/check-opencloud-storagebox-condition
 ExecStartPre=/usr/local/sbin/check-opencloud-storagebox
 ExecStart=/usr/bin/docker compose up --no-color --remove-orphans
 ExecStop=/usr/bin/docker compose stop --timeout 30

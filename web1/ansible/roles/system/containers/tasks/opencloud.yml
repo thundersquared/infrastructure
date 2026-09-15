@@ -65,14 +65,10 @@
     mode: '0755'
   notify: Restart OpenCloud
 
-- name: Deploy OpenCloud Storage Box start condition helper
-  ansible.builtin.copy:
-    src: opencloud/check-opencloud-storagebox-condition
-    dest: /usr/local/sbin/check-opencloud-storagebox-condition
-    owner: root
-    group: root
-    mode: '0755'
-  notify: Restart OpenCloud
+- name: Remove obsolete OpenCloud Storage Box condition helper
+  ansible.builtin.file:
+    path: /usr/local/sbin/check-opencloud-storagebox-condition
+    state: absent
 
 - name: Deploy OpenCloud Storage Box systemd unit
   ansible.builtin.copy:

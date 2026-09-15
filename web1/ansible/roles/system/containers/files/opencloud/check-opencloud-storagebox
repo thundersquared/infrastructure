@@ -35,56 +35,54 @@ verify_mount() {
 run_user_probe() {
   local probe_dir=$1
 
-  PROBE_DIR="$probe_dir" /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /bin/bash -ceu '
-    umask 007
-    value=$(printf "%*s" 4096 "" | tr " " x)
+  /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups "$0" --user-probe "$probe_dir"
+}
 
-    printf "%s" "opencloud-storagebox-content" > "$PROBE_DIR/content"
-    test "$(cat "$PROBE_DIR/content")" = "opencloud-storagebox-content"
-    mv "$PROBE_DIR/content" "$PROBE_DIR/renamed-content"
+run_user_probe_as_user() {
+  local probe_dir=$1
+  local lock_status
+  local reserved_name='reserved-:<>*?|'
+  local value
 
-    setfattr -n user.opencloud-storagebox -v "$value" "$PROBE_DIR/renamed-content"
-    test "$(getfattr --only-values -n user.opencloud-storagebox "$PROBE_DIR/renamed-content")" = "$value"
-    setfattr -x user.opencloud-storagebox "$PROBE_DIR/renamed-content"
+  umask 007
+  value=$(printf '%*s' 4096 '' | tr ' ' x)
 
-    mkdir "$PROBE_DIR/directory"
-    setfattr -n user.opencloud-storagebox-directory -v "directory-xattr" "$PROBE_DIR/directory"
-    test "$(getfattr --only-values -n user.opencloud-storagebox-directory "$PROBE_DIR/directory")" = "directory-xattr"
-    setfattr -x user.opencloud-storagebox-directory "$PROBE_DIR/directory"
+  printf '%s' 'opencloud-storagebox-content' > "$probe_dir/content"
+  test "$(cat "$probe_dir/content")" = 'opencloud-storagebox-content'
+  mv "$probe_dir/content" "$probe_dir/renamed-content"
 
-    printf "lower" > "$PROBE_DIR/case-name"
-    printf "upper" > "$PROBE_DIR/CASE-NAME"
-    test "$(cat "$PROBE_DIR/case-name")" = "lower"
-    test "$(cat "$PROBE_DIR/CASE-NAME")" = "upper"
+  setfattr -n user.opencloud-storagebox -v "$value" "$probe_dir/renamed-content"
+  test "$(getfattr --only-values -n user.opencloud-storagebox "$probe_dir/renamed-content" 2>/dev/null)" = "$value"
+  setfattr -x user.opencloud-storagebox "$probe_dir/renamed-content"
 
-    reserved_name="reserved-:<>*?|"
-    printf "reserved" > "$PROBE_DIR/$reserved_name"
-    test "$(cat "$PROBE_DIR/$reserved_name")" = "reserved"
+  mkdir "$probe_dir/directory"
+  setfattr -n user.opencloud-storagebox-directory -v 'directory-xattr' "$probe_dir/directory"
+  test "$(getfattr --only-values -n user.opencloud-storagebox-directory "$probe_dir/directory" 2>/dev/null)" = 'directory-xattr'
+  setfattr -x user.opencloud-storagebox-directory "$probe_dir/directory"
 
-    exec 9>"$PROBE_DIR/lock"
-    flock -x 9
-    if lock_output=$(/bin/bash -c "exec 8>> \"\$1\"; flock -n -x 8" _ "$PROBE_DIR/lock" 2>&1); then
-      printf "%s\\n" "Exclusive advisory lock did not contend." >&2
-      exit 1
-    else
-      lock_status=$?
-      case "$lock_status" in
-        1)
-          ;;
-        65)
-          if [[ "$lock_output" != *'Permission denied'* ]]; then
-            printf '%s\\n' "Exclusive advisory lock probe failed: $lock_output" >&2
-            exit 1
-          fi
-          ;;
-        *)
-          printf '%s\\n' "Exclusive advisory lock probe failed: $lock_output" >&2
-          exit 1
-          ;;
-      esac
-    fi
-    exec 9>&-
-  '
+  printf '%s' 'lower' > "$probe_dir/case-name"
+  printf '%s' 'upper' > "$probe_dir/CASE-NAME"
+  test "$(cat "$probe_dir/case-name")" = 'lower'
+  test "$(cat "$probe_dir/CASE-NAME")" = 'upper'
+
+  printf '%s' 'reserved' > "$probe_dir/$reserved_name"
+  test "$(cat "$probe_dir/$reserved_name")" = 'reserved'
+
+  exec 9>"$probe_dir/lock"
+  /usr/bin/flock -x 9
+  if /bin/bash -c 'exec 8>> "$1"; /usr/bin/flock -n -x -E 75 8' _ "$probe_dir/lock" 2>/dev/null; then
+    fail 'Exclusive advisory lock did not contend.' "$SEMANTICS_ERROR"
+  else
+    lock_status=$?
+    case "$lock_status" in
+      65|75)
+        ;;
+      *)
+        fail "Exclusive advisory lock probe failed with status $lock_status." "$SEMANTICS_ERROR"
+        ;;
+    esac
+  fi
+  exec 9>&-
 }
 
 cleanup_probe() {
@@ -146,6 +144,14 @@ run_persistence_probe() {
   trap - RETURN EXIT
   /usr/bin/touch "$MARKER"
 }
+
+if [[ "${1:-}" == --user-probe ]]; then
+  if [[ -z "${2:-}" ]]; then
+    fail 'Missing Storage Box user probe directory.' "$SEMANTICS_ERROR"
+  fi
+  run_user_probe_as_user "$2"
+  exit
+fi
 
 if [[ -z "$REMOTE" ]]; then
   fail 'Missing OPENCLOUD_STORAGEBOX_REMOTE.' "$CONFIG_ERROR"
