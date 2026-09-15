@@ -1,0 +1,48 @@
+{
+  "common": {
+    "name": "studios04 Cloud",
+    "slogan": "Private files. Shared simply."
+  },
+  "clients": {
+    "web": {
+      "themes": [
+        {
+          "isDark": false,
+          "label": "studios04 Light",
+          "designTokens": {
+            "roles": {
+              "primary": "#5b21b6",
+              "onPrimary": "#ffffff",
+              "primaryContainer": "#e9ddff",
+              "onPrimaryContainer": "#21005d",
+              "secondary": "#006b78",
+              "onSecondary": "#ffffff",
+              "secondaryContainer": "#b7f3ff",
+              "onSecondaryContainer": "#001f25",
+              "chrome": "#312e81",
+              "onChrome": "#ffffff"
+            }
+          }
+        },
+        {
+          "isDark": true,
+          "label": "studios04 Dark",
+          "designTokens": {
+            "roles": {
+              "primary": "#d0bcff",
+              "onPrimary": "#381e72",
+              "primaryContainer": "#4f378b",
+              "onPrimaryContainer": "#e9ddff",
+              "secondary": "#6ce5f5",
+              "onSecondary": "#00363e",
+              "secondaryContainer": "#004f5a",
+              "onSecondaryContainer": "#b7f3ff",
+              "chrome": "#d0bcff",
+              "onChrome": "#312e81"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

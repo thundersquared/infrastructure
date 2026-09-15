@@ -45,6 +45,7 @@ services:
       - opencloud_data:/var/lib/opencloud
       - ./csp.yaml:/etc/opencloud/csp.yaml:ro
       - ./banned-password-list.txt:/etc/opencloud/banned-password-list.txt:ro
+      - ./themes:/etc/opencloud/themes:ro
     networks:
       - app-infra
       - garage

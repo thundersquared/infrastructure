@@ -54,6 +54,17 @@ OpenCloud, stop `opencloud.service`, remount Storage Box, restart OpenCloud,
 then download and checksum the file. Simulate a temporary CIFS outage and
 confirm Garage and OpenCloud recover after remount.
 
+## Branding
+
+OpenCloud loads `themes/studios04/theme.json` through `WEB_ASSET_THEMES_PATH`.
+It sets the product name, slogan, and light/dark color palette. Edit that file,
+then restart OpenCloud and hard-refresh browser assets.
+
+To replace the default OpenCloud logo, add SVG files below
+`themes/studios04/assets/`, then set `logo`, `logoMobile`, and dark-theme logo
+paths in `theme.json`. Use public paths such as
+`themes/studios04/assets/logo.svg`; do not use container filesystem paths.
+
 ## Authentik
 
 OpenCloud uses Authentik as external OIDC provider. Built-in OpenCloud `idp` is
