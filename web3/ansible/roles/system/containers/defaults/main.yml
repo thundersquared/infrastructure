@@ -24,3 +24,6 @@ docker_stacks:
   gpt-load:
     env_file: true
     state: present
+  hermes:
+    env_file: true
+    state: present

@@ -4,9 +4,19 @@
     path: "/opt/containers/{{ item.key }}/.env"
   register: env_stat
 
+- name: Restrict stack .env permissions
+  ansible.builtin.file:
+    path: "/opt/containers/{{ item.key }}/.env"
+    owner: root
+    group: root
+    mode: '0600'
+  when: item.value.env_file and env_stat.stat.exists
+
 - name: Deploy stack
   community.docker.docker_compose_v2:
     project_src: "/opt/containers/{{ item.key }}"
     state: "{{ item.value.state }}"
-  when: not item.value.env_file or (item.value.env_file and env_stat.stat.exists)
+  when: >-
+    not item.value.env_file or
+    (item.value.env_file and env_stat.stat.exists)
   register: compose_result
