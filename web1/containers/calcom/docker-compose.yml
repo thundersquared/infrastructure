@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:18-alpine
+    image: postgres:18-alpine@sha256:6c538e7206ea40ff740ef27883529390a690b6ead6ba96b44c67a9f7c638e8fd
     restart: unless-stopped
     volumes:
       - database:/var/lib/postgresql/data
@@ -15,7 +15,7 @@ services:
       - calcom
 
   calcom:
-    image: calcom/cal.com:v6.2.0
+    image: calcom/cal.com:v6.2.0@sha256:ace3bb1219fb7306585ab9f4d94d41af7ee064c343db0498173436bbe857bd49
     restart: unless-stopped
     cap_drop:
       - ALL
