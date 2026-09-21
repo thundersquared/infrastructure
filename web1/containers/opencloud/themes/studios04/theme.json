@@ -117,6 +117,13 @@
   },
   "common": {
     "logo": "themes/studios04/assets/logo-light.svg",
-    "name": "studios04"
+    "name": "studios04",
+    "slogan": "OpenCloud – Excellent file sharing",
+    "urls": {
+      "accessDeniedHelp": "",
+      "accessibility": "https://opencloud.eu/en/accessibility-statement",
+      "imprint": "https://opencloud.eu/en/legal-notice",
+      "privacy": "https://opencloud.eu/en/data-protection-notice"
+    }
   }
 }
