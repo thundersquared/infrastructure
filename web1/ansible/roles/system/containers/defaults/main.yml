@@ -22,3 +22,6 @@ docker_stacks:
     env_file: true
     state: present
     systemd_managed: true
+  hermes:
+    env_file: true
+    state: present
