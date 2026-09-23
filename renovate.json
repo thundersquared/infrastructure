@@ -44,6 +44,12 @@
       "matchDatasources": ["github-releases"],
       "matchPackageNames": ["opentofu/opentofu"],
       "groupName": "OpenTofu core version"
+    },
+    {
+      "description": "Compare gpt-load release candidate tags by their numeric RC suffix.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/tbphp/gpt-load"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-rc\\.(?<build>\\d+)$"
     }
   ],
   "customManagers": [
