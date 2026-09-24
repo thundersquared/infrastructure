@@ -1,6 +1,6 @@
 services:
   headscale:
-    image: headscale/headscale:v0.29.3@sha256:0e7f1c6e4ce6c2a2a001103ecd3fa645a045adf30ac8a5234fe037b43000cd72
+    image: headscale/headscale:v0.29.4@sha256:8833f828b414c0907b7e5c71da76473216fe17cce0818a166b536ec552c0903f
     command: serve
     restart: unless-stopped
     ports:
