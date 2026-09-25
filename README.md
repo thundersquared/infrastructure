@@ -158,11 +158,10 @@ credentials at all — the checks are entirely static analysis:
 - Third-party actions are pinned to a full commit SHA, fixing the code that
   runs with this job's token.
 
-These are conventions, not controls. Nothing in this repository can enforce
-them, because a pull request can edit the workflow that would do the enforcing.
-`main` is not currently a protected branch, so nothing requires these checks to
-pass either. Review is the actual control here; `zizmor` catches the mechanical
-mistakes.
+All four checks are required status checks on `main`, so a pull request cannot
+merge until they pass. If a check is retired or renamed, remove it from the
+`required_status_checks.contexts` list in the same pull request — otherwise the
+merge blocks waiting on a check that no longer reports.
 
 The deploy workflows do use secrets — they have to. They are triggered by
 `push` to `main`, `schedule` and manual dispatch, never by `pull_request`, so

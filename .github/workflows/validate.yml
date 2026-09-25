@@ -6,9 +6,8 @@
 #
 #   1. It references no `secrets.*` and no `environment:`, so the job runs with
 #      no access to repository or environment secrets regardless of who opened
-#      the pull request. zizmor's `artipacked` audit and the reviewer's eye are
-#      what keep that true; nothing in this repo can enforce it, because a pull
-#      request can edit this workflow.
+#      the pull request. zizmor's audits cover the mechanical cases; the rest
+#      is review.
 #   2. `permissions: contents: read` at workflow level — no write scopes and
 #      no `id-token`.
 #   3. Third-party actions are pinned to a full commit SHA, so the code that
