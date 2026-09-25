@@ -1,53 +1,53 @@
 ---
 directives:
   child-src:
-    - '''self'''
+    - "'self'"
   connect-src:
-    - '''self'''
-    - 'blob:'
-    - 'https://${COMPANION_DOMAIN|companion.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
-    - 'wss://${COMPANION_DOMAIN|companion.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
-    - 'https://raw.githubusercontent.com/opencloud-eu/awesome-apps/'
-    - 'https://${IDP_DOMAIN|keycloak.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
-    - 'https://update.opencloud.eu/'
-    - 'https://tile.openstreetmap.org/'
+    - "'self'"
+    - "blob:"
+    - "https://${COMPANION_DOMAIN|companion.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
+    - "wss://${COMPANION_DOMAIN|companion.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
+    - "https://raw.githubusercontent.com/opencloud-eu/awesome-apps/"
+    - "https://${IDP_DOMAIN|keycloak.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
+    - "https://update.opencloud.eu/"
+    - "https://tile.openstreetmap.org/"
   default-src:
-    - '''none'''
+    - "'none'"
   font-src:
-    - '''self'''
+    - "'self'"
   frame-ancestors:
-    - '''self'''
+    - "'self'"
   frame-src:
-    - '''self'''
-    - 'blob:'
-    - 'https://embed.diagrams.net/'
-    - 'https://${COLLABORA_DOMAIN|collabora.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
-    - 'https://${EURO_OFFICE_DOMAIN|euro-office.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
-    - 'https://docs.opencloud.eu'
-    - 'https://${IDP_DOMAIN|keycloak.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
+    - "'self'"
+    - "blob:"
+    - "https://embed.diagrams.net/"
+    - "https://${COLLABORA_DOMAIN|collabora.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
+    - "https://${EURO_OFFICE_DOMAIN|euro-office.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
+    - "https://docs.opencloud.eu"
+    - "https://${IDP_DOMAIN|keycloak.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
   img-src:
-    - '''self'''
-    - 'data:'
-    - 'blob:'
-    - 'https://raw.githubusercontent.com/opencloud-eu/awesome-apps/'
-    - 'https://tile.openstreetmap.org/'
-    - 'https://${COLLABORA_DOMAIN|collabora.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
-    - 'https://${EURO_OFFICE_DOMAIN|euro-office.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
+    - "'self'"
+    - "data:"
+    - "blob:"
+    - "https://raw.githubusercontent.com/opencloud-eu/awesome-apps/"
+    - "https://tile.openstreetmap.org/"
+    - "https://${COLLABORA_DOMAIN|collabora.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
+    - "https://${EURO_OFFICE_DOMAIN|euro-office.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
   manifest-src:
-    - '''self'''
+    - "'self'"
   media-src:
-    - '''self'''
+    - "'self'"
   object-src:
-    - '''self'''
-    - 'blob:'
+    - "'self'"
+    - "blob:"
   script-src:
-    - '''self'''
-    - '''unsafe-inline'''
-    - 'https://${IDP_DOMAIN|keycloak.opencloud.test}${TRAEFIK_PORT_HTTPS}/'
+    - "'self'"
+    - "'unsafe-inline'"
+    - "https://${IDP_DOMAIN|keycloak.opencloud.test}${TRAEFIK_PORT_HTTPS}/"
   style-src:
-    - '''self'''
-    - '''unsafe-inline'''
-    - 'blob:'
+    - "'self'"
+    - "'unsafe-inline'"
+    - "blob:"
   worker-src:
     - "'self'"
-    - 'blob:'
+    - "blob:"

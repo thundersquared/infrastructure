@@ -13,7 +13,7 @@
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   loop:
     - /etc/monit
     - /etc/monit.d
@@ -25,7 +25,7 @@
     dest: /etc/monitrc
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
   notify: Reload monit
   become: true
 
@@ -35,7 +35,7 @@
     dest: /etc/monit.d/disk.cfg
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
   notify: Reload monit
   become: true
 
@@ -45,7 +45,7 @@
     dest: /etc/monit/notify-chat.sh
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   notify: Reload monit
   become: true
 
@@ -55,7 +55,7 @@
     dest: /etc/monit/check-docker-stack.sh
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   notify: Reload monit
   become: true
 
@@ -65,7 +65,7 @@
     dest: /etc/monit.d/containers.cfg
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
   notify: Reload monit
   become: true
 
@@ -75,7 +75,7 @@
     dest: /etc/monit/notify-chat.env
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
     force: false
   become: true
 
@@ -85,7 +85,7 @@
     dest: /etc/monit.d/mail.cfg
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
     force: false
   become: true
 

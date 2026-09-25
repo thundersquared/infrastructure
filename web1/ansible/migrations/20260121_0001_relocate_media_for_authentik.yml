@@ -6,7 +6,7 @@
   file:
     path: /opt/containers/authentik/data
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Relocate authentik media directory
   command: mv /opt/containers/authentik/media /opt/containers/authentik/data/media

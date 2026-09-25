@@ -1,3 +1,4 @@
+---
 name: Deploy mirror with Ansible
 permissions:
   contents: read

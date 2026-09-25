@@ -2,19 +2,19 @@
 - name: Setup Authentik Infrastructure
   block:
     - name: Create authentik directories
-      file:
+      ansible.builtin.file:
         path: "/opt/containers/authentik/{{ item }}"
         state: directory
         owner: "1000"
         group: "1000"
-        mode: '0755'
+        mode: "0755"
       loop:
         - media
         - custom-templates
         - certs
 
     - name: Check if Authentik .env file exists
-      stat:
+      ansible.builtin.stat:
         path: /opt/containers/authentik/.env
       register: authentik_env_file
 
@@ -27,6 +27,6 @@
       when: authentik_env_file.stat.exists
 
     - name: Show message when .env file is missing
-      debug:
+      ansible.builtin.debug:
         msg: "Authentik .env file is missing. Please create it manually at /opt/containers/authentik/.env"
       when: not authentik_env_file.stat.exists

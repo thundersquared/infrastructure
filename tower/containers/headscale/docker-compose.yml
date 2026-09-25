@@ -1,3 +1,4 @@
+---
 services:
   headscale:
     image: headscale/headscale:v0.29.4@sha256:8833f828b414c0907b7e5c71da76473216fe17cce0818a166b536ec552c0903f

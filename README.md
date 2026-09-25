@@ -105,6 +105,66 @@ Migrations run automatically as part of the playbook execution via the `system/m
 
 If a migration fails, the entire playbook stops to prevent inconsistent states.
 
+## Validation
+
+Every pull request runs `.github/workflows/validate.yml`, which performs
+static checks only. It never connects to a host, reads a state file, or
+touches a cloud provider, so a broken change is caught before it can reach
+production rather than during a deploy.
+
+| Check | Tool | Catches |
+|---|---|---|
+| Workflow secret guard | `ci/check_workflow_secrets.sh` | The validation workflow gaining access to secrets |
+| Compose policy | `ci/check_compose.py` | Missing `cap_drop`, public port bindings, unpinned or exempted services |
+| YAML | `yamllint` | Syntax errors, duplicate keys, style drift |
+| Ansible | `ansible-lint` | Broken syntax, missing FQCN, non-idempotent commands, unset file modes |
+| OpenTofu | `tofu validate` / `tofu fmt` | Invalid or unformatted configuration for `tower` |
+| Actions | `zizmor` | Workflow-level privilege footguns |
+
+### Running the checks locally
+
+```bash
+ci/validate.sh
+```
+
+Needs `ansible-lint`, `yamllint`, `zizmor` and `tofu` on `PATH`. The script
+runs the same checks as CI, so failures reproduce locally.
+
+### The container security contract is enforced
+
+The rules described in `CLAUDE.md` (drop all capabilities, add
+`no-new-privileges`, bind ports to loopback, pin image tags) are checked by
+`ci/check_compose.py` rather than left to review discipline. Services that
+genuinely cannot satisfy the policy — data stores that need `CAP_SETUID` to
+run `gosu`, the authentik worker that needs the Docker socket — are listed in
+`EXEMPTIONS` with a written reason.
+
+Adding an entry to that list is therefore a deliberate, reviewable change. If
+a service is exempted but also sets `cap_drop` or `security_opt`, the check
+fails, so a stale exemption cannot linger.
+
+### Why the validation workflow holds no secrets
+
+`validate.yml` runs on `pull_request`, so it is configured to hold no
+credentials at all — the checks are entirely static analysis:
+
+- It references no `secrets.*` and no `environment:`, so the job runs with no
+  access to repository or environment secrets regardless of who opened the
+  pull request.
+- `permissions: contents: read`, so the automatic `GITHUB_TOKEN` cannot write.
+- Every `actions/checkout` sets `persist-credentials: false`, so the token is
+  not left in `.git/config` where later steps could read it.
+- Third-party actions are pinned to a full commit SHA, fixing the code that
+  runs with this job's token.
+
+`ci/check_workflow_secrets.sh` re-checks these properties on every run, so a
+later edit that adds a credential reference fails CI rather than passing
+unnoticed.
+
+The deploy workflows do use secrets — they have to. They are triggered by
+`push` to `main`, `schedule` and manual dispatch, never by `pull_request`, so
+they never run code from a pull request.
+
 ## Dependency Management
 
 This repository uses Renovate to keep dependencies up-to-date:

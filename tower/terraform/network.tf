@@ -153,9 +153,9 @@ resource "oci_core_security_list" "tower" {
 }
 
 resource "oci_core_subnet" "tower" {
-  compartment_id             = var.compartment_ocid
-  vcn_id                     = oci_core_vcn.tower.id
-  cidr_block                 = var.subnet_cidr
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.tower.id
+  cidr_block     = var.subnet_cidr
   # Carve a /64 from the VCN's OCI-assigned /56
   ipv6cidr_block             = cidrsubnet(oci_core_vcn.tower.ipv6cidr_blocks[0], 8, 0)
   display_name               = "${var.instance_display_name}-subnet"
