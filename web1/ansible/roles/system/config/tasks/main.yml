@@ -1,89 +1,89 @@
 ---
 - name: UFW
   block:
-  - name: Allow incoming UDP port 7844
-    community.general.ufw:
-      rule: allow
-      proto: udp
-      from_port: 7844
-      comment: Allow incoming traffic from UDP port 7844
-      delete: true
-    become: true
+    - name: Allow incoming UDP port 7844
+      community.general.ufw:
+        rule: allow
+        proto: udp
+        from_port: 7844
+        comment: Allow incoming traffic from UDP port 7844
+        delete: true
+      become: true
 
 - name: DNS
   block:
-  - name: Ensure systemd-resolved is running
-    ansible.builtin.systemd_service:
-      name: systemd-resolved
-      state: started
-      enabled: yes
-    become: true
+    - name: Ensure systemd-resolved is running
+      ansible.builtin.systemd_service:
+        name: systemd-resolved
+        state: started
+        enabled: true
+      become: true
 
-  - name: Configure systemd-resolved for Google and Quad9 DNS
-    ansible.builtin.lineinfile:
-      path: /etc/systemd/resolved.conf
-      regexp: '^#?DNS='
-      line: 'DNS=8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112'
-    notify: Restart systemd-resolved
-    become: true
+    - name: Configure systemd-resolved for Google and Quad9 DNS
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: "^#?DNS="
+        line: "DNS=8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112"
+      notify: Restart systemd-resolved
+      become: true
 
-  - name: Configure systemd-resolved for ControlD and Cloudflare Fallback DNS
-    ansible.builtin.lineinfile:
-      path: /etc/systemd/resolved.conf
-      regexp: '^#?FallbackDNS='
-      line: 'FallbackDNS=76.76.2.0 76.76.10.0 1.1.1.1 1.0.0.1'
-    notify: Restart systemd-resolved
-    become: true
+    - name: Configure systemd-resolved for ControlD and Cloudflare Fallback DNS
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: "^#?FallbackDNS="
+        line: "FallbackDNS=76.76.2.0 76.76.10.0 1.1.1.1 1.0.0.1"
+      notify: Restart systemd-resolved
+      become: true
 
-  - name: Configure systemd-resolved for DNSOverTLS
-    ansible.builtin.lineinfile:
-      path: /etc/systemd/resolved.conf
-      regexp: '^#?DNSOverTLS='
-      line: 'DNSOverTLS=no'
-    notify: Restart systemd-resolved
-    become: true
+    - name: Configure systemd-resolved for DNSOverTLS
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: "^#?DNSOverTLS="
+        line: "DNSOverTLS=no"
+      notify: Restart systemd-resolved
+      become: true
 
-  - name: Configure systemd-resolved for Cache
-    ansible.builtin.lineinfile:
-      path: /etc/systemd/resolved.conf
-      regexp: '^#?Cache='
-      line: 'Cache=yes'
-    notify: Restart systemd-resolved
-    become: true
+    - name: Configure systemd-resolved for Cache
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: "^#?Cache="
+        line: "Cache=yes"
+      notify: Restart systemd-resolved
+      become: true
 
-  - name: Configure systemd-resolved for Domain
-    ansible.builtin.lineinfile:
-      path: /etc/systemd/resolved.conf
-      regexp: '^#?Domain='
-      line: "Domain={{ dns_search_domain }}"
-    when: dns_search_domain | default('') | length > 0
-    notify: Restart systemd-resolved
-    become: true
+    - name: Configure systemd-resolved for Domain
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: "^#?Domain="
+        line: "Domain={{ dns_search_domain }}"
+      when: dns_search_domain | default('') | length > 0
+      notify: Restart systemd-resolved
+      become: true
 
 - name: Logrotate
   block:
-  - name: Remove obsolete Docker logrotate configuration
-    ansible.builtin.file:
-      path: /etc/logrotate.d/docker
-      state: absent
-    become: true
+    - name: Remove obsolete Docker logrotate configuration
+      ansible.builtin.file:
+        path: /etc/logrotate.d/docker
+        state: absent
+      become: true
 
-  - name: Create logrotate.timer.d directory
-    ansible.builtin.file:
-      path: /etc/systemd/system/logrotate.timer.d
-      state: directory
-      mode: '0755'
-    become: true
+    - name: Create logrotate.timer.d directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/logrotate.timer.d
+        state: directory
+        mode: "0755"
+      become: true
 
-  - name: Override logrotate.timer
-    ansible.builtin.copy:
-      src: files/logrotate.timer.d/override.conf
-      dest: /etc/systemd/system/logrotate.timer.d/override.conf
-      owner: root
-      group: root
-      mode: '0644'
-    notify: Restart logrotate.timer
-    become: true
+    - name: Override logrotate.timer
+      ansible.builtin.copy:
+        src: files/logrotate.timer.d/override.conf
+        dest: /etc/systemd/system/logrotate.timer.d/override.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart logrotate.timer
+      become: true
 
 - name: Nginx Compression
   # CloudPanel pre-loads brotli via /etc/nginx/modules-enabled/50-mod-ngx-brotli.conf
@@ -95,32 +95,38 @@
     - name: Tune gzip_comp_level
       ansible.builtin.replace:
         path: /etc/nginx/nginx.conf
-        regexp: '^(\s*)gzip_comp_level\s+\d+\s*;'
-        replace: '\g<1>gzip_comp_level 5;'
+        regexp: "^(\\s*)gzip_comp_level\\s+\\d+\\s*;"
+        replace: "\\g<1>gzip_comp_level 5;"
       notify: Reload nginx
       become: true
 
     - name: Tune gzip_types
       ansible.builtin.replace:
         path: /etc/nginx/nginx.conf
-        regexp: '^(\s*)gzip_types[^;]*;'
-        replace: '\g<1>gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss application/atom+xml application/rss+xml application/wasm application/manifest+json image/svg+xml font/ttf font/otf application/vnd.ms-fontobject;'
+        regexp: "^(\\s*)gzip_types[^;]*;"
+        replace: >-
+          \g<1>gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss
+          application/atom+xml application/rss+xml application/wasm application/manifest+json image/svg+xml font/ttf font/otf
+          application/vnd.ms-fontobject;
       notify: Reload nginx
       become: true
 
     - name: Tune brotli_comp_level
       ansible.builtin.replace:
         path: /etc/nginx/nginx.conf
-        regexp: '^(\s*)brotli_comp_level\s+\d+\s*;'
-        replace: '\g<1>brotli_comp_level 6;'
+        regexp: "^(\\s*)brotli_comp_level\\s+\\d+\\s*;"
+        replace: "\\g<1>brotli_comp_level 6;"
       notify: Reload nginx
       become: true
 
     - name: Tune brotli_types
       ansible.builtin.replace:
         path: /etc/nginx/nginx.conf
-        regexp: '^(\s*)brotli_types[^;]*;'
-        replace: '\g<1>brotli_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss application/atom+xml application/rss+xml application/wasm application/manifest+json image/svg+xml font/ttf font/otf application/vnd.ms-fontobject;'
+        regexp: "^(\\s*)brotli_types[^;]*;"
+        replace: >-
+          \g<1>brotli_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss
+          application/atom+xml application/rss+xml application/wasm application/manifest+json image/svg+xml font/ttf font/otf
+          application/vnd.ms-fontobject;
       notify: Reload nginx
       become: true
 

@@ -1,3 +1,4 @@
+---
 services:
   1min-relay:
     image: ghcr.io/thundersquared/1min-relay:v1.1.0

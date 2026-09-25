@@ -1,3 +1,4 @@
+---
 name: Deploy mirror with OpenTofu
 permissions:
   contents: read

@@ -12,8 +12,8 @@
 - name: Update CrowdSec firewall bouncer mode to nftables
   lineinfile:
     path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-    regexp: '^mode:'
-    line: 'mode: nftables'
+    regexp: "^mode:"
+    line: "mode: nftables"
   when: bouncer_config.stat.exists
 
 - name: Restart CrowdSec firewall bouncer to apply new config

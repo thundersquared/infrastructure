@@ -1,3 +1,4 @@
+---
 services:
   roundcubemail:
     image: roundcube/roundcubemail:1.7.4-apache@sha256:1ccbb2c5909960802b97ce7ec526a50668ad4b139bf8b03817aba64c6b49d58a

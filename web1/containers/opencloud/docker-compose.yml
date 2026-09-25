@@ -54,7 +54,6 @@ volumes:
   garage_meta:
   opencloud_config:
   opencloud_data:
-
 networks:
   app-infra:
     external: true

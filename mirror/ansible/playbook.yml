@@ -21,10 +21,10 @@
       no_log: true
       block:
         - name: Apply OS hardening
-          include_role:
+          ansible.builtin.include_role:
             name: devsec.hardening.os_hardening
           when: scheduled_run
         - name: Apply ssh hardening
-          include_role:
+          ansible.builtin.include_role:
             name: devsec.hardening.ssh_hardening
           when: scheduled_run

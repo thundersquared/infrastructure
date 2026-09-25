@@ -6,7 +6,7 @@ os_env_umask: "022"
 os_user_pw_ageing: false
 os_auth_pam_passwdqc_enable: false
 sftp_enabled: true
-ssh_allow_tcp_forwarding: 'local'
+ssh_allow_tcp_forwarding: "local"
 ssh_print_last_log: true
 ssh_permit_root_login: "without-password"
 ssh_permit_tunnel: "yes"
@@ -30,10 +30,10 @@ sysctl_overwrite:
 php_custom_extensions:
   "8.4":
     - { name: brotli, version: "0.18.3", apt_deps: ["libbrotli-dev"] }
-    - { name: zstd,   version: "0.15.2", apt_deps: ["libzstd-dev"]   }
+    - { name: zstd, version: "0.15.2", apt_deps: ["libzstd-dev"] }
   "8.5":
     - { name: brotli, version: "0.18.3", apt_deps: ["libbrotli-dev"] }
-    - { name: zstd,   version: "0.15.2", apt_deps: ["libzstd-dev"]   }
+    - { name: zstd, version: "0.15.2", apt_deps: ["libzstd-dev"] }
 
 # Bound Docker's default json-file logs for containers that do not override the
 # driver in their Compose project.

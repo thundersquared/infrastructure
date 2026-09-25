@@ -1,19 +1,19 @@
 ---
 - name: Ensure /opt/containers exists
-  file:
+  ansible.builtin.file:
     path: /opt/containers
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy containers directory to remote node
-  copy:
+  ansible.builtin.copy:
     src: "{{ playbook_dir }}/../containers/"
     dest: /opt/containers/
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
   notify: Restart containers
 
 - name: Create shared app-infra Docker network
@@ -23,24 +23,24 @@
     state: present
 
 - name: Create cloudflared .env file
-  copy:
+  ansible.builtin.copy:
     content: |
       TUNNEL_TOKEN={{ lookup('env', 'CLOUDFLARED_TOKEN') }}
     dest: /opt/containers/cloudflared/.env
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
   when: lookup('env', 'CLOUDFLARED_TOKEN') | length > 0
 
 - name: Deploy docker-compose projects
-  include_tasks: deploy_stack.yml
+  ansible.builtin.include_tasks: deploy_stack.yml
   loop: "{{ docker_stacks | dict2items }}"
 
 - name: Clean up Docker system
   community.docker.docker_prune:
-    containers: yes
-    images: yes
+    containers: true
+    images: true
     images_filters:
       dangling: false
-    networks: yes
-    builder_cache: yes
+    networks: true
+    builder_cache: true

@@ -90,7 +90,6 @@ services:
 volumes:
   db:
   server-local-data:
-
 networks:
   twenty:
   app-infra:
