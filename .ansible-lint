@@ -1,0 +1,60 @@
+---
+# ansible-lint configuration.
+#
+# Scoped to rules that catch real breakage. Everything skipped below is
+# deliberate and carries a reason, so the skip list stays a short, reviewable
+# list rather than a growing pile of suppressions.
+
+profile: production
+
+skip_list:
+  # --- Naming conventions this repo does not follow ------------------------
+  # Task variable prefixes (migrations_foo) and task-name casing would mean
+  # renaming across six duplicated role trees for no functional gain.
+  - var-naming[no-role-prefix]
+  - name[casing]
+  - name[template]
+  - name[missing-handler]
+
+  # --- Structural choices that are correct as written ----------------------
+  # The system/docker-login directory name carries a hyphen. Renaming it
+  # across every host (and every `- role: system/docker-login` reference) is
+  # pure churn for a cosmetic rule.
+  - role-name
+
+  # `collections:` widens the plugin search path for devsec.hardening. Using
+  # FQCN everywhere instead is arguably tidier, but removing the keyword is a
+  # behaviour change to every play for no functional benefit.
+  - fqcn[keyword]
+
+  # `systemctl try-restart` restarts only if the unit is already running,
+  # whereas systemd_service state=restarted would also start a stopped unit.
+  # The shell-out is deliberate, so keep it and skip the idiom rule.
+  - command-instead-of-module
+
+  # Tasks that notify a handler on change are still better as tasks here: the
+  # crowdsec config edits are conditional on console/bouncer state and read
+  # more clearly inline than as handlers with matching names.
+  - no-handler
+
+exclude_paths:
+  # Non-Ansible content that happens to live under the tree.
+  - .github/
+  - ci/
+  - "*.json"
+  - "*.lock.hcl"
+  - "**/files/**"
+
+warn_list:
+  - experimental
+
+# Roles are duplicated per host by design (see README). Linting all six copies
+# is intentional: drift between them is the failure mode worth catching.
+kinds:
+  - playbook: "**/ansible/playbook.yml"
+  - role: "**/ansible/roles/*/"
+  - tasks: "**/ansible/roles/*/tasks/*.yml"
+  - handlers: "**/ansible/roles/*/handlers/*.yml"
+  - defaults: "**/ansible/roles/*/defaults/*.yml"
+  - vars: "**/ansible/roles/*/vars/*.yml"
+  - migrations: "**/ansible/migrations/*.yml"

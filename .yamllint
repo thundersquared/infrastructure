@@ -1,0 +1,55 @@
+---
+extends: default
+
+rules:
+  # The nginx MIME-type replacement strings in system/config are unavoidably
+  # long. 160 keeps the rule useful for runaway blocks while leaving room for
+  # digests and URLs (which are non-breakable and allowed regardless).
+  line-length:
+    max: 160
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: false
+
+  # Ansible reads `yes`/`no` as booleans, but `true`/`false` is unambiguous
+  # across YAML parsers (compose files, GitHub Actions, OpenTofu-adjacent
+  # tooling). Keys are exempt: task keywords like `when: no` read correctly
+  # and rewriting them risks behaviour changes.
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+
+  # Every YAML file in the repo opens with `---`; keep it enforced so new
+  # files cannot drift in without the document marker.
+  document-start:
+    present: true
+
+  # Ansible task files legitimately mix both sequence styles: role task lists
+  # sit flush with the parent key (`block:` / `- name:`), while playbook
+  # `roles:` / `vars_files:` lists are indented. `consistent` accepts either
+  # as long as a given file does not mix them, which is what actually
+  # catches real mistakes.
+  indentation:
+    spaces: consistent
+    indent-sequences: consistent
+
+  # Flow mappings in the php_custom_extensions / hardening var files are
+  # column-aligned for readability. Permit the alignment padding.
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  commas:
+    min-spaces-after: 0
+    max-spaces-after: 1
+
+  comments:
+    min-spaces-from-content: 1
+
+  # --- Compatibility with `ansible-lint --fix` -----------------------------
+  # ansible-lint refuses to autofix when the project .yamllint disagrees with
+  # its own expectations for the `yaml` rule. Without these it reports "Found
+  # incompatible custom yamllint configuration" and silently disables fix
+  # mode, so `fqcn` remediation would never run.
+  comments-indentation: false
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
