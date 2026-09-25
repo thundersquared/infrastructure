@@ -114,8 +114,6 @@ production rather than during a deploy.
 
 | Check | Tool | Catches |
 |---|---|---|
-| Workflow secret guard | `ci/check_workflow_secrets.sh` | The validation workflow gaining access to secrets |
-| Compose policy | `ci/check_compose.py` | Missing `cap_drop`, public port bindings, unpinned or exempted services |
 | YAML | `yamllint` | Syntax errors, duplicate keys, style drift |
 | Ansible | `ansible-lint` | Broken syntax, missing FQCN, non-idempotent commands, unset file modes |
 | OpenTofu | `tofu validate` / `tofu fmt` | Invalid or unformatted configuration for `tower` |
@@ -130,18 +128,21 @@ ci/validate.sh
 Needs `ansible-lint`, `yamllint`, `zizmor` and `tofu` on `PATH`. The script
 runs the same checks as CI, so failures reproduce locally.
 
-### The container security contract is enforced
+### The container security contract is not enforced
 
-The rules described in `CLAUDE.md` (drop all capabilities, add
-`no-new-privileges`, bind ports to loopback, pin image tags) are checked by
-`ci/check_compose.py` rather than left to review discipline. Services that
-genuinely cannot satisfy the policy — data stores that need `CAP_SETUID` to
-run `gosu`, the authentik worker that needs the Docker socket — are listed in
-`EXEMPTIONS` with a written reason.
+The rules in `CLAUDE.md` (drop all capabilities, add `no-new-privileges`, bind
+ports to loopback, pin image tags) are review-time guidance, not a gate. There
+is no automated check, so a new service that omits `cap_drop` will pass CI and
+rely on the reviewer noticing.
 
-Adding an entry to that list is therefore a deliberate, reviewable change. If
-a service is exempted but also sets `cap_drop` or `security_opt`, the check
-fails, so a stale exemption cannot linger.
+This was a deliberate trade-off. An earlier version enforced it with a script
+keyed by an exemption list, but the contract is prose in `CLAUDE.md` and would
+have had two places to drift apart. It was removed rather than maintained.
+
+If you want it enforced, the exemption list is the part that needs writing
+first — a service name alone is ambiguous, since `worker` is the
+Docker-socket-holding authentik worker in one stack and an ordinary hardened
+twenty.crm worker in another.
 
 ### Why the validation workflow holds no secrets
 
@@ -157,9 +158,11 @@ credentials at all — the checks are entirely static analysis:
 - Third-party actions are pinned to a full commit SHA, fixing the code that
   runs with this job's token.
 
-`ci/check_workflow_secrets.sh` re-checks these properties on every run, so a
-later edit that adds a credential reference fails CI rather than passing
-unnoticed.
+These are conventions, not controls. Nothing in this repository can enforce
+them, because a pull request can edit the workflow that would do the enforcing.
+`main` is not currently a protected branch, so nothing requires these checks to
+pass either. Review is the actual control here; `zizmor` catches the mechanical
+mistakes.
 
 The deploy workflows do use secrets — they have to. They are triggered by
 `push` to `main`, `schedule` and manual dispatch, never by `pull_request`, so

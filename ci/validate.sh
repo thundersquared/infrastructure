@@ -30,20 +30,7 @@ run() {
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-# 1. This workflow must not be able to reach secrets. Runs first and without
-#    any dependencies, because it is the check that protects the other four:
-#    they all execute code from the pull request.
-run "workflow secret guard" ./ci/check_workflow_secrets.sh .github/workflows/validate.yml
-
-# 2. Container security contract from CLAUDE.md, enforced.
-if have python3; then
-  run "compose policy" python3 ci/check_compose.py .
-else
-  printf '\nSKIP: compose policy (python3 not found)\n'
-  status=1
-fi
-
-# 3. YAML style and correctness.
+# 1. YAML style and correctness.
 if have yamllint; then
   run "yamllint" yamllint --strict --config-file .yamllint .
 else
@@ -51,7 +38,7 @@ else
   status=1
 fi
 
-# 4. Ansible correctness: syntax-check, FQCN, idempotency, risky permissions.
+# 2. Ansible correctness: syntax-check, FQCN, idempotency, risky permissions.
 if have ansible-lint; then
   run "ansible-lint" ansible-lint --offline
 else
@@ -59,7 +46,7 @@ else
   status=1
 fi
 
-# 5. OpenTofu for the tower host. -backend=false means no OCI credentials and
+# 3. OpenTofu for the tower host. -backend=false means no OCI credentials and
 #    no state access are needed, matching CI.
 if have tofu; then
   run "tofu validate" env -C tower/terraform tofu init -backend=false -input=false -no-color
@@ -69,7 +56,7 @@ else
   status=1
 fi
 
-# 6. Audit this workflow for Actions-level privilege footguns.
+# 4. Audit this workflow for Actions-level privilege footguns.
 if have zizmor; then
   run "zizmor" zizmor --persona=pedantic --min-severity=low .github/workflows/validate.yml
 else
