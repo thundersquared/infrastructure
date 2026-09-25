@@ -1,6 +1,6 @@
 ---
 - name: Check if fleet .env file exists
-  stat:
+  ansible.builtin.stat:
     path: /opt/containers/fleet/.env
   register: fleet_env_stat
 

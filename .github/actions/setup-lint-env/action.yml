@@ -1,0 +1,43 @@
+---
+name: Setup lint environment
+description: >-
+  Set up a uv-managed virtualenv and install the requested packages into it.
+
+  Used by the validation jobs so they share one toolchain with the deploy
+  workflows rather than each pip-installing into whatever setup-python
+  provides. uv also caches, which is most of why ansible-lint is no longer the
+  slow job.
+
+inputs:
+  packages:
+    description: >-
+      Packages to install, in `uv pip install` syntax. The ansible job passes
+      `-r requirements.txt` alongside ansible-lint so that ansible-lint uses
+      the ansible-core the deploys pin, instead of pulling its own copy.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version-file: .python-version
+
+    - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        enable-cache: true
+        cache-dependency-glob: requirements.txt
+
+    - name: Create virtualenv
+      run: uv venv
+      shell: bash
+
+    - name: Install packages
+      run: uv pip install --python .venv/bin/python ${{ inputs.packages }}
+      shell: bash
+
+    # uv does not put the environment on PATH by itself; without this the
+    # tools would resolve from whatever setup-python provides.
+    - name: Put the virtualenv on PATH
+      run: echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      shell: bash

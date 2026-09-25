@@ -2,7 +2,7 @@
 services:
   gateway:
     # renovate: datasource=docker depName=nousresearch/hermes-agent
-    image: nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7  # yamllint disable-line rule:line-length
+    image: nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7 # yamllint disable-line rule:line-length
     command: ["gateway", "run"]
     env_file:
       - .env

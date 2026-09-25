@@ -117,10 +117,46 @@ Applied to: cloudflared, webmail, n8n runner.
 - **All data store images** (PostgreSQL, MySQL, Redis, KeyDB, Valkey, OpenSearch, Meilisearch) — their entrypoints start as `root` and use `gosu` to drop to the database user, which requires `CAP_SETUID`/`CAP_SETGID`. Both `cap_drop: [ALL]` and `no-new-privileges:true` break this pattern and prevent the container from starting.
 - `roundcube` — Apache+PHP image breaks with `cap_drop: [ALL]`; gets `tmpfs: [/tmp]` only.
 
+> **This section is not enforced by CI.** Nothing checks a compose file, so a
+> service that omits `cap_drop` passes review only if someone catches it. The
+> rules above are the contract; applying them is the reviewer's job.
+>
+> Two things make this harder to eyeball than it looks. Service names are
+> ambiguous across stacks — `worker` is the Docker-socket-holding authentik
+> worker in one stack and an ordinary hardened twenty.crm worker in another, so
+> "the worker is exempt" is not a safe rule of thumb. And three services
+> deliberately publish a port on all interfaces: the MX (it exists to receive
+> SMTP), headscale (WireGuard endpoint), frankenphp (terminates ACME
+> HTTP-01). Anything else must bind `127.0.0.1`.
+
 ## Adding a Service
 
 1. Create `<host>/containers/<service>/docker-compose.yml`
 2. Add to `docker_stacks` in `<host>/ansible/roles/system/containers/defaults/main.yml`
+3. Apply the container contract above — CI will not check it for you
+4. Run `ci/validate.sh` for the checks that do exist
+
+## Validation
+
+`ci/validate.sh` runs every check that CI runs: yamllint, ansible-lint,
+`tofu validate` / `tofu fmt` for `tower`, and a zizmor audit of the validation
+workflow. Run it before pushing; the same failures otherwise surface as a red
+PR.
+
+Configs live in `.yamllint` and `.ansible-lint`. Two things to know when
+editing them:
+
+- `.ansible-lint` `skip_list` entries each carry a reason. Adding a new skip
+  to silence a finding is a decision that should be argued in a review, not
+  a reflex — prefer fixing the finding.
+- `.yamllint` must keep `comments-indentation: false` and the two
+  `octal-values` settings. `ansible-lint --fix` silently disables itself when
+  the project yamllint config disagrees with its expectations, so removing
+  them breaks `fqcn` remediation without any visible error.
+
+`ansible-lint --fix fqcn` is safe to run and is how the FQCN migration was
+done. Verify with `git diff` afterwards: it should only add module
+qualification.
 
 ## nftables + Docker + CrowdSec
 
@@ -134,3 +170,13 @@ When nftables is the firewall backend, three things must be correct:
    net.netfilter.nf_conntrack_tcp_timeout_established: 86400
    net.netfilter.nf_conntrack_tcp_timeout_time_wait: 30
    ```
+
+## Declared dependencies
+
+`community.docker` and `community.general` are used by the role tree
+(`community.docker.docker_compose_v2`, `community.general.ufw`, …) and are
+pinned in every host's `ansible/requirements.yml`. They were previously
+resolved only as a transitive dependency of `geerlingguy.docker`, which
+declares no dependencies of its own — so a clean runner would have failed
+`ansible-lint`'s syntax check. Keep them listed.
+

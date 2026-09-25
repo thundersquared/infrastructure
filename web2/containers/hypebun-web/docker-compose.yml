@@ -1,3 +1,4 @@
+---
 services:
   frankenphp:
     # Custom image: base FrankenPHP + mysqli/gd/intl/... required by AltumCode.

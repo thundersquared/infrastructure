@@ -29,13 +29,13 @@
       ansible.builtin.file:
         path: "/tmp/php-ext-build/{{ php_version }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: "PHP {{ php_version }} {{ ext.name }} - download PECL tarball"
       ansible.builtin.get_url:
         url: "https://pecl.php.net/get/{{ ext.name }}-{{ ext.version }}.tgz"
         dest: "/tmp/php-ext-build/{{ ext.name }}-{{ ext.version }}.tgz"
-        mode: '0644'
+        mode: "0644"
 
     - name: "PHP {{ php_version }} {{ ext.name }} - extract source into version-scoped directory"
       ansible.builtin.unarchive:
@@ -54,6 +54,7 @@
       args:
         chdir: "/tmp/php-ext-build/{{ php_version }}/{{ ext.name }}-{{ ext.version }}"
         executable: /bin/bash
+      changed_when: true
 
     - name: "PHP {{ php_version }} {{ ext.name }} - register in cli php.ini"
       ansible.builtin.lineinfile:
