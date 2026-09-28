@@ -7,6 +7,12 @@ services:
     image: hypebun-frankenphp:1.12.4-php8.5
     container_name: hypebun-web
     restart: unless-stopped
+    # Keep rotation explicit; daemon defaults apply only at container creation.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - db
     # tls-check.php (on-demand TLS gate) needs MYSQL_* creds to reach the

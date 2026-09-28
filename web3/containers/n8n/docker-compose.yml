@@ -18,6 +18,20 @@ services:
     networks:
       - n8n
 
+  valkey:
+    image: valkey/valkey:9.1-alpine3.23@sha256:c9b77919daeba2c02ad954d0c844cc4e7142069d177b89c5fd771f405daf9e02  # yamllint disable-line rule:line-length
+    restart: unless-stopped
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - n8n
+
   n8n:
     image: ghcr.io/thundersquared/n8n:2.40.6@sha256:bf7de380b5a8d7a17edf7e89aec9464a6f5fe581866f1e1f0cfdc673dd79a652
     restart: unless-stopped
@@ -57,6 +71,7 @@ services:
 
 volumes:
   postgres:
+  valkey:
   n8n_data:
 
 networks:
