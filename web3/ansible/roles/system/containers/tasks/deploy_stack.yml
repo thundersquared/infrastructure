@@ -9,7 +9,7 @@
     path: "/opt/containers/{{ item.key }}/.env"
     owner: root
     group: root
-    mode: '0600'
+    mode: "0600"
   when: item.value.env_file and env_stat.stat.exists
 
 - name: Deploy stack

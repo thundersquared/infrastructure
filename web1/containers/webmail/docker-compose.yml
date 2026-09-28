@@ -1,3 +1,4 @@
+---
 services:
   webmail:
     image: ghcr.io/linagora/tmail-web:release

@@ -1,12 +1,13 @@
+---
 - name: Read CrowdSec token from environment
-  set_fact:
+  ansible.builtin.set_fact:
     crowdsec_token: "{{ lookup('env', 'CROWDSEC_TOKEN') | default('', true) }}"
 
 - name: Download CrowdSec GPG key
-  get_url:
+  ansible.builtin.get_url:
     url: https://packagecloud.io/crowdsec/crowdsec/gpgkey
     dest: /usr/share/keyrings/crowdsec.asc
-    mode: '0644'
+    mode: "0644"
 
 - name: Install deb822 repository dependency
   ansible.builtin.apt:
@@ -38,7 +39,7 @@
 
 - name: Update apt cache
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
   when: crowdsec_repo.changed
 
 - name: Install CrowdSec
@@ -57,54 +58,56 @@
     state: present
 
 - name: Deploy CrowdSec configuration
-  template:
+  ansible.builtin.template:
     src: config.yaml.j2
     dest: /etc/crowdsec/config.yaml
+    mode: "0644"
   notify: restart crowdsec
 
 - name: Update local API credentials URL
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/crowdsec/local_api_credentials.yaml
-    regexp: '^url:'
-    line: 'url: http://127.0.0.1:8081'
+    regexp: "^url:"
+    line: "url: http://127.0.0.1:8081"
 
 - name: Enable and start CrowdSec service
-  service:
+  ansible.builtin.service:
     name: crowdsec
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Enable and start CrowdSec firewall bouncer service
-  service:
+  ansible.builtin.service:
     name: crowdsec-firewall-bouncer
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Update firewall bouncer API URL
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-    regexp: '^api_url:'
-    line: 'api_url: http://127.0.0.1:8081/'
+    regexp: "^api_url:"
+    line: "api_url: http://127.0.0.1:8081/"
   notify: restart crowdsec-firewall-bouncer
 
 - name: Ensure CrowdSec firewall bouncer uses nftables mode
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-    regexp: '^mode:'
-    line: 'mode: nftables'
+    regexp: "^mode:"
+    line: "mode: nftables"
   notify: restart crowdsec-firewall-bouncer
 
 - name: Update nginx bouncer API URL
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/crowdsec/bouncers/crowdsec-nginx-bouncer.conf
-    regexp: '^API_URL='
-    line: 'API_URL=http://127.0.0.1:8081'
+    regexp: "^API_URL="
+    line: "API_URL=http://127.0.0.1:8081"
 
 - name: Check CrowdSec console enrollment status
-  command: cscli console status -o json
+  ansible.builtin.command: cscli console status -o json
   register: console_status
   changed_when: false
 
 - name: Enroll CrowdSec with console
-  command: cscli console enroll "{{ crowdsec_token }}"
+  ansible.builtin.command: cscli console enroll "{{ crowdsec_token }}"
+  changed_when: true
   when: crowdsec_token | length > 0 and 'console_management' not in (console_status.stdout | from_json)

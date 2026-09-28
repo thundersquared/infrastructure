@@ -73,7 +73,6 @@ volumes:
   postgres:
   valkey:
   n8n_data:
-
 networks:
   n8n:
   app-infra:

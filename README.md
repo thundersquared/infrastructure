@@ -105,6 +105,68 @@ Migrations run automatically as part of the playbook execution via the `system/m
 
 If a migration fails, the entire playbook stops to prevent inconsistent states.
 
+## Validation
+
+Every pull request runs `.github/workflows/validate.yml`, which performs
+static checks only. It never connects to a host, reads a state file, or
+touches a cloud provider, so a broken change is caught before it can reach
+production rather than during a deploy.
+
+| Check | Tool | Catches |
+|---|---|---|
+| YAML | `yamllint` | Syntax errors, duplicate keys, style drift |
+| Ansible | `ansible-lint` | Broken syntax, missing FQCN, non-idempotent commands, unset file modes |
+| OpenTofu | `tofu validate` / `tofu fmt` | Invalid or unformatted configuration for `tower` |
+| Actions | `zizmor` | Workflow-level privilege footguns |
+
+### Running the checks locally
+
+```bash
+ci/validate.sh
+```
+
+Needs `ansible-lint`, `yamllint`, `zizmor` and `tofu` on `PATH`. The script
+runs the same checks as CI, so failures reproduce locally.
+
+### The container security contract is not enforced
+
+The rules in `CLAUDE.md` (drop all capabilities, add `no-new-privileges`, bind
+ports to loopback, pin image tags) are review-time guidance, not a gate. There
+is no automated check, so a new service that omits `cap_drop` will pass CI and
+rely on the reviewer noticing.
+
+This was a deliberate trade-off. An earlier version enforced it with a script
+keyed by an exemption list, but the contract is prose in `CLAUDE.md` and would
+have had two places to drift apart. It was removed rather than maintained.
+
+If you want it enforced, the exemption list is the part that needs writing
+first — a service name alone is ambiguous, since `worker` is the
+Docker-socket-holding authentik worker in one stack and an ordinary hardened
+twenty.crm worker in another.
+
+### Why the validation workflow holds no secrets
+
+`validate.yml` runs on `pull_request`, so it is configured to hold no
+credentials at all — the checks are entirely static analysis:
+
+- It references no `secrets.*` and no `environment:`, so the job runs with no
+  access to repository or environment secrets regardless of who opened the
+  pull request.
+- `permissions: contents: read`, so the automatic `GITHUB_TOKEN` cannot write.
+- Every `actions/checkout` sets `persist-credentials: false`, so the token is
+  not left in `.git/config` where later steps could read it.
+- Third-party actions are pinned to a full commit SHA, fixing the code that
+  runs with this job's token.
+
+All four checks are required status checks on `main`, so a pull request cannot
+merge until they pass. If a check is retired or renamed, remove it from the
+`required_status_checks.contexts` list in the same pull request — otherwise the
+merge blocks waiting on a check that no longer reports.
+
+The deploy workflows do use secrets — they have to. They are triggered by
+`push` to `main`, `schedule` and manual dispatch, never by `pull_request`, so
+they never run code from a pull request.
+
 ## Dependency Management
 
 This repository uses Renovate to keep dependencies up-to-date:

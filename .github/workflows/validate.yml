@@ -1,0 +1,150 @@
+---
+# Static validation for pull requests.
+#
+# This workflow runs on `pull_request` and needs no credentials, so it is
+# configured to hold none:
+#
+#   1. It references no `secrets.*` and no `environment:`, so the job runs with
+#      no access to repository or environment secrets regardless of who opened
+#      the pull request. zizmor's audits cover the mechanical cases; the rest
+#      is review.
+#   2. `permissions: contents: read` at workflow level — no write scopes and
+#      no `id-token`.
+#   3. Third-party actions are pinned to a full commit SHA, so the code that
+#      runs with this job's token is fixed.
+#   4. Every `actions/checkout` sets `persist-credentials: false`, keeping the
+#      token out of `.git/config` where later steps could read it.
+#
+# If a check ever needs a secret, do not add it here. Put it in a separate
+# workflow triggered on `push` to a protected branch.
+
+name: Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    types:
+      - checks_requested
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  yamllint:
+    name: yamllint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/setup-lint-env
+        with:
+          packages: yamllint==1.38.0
+
+      - name: Lint YAML
+        run: yamllint --strict --config-file .yamllint .
+
+  ansible:
+    name: ansible-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # requirements.txt first, then ansible-lint, so that ansible-lint runs
+      # against the ansible-core the deploys pin rather than resolving its own.
+      # If the two ever conflict, this fails here instead of quietly installing
+      # a second copy and validating something deploys never run.
+      - uses: $/.github/actions/setup-lint-env
+        with:
+          packages: -r requirements.txt ansible-lint==26.9.0
+
+      - name: Cache galaxy requirements
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.ansible
+          key: ansible-galaxy-${{ hashFiles('*/ansible/requirements.yml') }}
+          restore-keys: ansible-galaxy-
+
+      # `ansible-galaxy install` (not `collection install`) so roles are
+      # fetched too — requirements.yml lists roles as well as collections, and
+      # the geerlingguy.docker role is what pulls in community.docker /
+      # community.general that the tasks actually call.
+      #
+      # These are resolved from the PR's requirements.yml, so a PR can point
+      # that at an arbitrary source. The job holds no credentials, so the
+      # exposure is limited to a throwaway runner.
+      - name: Install collections and roles
+        run: |
+          for host in mx1 web1 web2 web3 tower mirror; do
+            if [ -f "$host/ansible/requirements.yml" ]; then
+              ansible-galaxy install -r "$host/ansible/requirements.yml" --force
+            fi
+          done
+
+      - name: Lint playbooks and roles
+        run: ansible-lint --offline
+
+  tofu:
+    name: OpenTofu
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tower/terraform
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: 1.12.6
+
+      # -backend=false skips the S3 backend entirely, so validate needs no OCI
+      # credentials and no state access.
+      - name: Init without backend
+        run: tofu init -backend=false -input=false -no-color
+
+      - name: Validate
+        run: tofu validate -no-color
+
+      - name: Check formatting
+        run: tofu fmt -check -recursive -diff
+
+  workflows:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/setup-lint-env
+        with:
+          packages: zizmor==1.30.1
+
+      # Scoped to this workflow on purpose.
+      #
+      # This is the only workflow that runs code from a pull request, so it is
+      # the one where an Actions-level flaw matters most. Auditing it keeps the
+      # properties in the header comment from regressing.
+      #
+      # The deploy workflows are excluded because they legitimately hold
+      # credentials: they need `secrets.*` to deploy, and two of them chain off
+      # a provisioning job. Those are sound here because the triggering
+      # workflow only runs on push-to-main, schedule and manual dispatch.
+      # zizmor currently reports 42 findings across those eight files, mostly
+      # `template-injection` on `secrets.*` interpolation and missing
+      # `persist-credentials: false`. Worth a dedicated hardening pass; not
+      # this PR.
+      - name: Audit this workflow
+        run: zizmor --persona=pedantic --min-severity=low .github/workflows/validate.yml
