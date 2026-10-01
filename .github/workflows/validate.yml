@@ -73,12 +73,17 @@ jobs:
         with:
           path: ~/.ansible
           key: ansible-galaxy-${{ hashFiles('*/ansible/requirements.yml') }}
-          restore-keys: ansible-galaxy-
 
       # `ansible-galaxy install` (not `collection install`) so roles are
       # fetched too — requirements.yml lists roles as well as collections, and
       # the geerlingguy.docker role is what pulls in community.docker /
       # community.general that the tasks actually call.
+      #
+      # No `--force`: it re-downloaded every item once per host (~6x) and
+      # defeated the cache. Without it, galaxy skips what is already installed,
+      # so hosts sharing the same pins cost nothing after the first. The cache
+      # key has no restore-keys fallback, so a changed requirements.yml always
+      # starts from an empty cache (roles are not re-fetched on version bump).
       #
       # These are resolved from the PR's requirements.yml, so a PR can point
       # that at an arbitrary source. The job holds no credentials, so the
@@ -87,7 +92,7 @@ jobs:
         run: |
           for host in mx1 web1 web2 web3 tower mirror; do
             if [ -f "$host/ansible/requirements.yml" ]; then
-              ansible-galaxy install -r "$host/ansible/requirements.yml" --force
+              ansible-galaxy install -r "$host/ansible/requirements.yml"
             fi
           done
 
