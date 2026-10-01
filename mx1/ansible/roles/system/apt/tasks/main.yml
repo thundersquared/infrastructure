@@ -32,6 +32,22 @@
     enabled: true
     state: started
 
+- name: Install extrepo
+  ansible.builtin.apt:
+    name: extrepo
+    state: present
+
+- name: Enable mise repository
+  ansible.builtin.command: extrepo enable mise
+  args:
+    creates: /etc/apt/sources.list.d/extrepo_mise.sources
+
+- name: Install mise
+  ansible.builtin.apt:
+    name: mise
+    state: present
+    update_cache: true
+
 - name: Check if reboot required
   ansible.builtin.stat:
     path: /var/run/reboot-required
