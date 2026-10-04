@@ -1,0 +1,14 @@
+---
+# Bare public hostname of tower, e.g. "host.example.com". Kept out of the
+# public repo: it comes from the TOWER_HOSTNAME environment secret (the same
+# one OpenTofu uses for the DNS record). Unset = the headscale stack is left
+# alone, see tasks/main.yml.
+headscale_hostname: "{{ lookup('env', 'TOWER_HOSTNAME') }}"
+
+headscale_stack_dir: /opt/containers/headscale
+headscale_data_dir: "{{ headscale_stack_dir }}/data"
+headscale_backup_dir: "{{ headscale_stack_dir }}/backups"
+# Snapshots kept on the node. Deploys run at least twice a day (the
+# scheduled Ansible run, plus the one chained after the scheduled OpenTofu
+# apply), so 14 covers roughly a week. Must be at least 1.
+headscale_backup_keep: 14

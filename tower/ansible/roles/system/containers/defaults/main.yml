@@ -7,5 +7,5 @@ docker_stacks:
     env_file: true
     state: present
   headscale:
-    env_file: false
+    env_file: true
     state: present

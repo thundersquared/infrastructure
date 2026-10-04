@@ -12,6 +12,7 @@
     - role: system/migrations
     - role: system/config
     - role: system/docker-login
+    - role: system/headscale
     - role: system/containers
   collections:
     - devsec.hardening

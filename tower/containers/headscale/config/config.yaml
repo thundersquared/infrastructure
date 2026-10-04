@@ -1,0 +1,114 @@
+---
+# Headscale server configuration for tower.
+#
+# Ansible copies this directory to /opt/containers/headscale/config/ and the
+# compose file mounts it read-only at /etc/headscale. It holds no secrets:
+# the Noise/DERP private keys and the SQLite database are generated into
+# /opt/containers/headscale/data on first start and never enter git.
+#
+# The public hostname is deliberately not in this file (the repo is public).
+# Headscale reads any key from HEADSCALE_<KEY> environment variables, and the
+# system/headscale role writes the stack's .env from the TOWER_HOSTNAME
+# secret:
+#   HEADSCALE_SERVER_URL=https://<hostname>
+#   HEADSCALE_TLS_LETSENCRYPT_HOSTNAME=<hostname>
+# Without them headscale refuses to start (server_url must be https://...).
+#
+# Written against headscale v0.29.x. On every minor upgrade, diff this file
+# against that release's config-example.yaml — headscale refuses to start on
+# removed keys, which is what CI's `headscale configtest` job catches first.
+# https://github.com/juanfont/headscale/blob/v0.29.4/config-example.yaml
+
+# Control plane, Noise and embedded DERP are all served on 443 inside the
+# container. Metrics and gRPC stay on the container's loopback; the CLI talks
+# to the unix socket instead.
+listen_addr: 0.0.0.0:443
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+
+# Nothing proxies headscale, so never honour forwarded-for headers.
+trusted_proxies: []
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+# Self-hosted relay only: no Tailscale-operated DERP servers in the map. If
+# tower is unreachable, peers that cannot connect directly lose connectivity.
+# Add https://controlplane.tailscale.com/derpmap/default to `urls` to fall
+# back to Tailscale's relays (traffic stays end-to-end encrypted).
+derp:
+  server:
+    enabled: true
+    region_id: 999
+    region_code: tower
+    region_name: Tower (self-hosted)
+    # Only nodes registered on this server may relay through it.
+    verify_clients: true
+    stun_listen_addr: 0.0.0.0:3478
+    private_key_path: /var/lib/headscale/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+  urls: []
+  paths: []
+  auto_update_enabled: false
+  update_frequency: 3h
+
+node:
+  # Untagged nodes never expire unless expired by hand. The tailnet is a few
+  # always-on servers registered with single-use keys.
+  expiry: 0
+  ephemeral:
+    inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+    wal_autocheckpoint: 1000
+
+# TLS-ALPN-01 is answered on listen_addr, so no port 80 is needed. The DNS
+# record must resolve to tower before the first start. The hostname comes
+# from HEADSCALE_TLS_LETSENCRYPT_HOSTNAME (see the top of this file).
+acme_url: https://acme-v02.api.letsencrypt.org/directory
+acme_email: ""
+tls_letsencrypt_cache_dir: /var/lib/headscale/cache
+tls_letsencrypt_challenge_type: TLS-ALPN-01
+tls_cert_path: ""
+tls_key_path: ""
+
+log:
+  level: info
+  format: text
+
+# Reloaded on restart or SIGHUP. Edit policy.hujson next to this file.
+policy:
+  mode: file
+  path: /etc/headscale/policy.hujson
+
+# Headscale does not manage client DNS: no MagicDNS and no nameserver
+# overrides, so `tailscale up` on a node leaves its resolvers alone.
+# MagicDNS needs a base_domain that differs from server_url's domain.
+dns:
+  magic_dns: false
+  base_domain: ""
+  override_local_dns: false
+  nameservers:
+    global: []
+    split: {}
+  search_domains: []
+  extra_records: []
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+
+logtail:
+  enabled: false
+
+auto_update:
+  enabled: false
