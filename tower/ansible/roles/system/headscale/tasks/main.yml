@@ -27,8 +27,8 @@
 - name: Check the headscale hostname
   ansible.builtin.assert:
     that:
-      - headscale_hostname is match('^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$')
-    fail_msg: TOWER_HOSTNAME must be a bare hostname, with no scheme, port or path.
+      - headscale_hostname is match('^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$')
+    fail_msg: TOWER_HOSTNAME must be a bare lower-case FQDN, with no scheme, port or path.
     quiet: true
   when: headscale_hostname | length > 0
 

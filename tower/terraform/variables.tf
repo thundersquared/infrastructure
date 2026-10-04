@@ -84,6 +84,13 @@ variable "tower_hostname" {
   description = "Public FQDN of tower: the DNS record name and the Headscale server URL host. Kept out of the public repo; comes from the TOWER_HOSTNAME environment secret."
   type        = string
   sensitive   = true
+
+  # A missing GitHub secret arrives as an empty string, which still counts as
+  # a set value; without this the apply would try to rename the record to "".
+  validation {
+    condition     = can(regex("^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$", var.tower_hostname))
+    error_message = "tower_hostname must be a bare lower-case FQDN. Is the TOWER_HOSTNAME secret set?"
+  }
 }
 
 variable "cloudflare_zone_id" {

@@ -35,8 +35,8 @@ https://`).
 
 ## Before promoting to production
 
-1. Add the `TOWER_HOSTNAME` environment secret **before merging**. The OpenTofu apply fails without it (the
-   variable is required), and the Headscale stack is skipped.
+1. Add the `TOWER_HOSTNAME` environment secret **before merging**. Without it the OpenTofu apply stops at
+   variable validation (an unset secret arrives as an empty string), and the Headscale stack is skipped.
 2. Run these on tower, since the stack's live state was never checked:
 
    ```bash
