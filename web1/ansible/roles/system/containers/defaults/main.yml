@@ -1,8 +1,8 @@
 ---
 docker_stacks:
-  webmail:
-    env_file: false
-    state: stopped
+  mailflow:
+    env_file: true
+    state: present
   roundcube:
     env_file: true
     state: present

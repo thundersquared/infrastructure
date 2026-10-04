@@ -106,7 +106,7 @@ tmpfs:
   - /run        # nginx (PID file)
 ```
 
-Applied to: cloudflared, webmail, n8n runner.
+Applied to: cloudflared, mailflow frontend + backend, n8n runner.
 
 `calcom` is **not** read-only — its entrypoint installs NPM packages and writes a build cache on startup, which breaks under `read_only: true`. Keep `cap_drop: [ALL]` + `no-new-privileges:true`, omit `read_only`/`tmpfs`.
 
