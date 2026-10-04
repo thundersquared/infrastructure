@@ -30,6 +30,11 @@ grpc_allow_insecure: false
 # Nothing proxies headscale, so never honour forwarded-for headers.
 trusted_proxies: []
 
+# Every headscale CLI call, including the 30-second `headscale health`
+# healthcheck, otherwise asks GitHub for the latest release (thousands of
+# unauthenticated API calls a day). Renovate tracks releases instead.
+disable_check_updates: true
+
 noise:
   private_key_path: /var/lib/headscale/noise_private.key
 
