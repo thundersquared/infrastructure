@@ -4,7 +4,7 @@ provider "cloudflare" {
 
 resource "cloudflare_dns_record" "tower" {
   zone_id = var.cloudflare_zone_id
-  name    = "tower.compute.eu"
+  name    = var.tower_hostname
   type    = "A"
   content = oci_core_instance.tower.public_ip
   ttl     = 3600

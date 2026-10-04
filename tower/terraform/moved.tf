@@ -30,12 +30,3 @@ moved {
   from = oci_core_subnet.gateway
   to   = oci_core_subnet.tower
 }
-
-# arm1.turin.oci DNS record deleted — tower.compute.eu replaces it
-removed {
-  from = cloudflare_dns_record.arm1
-
-  lifecycle {
-    destroy = true
-  }
-}

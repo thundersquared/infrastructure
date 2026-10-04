@@ -35,6 +35,7 @@ jobs:
       TF_VAR_ssh_authorized_keys: ${{ secrets.SSH_AUTHORIZED_KEYS }}
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+      TF_VAR_tower_hostname: ${{ secrets.TOWER_HOSTNAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

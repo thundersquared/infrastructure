@@ -80,6 +80,12 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
+variable "tower_hostname" {
+  description = "Public FQDN of tower: the DNS record name and the Headscale server URL host. Kept out of the public repo; comes from the TOWER_HOSTNAME environment secret."
+  type        = string
+  sensitive   = true
+}
+
 variable "cloudflare_zone_id" {
   description = "Cloudflare zone ID"
   type        = string

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tower runs [Headscale](https://github.com/juanfont/headscale) — a self-hosted implementation of the Tailscale control plane — with the built-in DERP relay enabled. Nodes (Unraid servers named `giraffe`, `cetriolo`, `ostrich`) run the standard Tailscale client pointed at this control server. The VPN subnet is `100.64.0.0/10`.
+Tower runs [Headscale](https://github.com/juanfont/headscale) — a self-hosted implementation of the Tailscale control plane — with the built-in DERP relay enabled. Nodes run the standard Tailscale client pointed at this control server. The VPN subnet is `100.64.0.0/10`.
 
 The Headscale container is defined in `tower/containers/headscale/docker-compose.yml` and managed by Ansible like all other stacks.
 
@@ -91,10 +91,10 @@ docker compose exec headscale headscale debug node-key
 
 ### 2. Create a user
 
-Headscale requires at least one user (equivalent to a Tailscale account/tailnet). Create one for the homelab nodes:
+Headscale requires at least one user (equivalent to a Tailscale account/tailnet). Create one for the nodes:
 
 ```bash
-docker compose exec headscale headscale users create homelab
+docker compose exec headscale headscale users create <user>
 ```
 
 ### 3. Generate a preauth key
@@ -105,7 +105,7 @@ Create a reusable preauth key so nodes can register without manual approval:
 docker compose exec headscale headscale preauthkeys create --reusable --expiration 24h
 ```
 
-Copy the key from the output. Share it securely with each node operator (or use it yourself on each Unraid host). After nodes are registered you can let the key expire or delete it.
+Copy the key from the output. Share it securely with each node operator. After nodes are registered you can let the key expire or delete it.
 
 ---
 

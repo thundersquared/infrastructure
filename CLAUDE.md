@@ -38,6 +38,10 @@ docker_stacks:
 
 ## Conventions
 
+- **The repository is public.** Do not commit identifying details: hostnames and domains of the hosts (tower's comes
+  from the `TOWER_HOSTNAME` environment secret), names of personal machines or tailnet nodes, what hardware or OS
+  they run, or account identifiers. This applies to comments, docs, commit messages and PR text too. Inject runtime
+  values through environment secrets → `.env` / `TF_VAR_*`, and write `<tower-hostname>`-style placeholders in docs
 - **No `version:` key** in `docker-compose.yml` (deprecated in Compose V2)
 - **Always bind ports to localhost**: `127.0.0.1:<port>:<port>`; use incremental ports (3001, 3002, ...) per host
 - **Prefer `.env` files** over inline `environment:` blocks; set `env_file: - .env` in compose
