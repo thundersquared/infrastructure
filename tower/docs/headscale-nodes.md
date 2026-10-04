@@ -17,7 +17,7 @@ Install the Tailscale client for the node's OS from <https://tailscale.com/downl
 
 ### 2. Point Tailscale at the control server
 
-Create a single-use pre-auth key on tower ([headscale-setup.md](headscale-setup.md)),
+Create a single-use pre-auth key on tower ([headscale-setup.md](headscale-setup.md#2-create-a-pre-auth-key-per-node)),
 then run this on the node:
 
 ```bash

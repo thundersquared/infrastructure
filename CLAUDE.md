@@ -8,7 +8,7 @@ This repo manages infrastructure for multiple hosts using Ansible + Docker Compo
 
 **Ansible hosts** (`mx1`, `web1`, `web2`, `web3`): each top-level directory contains `ansible/` (playbooks and roles) and `containers/` (Docker Compose stacks).
 
-**OpenTofu hosts** (`tower`): each top-level directory contains `terraform/` (`.tf` files) and `docs/` (node-specific setup guide). Run `tofu` commands from the `terraform/` subdirectory. Variables are passed via `TF_VAR_*` env vars; the S3 backend requires `-backend-config` flags at `init` time — see `tower/docs/setup.md`. OpenTofu version: **1.12.x** (pinned in `.github/workflows/tower-tofu-apply.yml`). Note: `error()` in expressions requires ≥ 1.9. When updating providers, regenerate the lock file with `tofu providers lock -platform=linux_amd64` so CI hashes are included.
+**OpenTofu hosts** (`tower`): each top-level directory contains `terraform/` (`.tf` files) and `docs/` (node-specific setup guide). `tower` is also configured by Ansible: it has `ansible/` and `containers/` like the other hosts, deployed after each OpenTofu apply. Run `tofu` commands from the `terraform/` subdirectory. Variables are passed via `TF_VAR_*` env vars; the S3 backend requires `-backend-config` flags at `init` time — see `tower/docs/setup.md`. OpenTofu version: **1.12.x** (pinned in `.github/workflows/tower-tofu-apply.yml`). Note: `error()` in expressions requires ≥ 1.9. When updating providers, regenerate the lock file with `tofu providers lock -platform=linux_amd64` so CI hashes are included.
 
 ## Running Playbooks
 
@@ -97,7 +97,7 @@ security_opt:
 
 **When to add `cap_add` back** (always pair with `cap_drop: [ALL]`):
 - `NET_BIND_SERVICE` — container binds a privileged port (< 1024) directly, e.g. SMTP (25, 465, 587), IMAP (993), HTTPS (443)
-- `NET_ADMIN` — VPN/network management (e.g. headscale)
+- `NET_ADMIN` — VPN/network management (e.g. a WireGuard or Tailscale *client* container; not headscale, which is only a control server and needs just `NET_BIND_SERVICE`)
 - `SYS_NICE` — real-time scheduling (e.g. MySQL)
 - `CHOWN` — init/setup containers that `chown` volume paths on startup
 
@@ -110,7 +110,7 @@ tmpfs:
   - /run        # nginx (PID file)
 ```
 
-Applied to: cloudflared, mailflow frontend + backend, n8n runner.
+Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is stateful but also runs `read_only: true`: it writes only to its data volume and a `/var/run/headscale` tmpfs.
 
 `calcom` is **not** read-only — its entrypoint installs NPM packages and writes a build cache on startup, which breaks under `read_only: true`. Keep `cap_drop: [ALL]` + `no-new-privileges:true`, omit `read_only`/`tmpfs`.
 
@@ -130,8 +130,8 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner.
 > worker in one stack and an ordinary hardened twenty.crm worker in another, so
 > "the worker is exempt" is not a safe rule of thumb. And three services
 > deliberately publish a port on all interfaces: the MX (it exists to receive
-> SMTP), headscale (WireGuard endpoint), frankenphp (terminates ACME
-> HTTP-01). Anything else must bind `127.0.0.1`.
+> SMTP), headscale (tailnet control plane + DERP on 443/tcp, STUN on
+> 3478/udp), frankenphp (terminates ACME HTTP-01). Anything else must bind `127.0.0.1`.
 
 ## Adding a Service
 
@@ -143,9 +143,16 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner.
 ## Validation
 
 `ci/validate.sh` runs every check that CI runs: yamllint, ansible-lint,
-`tofu validate` / `tofu fmt` for `tower`, and a zizmor audit of the validation
-workflow. Run it before pushing; the same failures otherwise surface as a red
-PR.
+`tofu validate` / `tofu fmt` for `tower`, a zizmor audit of the validation
+workflow, and `ci/headscale-check.sh`, which runs the headscale image pinned in
+`tower/containers/headscale/docker-compose.yml` (`configtest`, `policy check`)
+against the committed config and policy and needs docker. Run it before pushing;
+the same failures otherwise surface as a red PR.
+
+Headscale's config and policy live in git at
+`tower/containers/headscale/config/` and are mounted read-only. Never tell
+anyone to edit them on the node. Operations, upgrades, restore, and why its
+users and nodes are not in OpenTofu: `tower/docs/headscale-setup.md`.
 
 Configs live in `.yamllint` and `.ansible-lint`. Two things to know when
 editing them:
