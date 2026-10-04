@@ -71,19 +71,6 @@
       exist, so system/containers skips the headscale stack.
   when: not headscale_env.stat.exists
 
-# Before this role existed the config was hand-written at the stack root.
-# Rename it (kept for comparison, under a name nothing mounts) only in a run
-# that redeploys the stack: an untouched old container still bind-mounts it.
-- name: Retire the hand-written headscale config
-  ansible.builtin.command:
-    argv:
-      - mv
-      - "{{ headscale_stack_dir }}/config.yaml"
-      - "{{ headscale_stack_dir }}/config.yaml.pre-git"
-    creates: "{{ headscale_stack_dir }}/config.yaml.pre-git"
-    removes: "{{ headscale_stack_dir }}/config.yaml"
-  when: headscale_env.stat.exists
-
 - name: Check for an existing headscale database
   ansible.builtin.stat:
     path: "{{ headscale_data_dir }}/db.sqlite"

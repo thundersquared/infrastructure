@@ -28,3 +28,10 @@
           ansible.builtin.include_role:
             name: devsec.hardening.ssh_hardening
           when: scheduled_run
+  post_tasks:
+    # After system/containers has recreated the stack, so the old container no
+    # longer bind-mounts the hand-written config.
+    - name: Retire the hand-written headscale config
+      ansible.builtin.include_role:
+        name: system/headscale
+        tasks_from: retire_legacy_config
