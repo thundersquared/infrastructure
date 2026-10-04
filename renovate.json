@@ -47,6 +47,15 @@
       "groupName": "OpenTofu core version"
     },
     {
+      "description": "Headscale (0.29+) refuses to start after skipping or downgrading a minor version, and migrates its database on start. One PR per minor so they can be merged in order; the checklist rides in each PR body.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["headscale/headscale"],
+      "separateMultipleMinor": true,
+      "prBodyNotes": [
+        "**Headscale upgrade** — see `tower/docs/headscale-setup.md#upgrading`. Merge minor versions one at a time, oldest first. Read the release notes for removed config keys (the `Headscale config` check runs this image against the committed config) and for the minimum Tailscale client version. The deploy snapshots the database first; rolling back a minor upgrade means restoring that snapshot."
+      ]
+    },
+    {
       "description": "Compare gpt-load release candidate tags by their numeric RC suffix.",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/tbphp/gpt-load"],
