@@ -15,8 +15,9 @@
 # Without them headscale refuses to start (server_url must be https://...).
 #
 # Written against headscale v0.29.x. On every minor upgrade, diff this file
-# against that release's config-example.yaml — headscale refuses to start on
-# removed keys, which is what CI's `headscale configtest` job catches first.
+# against that release's config-example.yaml. Keys headscale lists as removed
+# make it refuse to start (CI's `headscale configtest` job catches those), but
+# any other renamed or dropped key is silently ignored.
 # https://github.com/juanfont/headscale/blob/v0.29.4/config-example.yaml
 
 # Control plane, Noise and embedded DERP are all served on 443 inside the

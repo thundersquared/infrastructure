@@ -2,12 +2,15 @@
 # Check tower's committed Headscale config and policy with the exact image the
 # compose file pins.
 #
-# Headscale refuses to start on removed or renamed config keys (`dns_config`
-# and `ip_prefixes` in 0.23, `randomize_client_port` in 0.29), and
-# `docker compose up -d` still reports success when the container then
-# crash-loops, so the deploy cannot catch it. Running the pinned image against
-# the committed files here can. On a Renovate image bump, this is what fails
-# when the new release dropped a key the config still uses.
+# Headscale refuses to start on keys its deprecation list marks as removed
+# (`dns_config` in 0.23, `randomize_client_port` in 0.29) and on invalid
+# values, and `docker compose up -d` still reports success when the container
+# then crash-loops, so the deploy cannot catch it. Running the pinned image
+# against the committed files here can. On a Renovate image bump, this is what
+# fails when the new release removed a key the config still uses. Other
+# renamed or dropped keys are ignored without a warning (old configs' unread
+# `ip_prefixes` left no prefix configured, which only failed indirectly), so
+# the upgrade checklist's config-example.yaml diff is still needed.
 #
 # The repo is public, so the server's hostname is not in the config: on tower
 # it arrives through the stack's .env (HEADSCALE_SERVER_URL and

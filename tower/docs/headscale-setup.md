@@ -6,12 +6,13 @@ Tower runs [Headscale](https://github.com/juanfont/headscale), a self-hosted imp
 server, with the embedded DERP relay enabled. Nodes run the standard Tailscale client pointed at
 `https://<tower-hostname>`. Node addresses come from `100.64.0.0/10` and `fd7a:115c:a1e0::/48`.
 
-This repository is public, so tower's hostname is not committed anywhere. It lives in one GitHub environment secret,
+This repository is public, so tower's hostname is not in its files. It lives in one GitHub environment secret,
 `TOWER_HOSTNAME` (environment `tower`, see [setup.md](setup.md#environment-secrets-tower)), as a bare FQDN with no scheme.
 OpenTofu uses it as the DNS record name. Ansible writes it into the stack's `.env` as `HEADSCALE_SERVER_URL` and
 `HEADSCALE_TLS_LETSENCRYPT_HOSTNAME`, which Headscale reads in place of the matching config keys. Docs and examples
-write it as `<tower-hostname>`. Let's Encrypt still publishes it in Certificate Transparency logs, so this keeps it out
-of the repo, not secret.
+write it as `<tower-hostname>`. This keeps the name out of the current tree, not secret. Let's Encrypt publishes it in
+Certificate Transparency logs, and any name that was ever committed stays in public git history. To keep the host hard
+to find, pick a name that has never been in the repository, before registering clients.
 
 Who manages what:
 
@@ -48,11 +49,14 @@ https://`).
    ```
 
 - If clients were registered against a different `server_url`, set `TOWER_HOSTNAME` to that host instead. Clients store
-  the login server URL, so changing it orphans every registered node.
+  the login server URL, so changing it orphans every registered node. Changing `TOWER_HOSTNAME` also renames the
+  OpenTofu-managed DNS record in place. If a record for the new name already exists, delete it or `tofu import` it first,
+  or the apply fails.
 - If `data/db.sqlite` exists and nodes are registered, the deploy snapshots it before switching to the committed config
   (see [Backup and restore](#backup-and-restore)).
-- The first deploy that writes `.env` renames the hand-written `config.yaml` to `config.yaml.pre-git`, so it can't be
-  mistaken for the live file. Diff it against `config/config.yaml`, then delete it.
+- Once the stack runs on the new compose (so nothing mounts it any more), the deploy renames the hand-written
+  `config.yaml` to `config.yaml.pre-git`, so it can't be mistaken for the live file. Diff it against
+  `config/config.yaml`, then delete it.
 
 After the deploy, verify from **outside** tower:
 
@@ -60,8 +64,9 @@ After the deploy, verify from **outside** tower:
 curl -fsS https://<tower-hostname>/health     # {"status":"pass"}; also proves the Let's Encrypt cert is valid
 ```
 
-From a node: `tailscale netcheck` should list a `tower` DERP region with a latency, which proves `3478/udp` is
-reachable. If either check fails while the container is healthy, check the host firewall: OCI's Ubuntu images can ship
+From a node: `tailscale netcheck` must report `UDP: true` and `IPv4: yes, <address>`. The mapped address comes from
+tower's STUN server, which proves `3478/udp` is reachable. A `tower` region latency on its own does not: netcheck
+measures it over HTTPS when STUN fails. If either check fails while the container is healthy, check the host firewall: OCI's Ubuntu images can ship
 iptables rules that reject inbound traffic other than SSH, on top of the security list.
 
 ---
@@ -120,8 +125,9 @@ on start. Renovate raises one PR per minor version (`renovate.json`), and each P
 1. Merge minor versions **one at a time, oldest first**. Patch releases within a minor are always safe.
 2. Read the release notes for removed config keys and the minimum Tailscale client version (0.29: **v1.80.0**). Update
    the clients first if needed.
-3. Diff `config/config.yaml` against that release's `config-example.yaml`. The CI check fails on keys that make Headscale
-   refuse to start, but not on new options you may want.
+3. Diff `config/config.yaml` against that release's `config-example.yaml`. The CI check fails only on keys Headscale
+   lists as removed (it refuses to start on those). Any other renamed or dropped key is **silently ignored**, and new
+   options don't show up at all, so this diff is the only way to catch either.
 4. Merge. The deploy snapshots the database, then recreates the container on the new image.
 5. Check `docker compose ps` (healthy) and `docker compose logs`, then run `tailscale status` on a node.
 
@@ -130,8 +136,10 @@ matters:
 
 1. Merge a revert of the upgrade PR. The deploy recreates the container on the previous image, which refuses to open the
    migrated database and crash-loops. That is expected and changes nothing.
-2. On tower, restore the newest snapshot whose timestamp is **before** the upgrade deploy, following the steps in
-   [Backup and restore](#backup-and-restore). The snapshot that deploy took holds the migrated database, so skip it.
+2. On tower, restore the snapshot **the upgrade deploy itself took**, following the steps in
+   [Backup and restore](#backup-and-restore). The deploy takes its snapshot before it switches the image, so that one is
+   the newest copy from before the migration. Every later snapshot holds the migrated database, including the one the
+   revert deploy just took. The deploy log shows which run was the upgrade.
 
 Doing it the other way round (restore first, revert later) leaves a window where the newer image starts on the restored
 database, for example on the next scheduled deploy, and migrates it again.
@@ -187,7 +195,7 @@ Run from `/opt/containers/headscale/` on tower. Node and key commands take numer
 | Expire a node (forces re-login) | `docker compose exec headscale headscale nodes expire --identifier <node-id>` |
 | Delete a node | `docker compose exec headscale headscale nodes delete --identifier <node-id>` |
 | Show / approve advertised routes | `docker compose exec headscale headscale nodes list-routes` / `nodes approve-routes --identifier <node-id> --routes <cidr,…>` |
-| Show the loaded policy | `docker compose exec headscale headscale policy get` |
+| Show the policy file as mounted (not necessarily the loaded one until the next restart) | `docker compose exec headscale headscale policy get` |
 
 ---
 
