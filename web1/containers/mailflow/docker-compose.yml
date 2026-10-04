@@ -1,0 +1,126 @@
+---
+# MailFlow — unified IMAP/SMTP webmail (https://github.com/maathimself/mailflow)
+# Adapted from upstream docker-compose.ghcr.yml: HTTP only on localhost (TLS is
+# terminated by the host reverse proxy), bundled Caddy profile dropped.
+services:
+  frontend:
+    image: ghcr.io/maathimself/mailflow-frontend:3.8.1@sha256:8f4b3e6cc7ccf045669edd4f2887bcd6de970377b6c95d48f7b1e8430563be96  # yamllint disable-line rule:line-length
+    container_name: mailflow-frontend
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      # nginx master binds :80/:443, creates its temp dirs and drops workers
+      # to the nginx user
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+    # Upstream supports read-only roots: the entrypoint's config rewrites are
+    # best-effort and the baked-in resolver (127.0.0.11) is Docker's.
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+      - /var/cache/nginx
+      # Self-signed cert for the unused internal :443 listener, regenerated
+      # on each start
+      - /etc/nginx/ssl
+    ports:
+      - "127.0.0.1:3008:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - mailflow
+      - app-infra
+
+  backend:
+    image: ghcr.io/maathimself/mailflow-backend:3.8.1@sha256:c98193a87a232661895cf5300e4f886733d34410b68c408a347c6ebadc838e98  # yamllint disable-line rule:line-length
+    container_name: mailflow-backend
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    env_file:
+      - .env
+    environment:
+      # Stack wiring only; everything else lives in .env
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_URL: ${APP_URL}
+      DB_HOST: postgres
+      DB_NAME: mailflow
+      DB_USER: mailflow
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - mailflow
+
+  postgres:
+    image: postgres:18.6-alpine3.23@sha256:885cf05d376c7cf27afef02073e6bdac3841252537f16e244fd1c1e6a7c99fb1
+    container_name: mailflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mailflow
+      POSTGRES_USER: mailflow
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # PG18: version-specific PGDATA; volume mounts at /var/lib/postgresql
+      PGDATA: /var/lib/postgresql/18/docker
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailflow -d mailflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - mailflow
+
+  redis:
+    image: valkey/valkey:9.1-alpine3.23@sha256:c9b77919daeba2c02ad954d0c844cc4e7142069d177b89c5fd771f405daf9e02  # yamllint disable-line rule:line-length
+    container_name: mailflow-redis
+    restart: unless-stopped
+    command: ["valkey-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - mailflow
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mailflow:
+  app-infra:
+    external: true

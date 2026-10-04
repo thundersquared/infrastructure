@@ -1,0 +1,22 @@
+---
+# Migration: 20261004_0004_remove_webmail_stack
+# Description: Remove the retired tmail-web "webmail" stack (replaced by mailflow)
+# Problem: dropping a stack from docker_stacks and containers/ leaves its
+#   (stopped) container and /opt/containers/webmail behind on the host
+# Solution: compose down the old project, then delete its directory
+
+- name: Check for webmail compose project
+  ansible.builtin.stat:
+    path: /opt/containers/webmail/docker-compose.yml
+  register: webmail_compose
+
+- name: Remove webmail containers
+  community.docker.docker_compose_v2:
+    project_src: /opt/containers/webmail
+    state: absent
+  when: webmail_compose.stat.exists
+
+- name: Remove webmail project directory
+  ansible.builtin.file:
+    path: /opt/containers/webmail
+    state: absent
