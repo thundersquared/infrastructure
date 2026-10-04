@@ -103,7 +103,9 @@ Edit `config/config.yaml` or `config/policy.hujson` in a pull request. The **Hea
 image's `headscale configtest` and `headscale policy check` against them. A bad policy also stops Headscale from
 starting, so a red check here means "this would have taken the tailnet down".
 
-On merge, the deploy copies the files and restarts the stack, which reloads both.
+On merge, the deploy copies the files and recreates the container, which reloads both. A fingerprint of `config/` is
+written into `.env` (`CONFIG_SHA256`), so a retry after an interrupted deploy still recreates it, even when the files on
+tower are already up to date.
 
 `policy.hujson` is currently allow-all, which is exactly what Headscale does with no policy at all. The file explains how
 to restrict it; any `"grants"` key switches the tailnet to deny-by-default.
@@ -123,14 +125,24 @@ on start. Renovate raises one PR per minor version (`renovate.json`), and each P
 4. Merge. The deploy snapshots the database, then recreates the container on the new image.
 5. Check `docker compose ps` (healthy) and `docker compose logs`, then run `tailscale status` on a node.
 
-To roll back a minor upgrade, pin the previous image in `docker-compose.yml` **and** restore the snapshot taken just
-before the upgrade. The old version will not open a migrated database.
+To roll back a minor upgrade, the previous image and the pre-upgrade database must go back together. The order
+matters:
+
+1. Merge a revert of the upgrade PR. The deploy recreates the container on the previous image, which refuses to open the
+   migrated database and crash-loops. That is expected and changes nothing.
+2. On tower, restore the newest snapshot whose timestamp is **before** the upgrade deploy, following the steps in
+   [Backup and restore](#backup-and-restore). The snapshot that deploy took holds the migrated database, so skip it.
+
+Doing it the other way round (restore first, revert later) leaves a window where the newer image starts on the restored
+database, for example on the next scheduled deploy, and migrates it again.
 
 ---
 
 ## Backup and restore
 
-Before every deploy, `system/headscale` writes a snapshot to `/opt/containers/headscale/backups/<UTC timestamp>/`:
+Before every deploy, `system/headscale` writes a snapshot to `/opt/containers/headscale/backups/<UTC timestamp>/`. It
+is built under a hidden `.<timestamp>.partial` name and renamed only once complete, so an interrupted attempt never takes
+one of the kept slots. The next run removes leftover partial directories. Each snapshot holds:
 
 - `db.sqlite`: an online copy taken with SQLite's backup API (consistent while Headscale runs), checked with
   `PRAGMA quick_check`. A failing check fails the deploy before the image is changed.
@@ -148,8 +160,11 @@ docker compose stop
 cp backups/<timestamp>/db.sqlite data/db.sqlite
 rm -f data/db.sqlite-wal data/db.sqlite-shm      # stale WAL from the newer database
 cp backups/<timestamp>/*.key data/               # only if the keys were lost
-docker compose start
+docker compose up -d
 ```
+
+`up -d` (not `start`) makes sure the container runs the image `docker-compose.yml` currently pins. `start` would reuse
+the existing container, whatever image it was created from.
 
 Removing the stale `-wal`/`-shm` files matters. SQLite would replay them onto the older `db.sqlite` and corrupt it.
 

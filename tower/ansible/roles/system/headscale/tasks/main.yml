@@ -32,11 +32,27 @@
     quiet: true
   when: headscale_hostname | length > 0
 
+# Fingerprint of the committed config/ directory, written into .env below.
+# Headscale reads config.yaml and policy.hujson only at start, and a change to
+# a bind-mounted file does not make compose recreate the container; only the
+# shared "Restart containers" handler would apply it. If a run dies before
+# handlers fire, the retry copies nothing new and never notifies, leaving the
+# old policy loaded. A changed environment does make `compose up` recreate,
+# so this converges on every run regardless of handlers.
+- name: Fingerprint the committed headscale config
+  ansible.builtin.find:
+    paths: "{{ headscale_config_src }}"
+    get_checksum: true
+  delegate_to: localhost
+  become: false
+  register: headscale_config_files
+
 - name: Write the headscale .env
   ansible.builtin.copy:
     content: |
       HEADSCALE_SERVER_URL=https://{{ headscale_hostname }}
       HEADSCALE_TLS_LETSENCRYPT_HOSTNAME={{ headscale_hostname }}
+      CONFIG_SHA256={{ headscale_config_files.files | sort(attribute='path') | map(attribute='checksum') | join(',') | hash('sha256') }}
     dest: "{{ headscale_stack_dir }}/.env"
     owner: root
     group: root
@@ -73,13 +89,36 @@
     path: "{{ headscale_data_dir }}/db.sqlite"
   register: headscale_db
 
+# A snapshot is built under a hidden .partial name and renamed only once the
+# database check and key copy have succeeded, so an interrupted or failed
+# attempt can never be counted as one of the kept snapshots below.
+- name: Find interrupted headscale snapshots
+  ansible.builtin.find:
+    paths: "{{ headscale_backup_dir }}"
+    file_type: directory
+    hidden: true
+    patterns: ".*.partial"
+  register: headscale_partial_snapshots
+
+- name: Remove interrupted headscale snapshots
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ headscale_partial_snapshots.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+
 - name: Snapshot headscale state
   when: headscale_db.stat.exists
   block:
     # set_fact, not vars: now() is re-evaluated on every reference.
     - name: Pick the snapshot directory
       ansible.builtin.set_fact:
-        headscale_snapshot_dir: "{{ headscale_backup_dir }}/{{ now(utc=true, fmt='%Y%m%dT%H%M%SZ') }}"
+        headscale_snapshot_name: "{{ now(utc=true, fmt='%Y%m%dT%H%M%SZ') }}"
+
+    - name: Name the in-progress snapshot directory
+      ansible.builtin.set_fact:
+        headscale_snapshot_dir: "{{ headscale_backup_dir }}/.{{ headscale_snapshot_name }}.partial"
 
     - name: Create the snapshot directory
       ansible.builtin.file:
@@ -130,6 +169,14 @@
       loop: "{{ headscale_keys.files }}"
       loop_control:
         label: "{{ item.path | basename }}"
+
+    - name: Publish the completed snapshot
+      ansible.builtin.command:
+        argv:
+          - mv
+          - "{{ headscale_snapshot_dir }}"
+          - "{{ headscale_backup_dir }}/{{ headscale_snapshot_name }}"
+        creates: "{{ headscale_backup_dir }}/{{ headscale_snapshot_name }}"
 
 - name: Find headscale snapshots
   ansible.builtin.find:

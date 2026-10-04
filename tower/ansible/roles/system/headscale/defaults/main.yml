@@ -6,6 +6,9 @@
 headscale_hostname: "{{ lookup('env', 'TOWER_HOSTNAME') }}"
 
 headscale_stack_dir: /opt/containers/headscale
+# The committed config directory on the controller, fingerprinted into .env so
+# a config or policy change always recreates the container.
+headscale_config_src: "{{ playbook_dir }}/../containers/headscale/config"
 headscale_data_dir: "{{ headscale_stack_dir }}/data"
 headscale_backup_dir: "{{ headscale_stack_dir }}/backups"
 # Snapshots kept on the node. Deploys run at least twice a day (the
