@@ -125,6 +125,23 @@ jobs:
       - name: Check formatting
         run: tofu fmt -check -recursive -diff
 
+  headscale:
+    name: Headscale config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Runs the image pinned in tower/containers/headscale/docker-compose.yml
+      # against the committed config and policy, so a Renovate bump that drops
+      # a config key fails here rather than crash-looping on tower.
+      #
+      # The image reference comes from the PR, like the galaxy sources above.
+      # The job holds no credentials and the container gets no network.
+      - name: Check config and policy with the pinned image
+        run: ci/headscale-check.sh
+
   workflows:
     name: Workflow lint
     runs-on: ubuntu-latest

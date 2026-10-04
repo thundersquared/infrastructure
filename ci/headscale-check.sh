@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Check tower's committed Headscale config and policy with the exact image the
+# compose file pins.
+#
+# Headscale refuses to start on removed or renamed config keys (`dns_config`
+# and `ip_prefixes` in 0.23, `randomize_client_port` in 0.29), and
+# `docker compose up -d` still reports success when the container then
+# crash-loops, so the deploy cannot catch it. Running the pinned image against
+# the committed files here can. On a Renovate image bump, this is what fails
+# when the new release dropped a key the config still uses.
+#
+# The repo is public, so the server's hostname is not in the config: on tower
+# it arrives through the stack's .env (HEADSCALE_SERVER_URL and
+# HEADSCALE_TLS_LETSENCRYPT_HOSTNAME). This check supplies a placeholder the
+# same way, and fails if a hostname is committed into the file instead.
+#
+# Needs docker. The container gets no network and a throwaway data directory.
+#
+# Usage: ci/headscale-check.sh [ROOT]
+
+set -euo pipefail
+
+ROOT="${1:-.}"
+cd "$ROOT"
+
+stack=tower/containers/headscale
+image=$(awk '$1 == "image:" { print $2; exit }' "$stack/docker-compose.yml")
+if [ -z "$image" ]; then
+  echo "no image: line in $stack/docker-compose.yml" >&2
+  exit 1
+fi
+
+config="$stack/config/config.yaml"
+if grep -nE '^[[:space:]]*(server_url|tls_letsencrypt_hostname)[[:space:]]*:' "$config"; then
+  echo "$config sets the hostname; it must come from the stack's .env (see the file header)" >&2
+  exit 1
+fi
+
+placeholder=headscale.example.com
+
+headscale() {
+  docker run --rm --network none --read-only \
+    --tmpfs /var/run/headscale \
+    --tmpfs /var/lib/headscale \
+    -e HEADSCALE_SERVER_URL="https://$placeholder" \
+    -e HEADSCALE_TLS_LETSENCRYPT_HOSTNAME="$placeholder" \
+    -v "$PWD/$stack/config:/etc/headscale:ro" \
+    "$image" "$@"
+}
+
+echo "=== headscale configtest ($image)"
+headscale configtest
+
+# The bypass flag opens a fresh SQLite database in the tmpfs instead of
+# dialling a running server; --force answers its "is headscale running?"
+# prompt.
+echo "=== headscale policy check"
+headscale policy check --bypass-grpc-and-access-database-directly --force \
+  -f /etc/headscale/policy.hujson
