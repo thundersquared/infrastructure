@@ -44,7 +44,7 @@ services:
       - app-infra
 
   backend:
-    image: ghcr.io/maathimself/mailflow-backend:3.8.1@sha256:c98193a87a232661895cf5300e4f886733d34410b68c408a347c6ebadc838e98  # yamllint disable-line rule:line-length
+    image: ghcr.io/maathimself/mailflow-backend:3.8.2@sha256:ff53786c8d7295d9e9921884e7c9b19d23ed3230aa5ce139f8016f7221794771  # yamllint disable-line rule:line-length
     container_name: mailflow-backend
     restart: unless-stopped
     cap_drop:
