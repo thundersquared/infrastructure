@@ -1,7 +1,7 @@
 ---
 services:
   roundcubemail:
-    image: roundcube/roundcubemail:1.7.4-apache@sha256:93c6ccb63ce2feccb107c0eca128f8625ac4c3e9e42329e44d0a60da66a70a40
+    image: roundcube/roundcubemail:1.7.4-apache@sha256:1162705d5fa6514e6dc2eb71896c208fc3cae35b9cb49019ae23e3cbd9eab79b
     container_name: roundcubemail
     restart: unless-stopped
     tmpfs:
