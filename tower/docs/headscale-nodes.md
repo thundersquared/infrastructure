@@ -27,6 +27,10 @@ tailscale up --login-server=https://<tower-hostname> --authkey=<preauth-key>
 `<tower-hostname>` is the value of the `TOWER_HOSTNAME` environment secret. The login server URL is stored by the client,
 so it must not change later.
 
+If MagicDNS is enabled ([headscale-setup.md](headscale-setup.md#magicdns)), the node uses it by default. Add
+`--accept-dns=false` to keep this node's DNS untouched; `tailscale set --accept-dns=true` turns it on later. Other nodes
+reach it as `<node>.<base domain>` either way.
+
 ### 3. Verify the node is registered
 
 On tower, from `/opt/containers/headscale/`:

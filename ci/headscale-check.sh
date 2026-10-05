@@ -41,18 +41,37 @@ fi
 
 placeholder=headscale.example.com
 
+# Extra `-e KEY=VALUE` pairs may come first; the rest is headscale's argv.
 headscale() {
+  local env=()
+  while [ "${1:-}" = -e ]; do
+    env+=("$1" "$2")
+    shift 2
+  done
   docker run --rm --network none --read-only \
     --tmpfs /var/run/headscale \
     --tmpfs /var/lib/headscale \
     -e HEADSCALE_SERVER_URL="https://$placeholder" \
     -e HEADSCALE_TLS_LETSENCRYPT_HOSTNAME="$placeholder" \
+    "${env[@]}" \
     -v "$PWD/$stack/config:/etc/headscale:ro" \
     "$image" "$@"
 }
 
 echo "=== headscale configtest ($image)"
 headscale configtest
+
+# MagicDNS and the ACME email are also switched on through .env when their
+# secrets are set (tower/ansible/roles/system/headscale). Check that shape
+# too, with placeholders: the split map is JSON, as the role writes it.
+echo "=== headscale configtest, MagicDNS + split DNS + ACME email via env"
+headscale \
+  -e HEADSCALE_ACME_EMAIL=ops@example.com \
+  -e HEADSCALE_DNS_MAGIC_DNS=true \
+  -e HEADSCALE_DNS_BASE_DOMAIN=tailnet.internal \
+  -e HEADSCALE_DNS_SEARCH_DOMAINS=example.net \
+  -e 'HEADSCALE_DNS_NAMESERVERS_SPLIT={"example.net":["1.1.1.1","9.9.9.9"]}' \
+  configtest
 
 # The bypass flag opens a fresh SQLite database in the tmpfs instead of
 # dialling a running server; --force answers its "is headscale running?"

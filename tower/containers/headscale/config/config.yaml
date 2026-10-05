@@ -6,13 +6,17 @@
 # the Noise/DERP private keys and the SQLite database are generated into
 # /opt/containers/headscale/data on first start and never enter git.
 #
-# The public hostname is deliberately not in this file (the repo is public).
+# Anything identifying is deliberately not in this file (the repo is public).
 # Headscale reads any key from HEADSCALE_<KEY> environment variables, and the
-# system/headscale role writes the stack's .env from the TOWER_HOSTNAME
-# secret:
-#   HEADSCALE_SERVER_URL=https://<hostname>
-#   HEADSCALE_TLS_LETSENCRYPT_HOSTNAME=<hostname>
-# Without them headscale refuses to start (server_url must be https://...).
+# system/headscale role writes the stack's .env from environment secrets:
+#   TOWER_HOSTNAME          -> HEADSCALE_SERVER_URL=https://<hostname>
+#                              HEADSCALE_TLS_LETSENCRYPT_HOSTNAME=<hostname>
+#   TOWER_ACME_EMAIL        -> HEADSCALE_ACME_EMAIL (optional)
+#   TAILNET_BASE_DOMAIN     -> MagicDNS on, HEADSCALE_DNS_BASE_DOMAIN (optional)
+#   TAILNET_SEARCH_DOMAINS  -> HEADSCALE_DNS_SEARCH_DOMAINS, plus split
+#                              nameservers for each (optional)
+# Without the hostname headscale refuses to start (server_url must be
+# https://...).
 #
 # Written against headscale v0.29.x. On every minor upgrade, diff this file
 # against that release's config-example.yaml. Keys headscale lists as removed
@@ -85,7 +89,7 @@ database:
 # record must resolve to tower before the first start. The hostname comes
 # from HEADSCALE_TLS_LETSENCRYPT_HOSTNAME (see the top of this file).
 acme_url: https://acme-v02.api.letsencrypt.org/directory
-acme_email: ""
+# acme_email comes from HEADSCALE_ACME_EMAIL (see the top of this file).
 tls_letsencrypt_cache_dir: /var/lib/headscale/cache
 tls_letsencrypt_challenge_type: TLS-ALPN-01
 tls_cert_path: ""
@@ -100,9 +104,20 @@ policy:
   mode: file
   path: /etc/headscale/policy.hujson
 
-# Headscale does not manage client DNS: no MagicDNS and no nameserver
-# overrides, so `tailscale up` on a node leaves its resolvers alone.
-# MagicDNS needs a base_domain that differs from server_url's domain.
+# MagicDNS is off here and switched on by the role (HEADSCALE_DNS_MAGIC_DNS)
+# only when TAILNET_BASE_DOMAIN is set: with it on and no base_domain,
+# headscale refuses to start. base_domain must not be server_url's host or a
+# parent of it, or headscale refuses to start too.
+#
+# override_local_dns stays false: nodes keep their own resolvers for every
+# name outside the tailnet, and nothing replaces them with ours. A node opts
+# out of MagicDNS entirely with `tailscale set --accept-dns=false`.
+#
+# Search domains get split nameservers (the role writes the map): on Linux
+# with systemd-resolved a search domain also routes its queries to
+# 100.100.100.100, which needs somewhere to forward them, or every name under
+# it fails with SERVFAIL. global stays empty: with override_local_dns false
+# the client only uses it as a fallback while an exit node is in use.
 dns:
   magic_dns: false
   base_domain: ""
