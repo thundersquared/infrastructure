@@ -51,9 +51,12 @@ prefixes:
 derp:
   server:
     enabled: true
-    region_id: 999
+    # 900-999 is the range Tailscale reserves for self-hosted DERP regions
+    # (tailcfg/derpmap.go), so this cannot collide with one of theirs if their
+    # map is ever added to `urls` as a fallback.
+    region_id: 969
     region_code: tower
-    region_name: Tower (self-hosted)
+    region_name: eu-1
     # Only nodes registered on this server may relay through it.
     verify_clients: true
     stun_listen_addr: 0.0.0.0:3478
