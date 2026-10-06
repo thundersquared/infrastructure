@@ -1,0 +1,205 @@
+---
+# Runs before system/containers. That role applies image bumps, and headscale
+# migrates its database on start and then refuses to run the previous minor
+# version, so the snapshot taken here is the only rollback point for a bad
+# upgrade. Restore steps: tower/docs/headscale-setup.md.
+#
+# It also writes the stack's .env, which carries the public hostname so that
+# it never has to be committed. system/containers deploys the stack only when
+# that file exists (env_file: true in docker_stacks).
+
+- name: Ensure sqlite3 is installed
+  ansible.builtin.package:
+    name: sqlite3
+    state: present
+
+- name: Ensure headscale data and backup directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop:
+    - "{{ headscale_data_dir }}"
+    - "{{ headscale_backup_dir }}"
+
+- name: Check the headscale hostname
+  ansible.builtin.assert:
+    that:
+      - headscale_hostname is match('^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$')
+    fail_msg: TOWER_HOSTNAME must be a bare lower-case FQDN, with no scheme, port or path.
+    quiet: true
+  when: headscale_hostname | length > 0
+
+# Caught here because headscale would otherwise crash-loop on them, and the
+# deploy cannot see a crash loop. Messages never print the values (public logs).
+- name: Check the optional headscale settings
+  ansible.builtin.assert:
+    that:
+      - headscale_acme_email | length == 0 or headscale_acme_email is match('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+      - headscale_dns_base_domain | length == 0 or headscale_dns_base_domain is match('^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$')
+      # Headscale refuses a base domain that is server_url's host or a parent of it.
+      - headscale_dns_base_domain | length == 0 or headscale_hostname != headscale_dns_base_domain
+      - headscale_dns_base_domain | length == 0 or not headscale_hostname.endswith('.' ~ headscale_dns_base_domain)
+    fail_msg: >-
+      TOWER_ACME_EMAIL must be an email address; TAILNET_BASE_DOMAIN must be a
+      bare lower-case FQDN that is not tower's hostname or a parent of it.
+    quiet: true
+  when: headscale_hostname | length > 0
+
+# Fingerprint of the committed config/ directory, written into .env below.
+# Headscale reads config.yaml and policy.hujson only at start, and a change to
+# a bind-mounted file does not make compose recreate the container; only the
+# shared "Restart containers" handler would apply it. If a run dies before
+# handlers fire, the retry copies nothing new and never notifies, leaving the
+# old policy loaded. A changed environment does make `compose up` recreate,
+# so this converges on every run regardless of handlers.
+- name: Fingerprint the committed headscale config
+  ansible.builtin.find:
+    paths: "{{ headscale_config_src }}"
+    get_checksum: true
+  delegate_to: localhost
+  become: false
+  register: headscale_config_files
+
+- name: Write the headscale .env
+  ansible.builtin.copy:
+    content: |
+      HEADSCALE_SERVER_URL=https://{{ headscale_hostname }}
+      HEADSCALE_TLS_LETSENCRYPT_HOSTNAME={{ headscale_hostname }}
+      {% if headscale_acme_email | length > 0 %}
+      HEADSCALE_ACME_EMAIL={{ headscale_acme_email }}
+      {% endif %}
+      {% if headscale_dns_base_domain | length > 0 %}
+      HEADSCALE_DNS_MAGIC_DNS=true
+      HEADSCALE_DNS_BASE_DOMAIN={{ headscale_dns_base_domain }}
+      {% endif %}
+      CONFIG_SHA256={{ headscale_config_files.files | sort(attribute='path') | map(attribute='checksum') | join(',') | hash('sha256') }}
+    dest: "{{ headscale_stack_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+  when: headscale_hostname | length > 0
+
+- name: Check for the headscale .env
+  ansible.builtin.stat:
+    path: "{{ headscale_stack_dir }}/.env"
+  register: headscale_env
+
+- name: Report that the headscale stack will not be deployed
+  ansible.builtin.debug:
+    msg: >-
+      TOWER_HOSTNAME is not set and {{ headscale_stack_dir }}/.env does not
+      exist, so system/containers skips the headscale stack.
+  when: not headscale_env.stat.exists
+
+- name: Check for an existing headscale database
+  ansible.builtin.stat:
+    path: "{{ headscale_data_dir }}/db.sqlite"
+  register: headscale_db
+
+# A snapshot is built under a hidden .partial name and renamed only once the
+# database check and key copy have succeeded, so an interrupted or failed
+# attempt can never be counted as one of the kept snapshots below.
+- name: Find interrupted headscale snapshots
+  ansible.builtin.find:
+    paths: "{{ headscale_backup_dir }}"
+    file_type: directory
+    hidden: true
+    patterns: ".*.partial"
+  register: headscale_partial_snapshots
+
+- name: Remove interrupted headscale snapshots
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ headscale_partial_snapshots.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+
+- name: Snapshot headscale state
+  when: headscale_db.stat.exists
+  block:
+    # set_fact, not vars: now() is re-evaluated on every reference.
+    - name: Pick the snapshot directory
+      ansible.builtin.set_fact:
+        headscale_snapshot_name: "{{ now(utc=true, fmt='%Y%m%dT%H%M%SZ') }}"
+
+    - name: Name the in-progress snapshot directory
+      ansible.builtin.set_fact:
+        headscale_snapshot_dir: "{{ headscale_backup_dir }}/.{{ headscale_snapshot_name }}.partial"
+
+    - name: Create the snapshot directory
+      ansible.builtin.file:
+        path: "{{ headscale_snapshot_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    # SQLite's online backup API: consistent while headscale is running and
+    # writing through the WAL. A file copy of db.sqlite would not be.
+    - name: Back up the headscale database
+      ansible.builtin.command:
+        argv:
+          - sqlite3
+          - "{{ headscale_data_dir }}/db.sqlite"
+          - ".backup '{{ headscale_snapshot_dir }}/db.sqlite'"
+        creates: "{{ headscale_snapshot_dir }}/db.sqlite"
+
+    # Fail the deploy rather than upgrade on top of a database we could not
+    # roll back to.
+    - name: Verify the database snapshot
+      ansible.builtin.command:
+        argv:
+          - sqlite3
+          - "{{ headscale_snapshot_dir }}/db.sqlite"
+          - "PRAGMA quick_check;"
+      register: headscale_snapshot_check
+      changed_when: false
+      failed_when: headscale_snapshot_check.stdout != 'ok'
+
+    # The Noise key identifies the server to every client: losing it means
+    # re-registering every node. The DERP key exists only if DERP ever ran.
+    - name: Find headscale private keys
+      ansible.builtin.find:
+        paths: "{{ headscale_data_dir }}"
+        patterns: "*.key"
+      register: headscale_keys
+
+    - name: Back up headscale private keys
+      ansible.builtin.copy:
+        src: "{{ item.path }}"
+        dest: "{{ headscale_snapshot_dir }}/{{ item.path | basename }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0600"
+      loop: "{{ headscale_keys.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+
+    - name: Publish the completed snapshot
+      ansible.builtin.command:
+        argv:
+          - mv
+          - "{{ headscale_snapshot_dir }}"
+          - "{{ headscale_backup_dir }}/{{ headscale_snapshot_name }}"
+        creates: "{{ headscale_backup_dir }}/{{ headscale_snapshot_name }}"
+
+- name: Find headscale snapshots
+  ansible.builtin.find:
+    paths: "{{ headscale_backup_dir }}"
+    file_type: directory
+    patterns: "*T*Z"
+  register: headscale_snapshots
+
+# Names are UTC timestamps, so sorting by path is sorting by age.
+- name: Prune old headscale snapshots
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ (headscale_snapshots.files | sort(attribute='path'))[: -(headscale_backup_keep | int)] }}"
+  loop_control:
+    label: "{{ item.path | basename }}"

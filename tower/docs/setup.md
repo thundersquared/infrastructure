@@ -81,6 +81,9 @@ In your GitHub repository → **Settings** → **Environments** → **tower** (c
 | `SSH_AUTHORIZED_KEYS` | JSON array of SSH public keys, e.g. `["ssh-ed25519 AAAA...", "ssh-ed25519 BBBB..."]` |
 | `CLOUDFLARE_API_TOKEN` | API token from Step 4 |
 | `CLOUDFLARE_ZONE_ID` | Zone ID for your DNS zone from Step 4 |
+| `TOWER_HOSTNAME` | Tower's public FQDN, bare (no `https://`). Used as the DNS record name and as Headscale's server URL. Kept out of the repo because it is public; see [headscale-setup.md](headscale-setup.md) |
+| `TOWER_ACME_EMAIL` | Optional. Contact address for tower's Let's Encrypt account |
+| `TAILNET_BASE_DOMAIN` | Optional. Turns MagicDNS on: nodes become `<node>.<base domain>`. Use a name nothing public resolves, such as one under `.internal`; it must not be tower's hostname or a parent of it. See [headscale-setup.md](headscale-setup.md#magicdns) |
 
 ---
 

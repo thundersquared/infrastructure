@@ -1,0 +1,29 @@
+---
+# Bare public hostname of tower, e.g. "host.example.com". Kept out of the
+# public repo: it comes from the TOWER_HOSTNAME environment secret (the same
+# one OpenTofu uses for the DNS record). Unset = the headscale stack is left
+# alone, see tasks/main.yml.
+headscale_hostname: "{{ lookup('env', 'TOWER_HOSTNAME') }}"
+
+# Optional, also from environment secrets so nothing identifying is committed.
+# ACME account contact; Let's Encrypt no longer sends expiry reminders, so it
+# only matters for account recovery.
+headscale_acme_email: "{{ lookup('env', 'TOWER_ACME_EMAIL') }}"
+# MagicDNS base domain, e.g. "tailnet.internal". Setting it turns MagicDNS on.
+headscale_dns_base_domain: "{{ lookup('env', 'TAILNET_BASE_DOMAIN') }}"
+
+headscale_stack_dir: /opt/containers/headscale
+# Compose names it <project>-<service>-<index>; the project is the stack dir.
+headscale_container_name: headscale-headscale-1
+# Where the config was hand-written before it moved to git (bind-mounted as a
+# single file by the old compose). See tasks/retire_legacy_config.yml.
+headscale_legacy_config: "{{ headscale_stack_dir }}/config.yaml"
+# The committed config directory on the controller, fingerprinted into .env so
+# a config or policy change always recreates the container.
+headscale_config_src: "{{ playbook_dir }}/../containers/headscale/config"
+headscale_data_dir: "{{ headscale_stack_dir }}/data"
+headscale_backup_dir: "{{ headscale_stack_dir }}/backups"
+# Snapshots kept on the node. Deploys run at least twice a day (the
+# scheduled Ansible run, plus the one chained after the scheduled OpenTofu
+# apply), so 14 covers roughly a week. Must be at least 1.
+headscale_backup_keep: 14

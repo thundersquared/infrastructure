@@ -1,45 +1,45 @@
 # Headscale Nodes
 
-## Current Nodes
+Nodes are machines running the standard Tailscale client against tower's Headscale. Their names, addresses and owners
+live in Headscale's database, not in this repository. List them on tower with `headscale nodes list` (see
+[headscale-setup.md](headscale-setup.md)).
 
-| Name | Expected VPN IP | Role |
-|---|---|---|
-| `giraffe` | `100.64.x.x` | Unraid NAS/compute node |
-| `cetriolo` | `100.64.x.x` | Unraid NAS/compute node |
-| `ostrich` | `100.64.x.x` | Unraid NAS/compute node |
-
-Actual IPs are assigned by Headscale from the `100.64.0.0/10` CGNAT range and can be confirmed with `headscale nodes list` on tower (see [headscale-setup.md](headscale-setup.md)).
+Headscale assigns each node an address from `100.64.0.0/10` (plus one from `fd7a:115c:a1e0::/48`) at registration.
 
 ---
 
-## Registering an Unraid Node
+## Registering a Node
 
-### 1. Install Tailscale on Unraid
+### 1. Install Tailscale
 
-Install the Tailscale plugin via **Unraid Community Apps** (search for "Tailscale"). Alternatively, run the official `tailscale/tailscale` Docker container if you prefer a compose-managed approach. Either method works; the plugin is simpler for Unraid.
+Install the Tailscale client for the node's OS from <https://tailscale.com/download>, or run the official
+`tailscale/tailscale` container. Headscale 0.29 rejects clients older than **v1.80.0**. Check with `tailscale version`.
 
-### 2. Point Tailscale at the custom control server
+### 2. Point Tailscale at the control server
 
-Run the following command in the Unraid terminal (or via the plugin's shell):
+Create a single-use pre-auth key on tower ([headscale-setup.md](headscale-setup.md#2-create-a-pre-auth-key-per-node)),
+then run this on the node:
 
 ```bash
-tailscale up --login-server=https://<HEADSCALE_SERVER_URL> --authkey=<preauth-key>
+tailscale up --login-server=https://<tower-hostname> --authkey=<preauth-key>
 ```
 
-- Replace `<HEADSCALE_SERVER_URL>` with the value from the GitHub secret (the public hostname of tower).
-- Replace `<preauth-key>` with a key generated on tower (see [headscale-setup.md](headscale-setup.md)).
+`<tower-hostname>` is the value of the `TOWER_HOSTNAME` environment secret. The login server URL is stored by the client,
+so it must not change later.
 
-On success, Tailscale will print the assigned VPN IP and the node will appear in `headscale nodes list` on tower.
+If MagicDNS is enabled ([headscale-setup.md](headscale-setup.md#magicdns)), the node uses it by default. Add
+`--accept-dns=false` to keep this node's DNS untouched; `tailscale set --accept-dns=true` turns it on later. Other nodes
+reach it as `<node>.<base domain>` either way.
 
 ### 3. Verify the node is registered
 
-On tower:
+On tower, from `/opt/containers/headscale/`:
 
 ```bash
 docker compose exec headscale headscale nodes list
 ```
 
-The node should appear with a `100.64.x.x` address and an `Online` status.
+The node should be listed with a `100.64.x.x` address and show as online.
 
 ---
 
@@ -53,7 +53,7 @@ On any registered node:
 tailscale status
 ```
 
-This lists all peers, their VPN IPs, and whether they are online.
+This lists all peers with their VPN IPs and whether they are online. A peer reached through the relay shows `relay "tower"`.
 
 ### Ping a peer
 
@@ -61,20 +61,15 @@ This lists all peers, their VPN IPs, and whether they are online.
 tailscale ping <peer-name-or-ip>
 ```
 
-Successful pings confirm the mesh is functional.
+Each reply says how it travelled: `via DERP(tower)` means relayed through tower, `via <ip>:<port>` means a direct
+peer-to-peer path.
 
-### Check relay vs. direct (P2P) connection
-
-To see whether traffic to a peer is going direct (P2P) or through the DERP relay on tower:
-
-```bash
-tailscale debug peer-endpoint-changes
-```
-
-Or run a general connectivity check (shows DERP latency, STUN results, UDP availability):
+### Check NAT traversal and DERP reachability
 
 ```bash
 tailscale netcheck
 ```
 
-Direct connections are preferred. If all traffic routes through DERP, check that UDP port `3478` is reachable from the nodes and that no NAT is blocking peer-to-peer UDP.
+This shows UDP availability, the STUN result and the latency to the `tower` DERP region. Direct connections are
+preferred. If everything relays through DERP, check that `3478/udp` on tower is reachable from the node and that the
+node's NAT allows peer-to-peer UDP.

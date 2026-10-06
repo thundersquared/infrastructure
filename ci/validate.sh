@@ -7,6 +7,7 @@
 # Requirements:
 #   ansible-lint, yamllint, zizmor   (pip, or via the repo venv)
 #   opentofu >= 1.12                 (tofu)
+#   docker                           (headscale config check)
 #
 # Usage: ci/validate.sh [ROOT]
 
@@ -61,6 +62,14 @@ if have zizmor; then
   run "zizmor" zizmor --persona=pedantic --min-severity=low .github/workflows/validate.yml
 else
   printf '\nSKIP: zizmor (not installed)\n'
+  status=1
+fi
+
+# 5. Headscale config and policy, checked by the image the compose file pins.
+if have docker; then
+  run "headscale config" ci/headscale-check.sh
+else
+  printf '\nSKIP: headscale config (docker not installed)\n'
   status=1
 fi
 

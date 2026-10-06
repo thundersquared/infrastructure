@@ -19,5 +19,6 @@ ssh_authorized_keys = [
   "ssh-ed25519 AAAAC3... user@host",
 ]
 
+tower_hostname       = "tower.example.com"
 cloudflare_api_token = "..."
 cloudflare_zone_id   = "..."

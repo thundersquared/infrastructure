@@ -29,7 +29,7 @@ The repository currently manages the following hosts:
 | `web1` | Ansible + Docker | Web/app services |
 | `web2` | Ansible + Docker | Web/app services |
 | `web3` | Ansible + Docker | Web/app services |
-| `tower` | OpenTofu | ARM VM on OCI — WireGuard VPN endpoint and SSH bastion |
+| `tower` | OpenTofu + Ansible + Docker | ARM VM on OCI — Headscale control server (tailnet coordination + DERP relay) |
 
 See [`tower/docs/setup.md`](tower/docs/setup.md) for the one-time bootstrap steps for the tower node.
 
@@ -107,10 +107,11 @@ If a migration fails, the entire playbook stops to prevent inconsistent states.
 
 ## Validation
 
-Every pull request runs `.github/workflows/validate.yml`, which performs
-static checks only. It never connects to a host, reads a state file, or
-touches a cloud provider, so a broken change is caught before it can reach
-production rather than during a deploy.
+Every pull request runs `.github/workflows/validate.yml`. It never connects
+to a host, reads a state file, or touches a cloud provider, so a broken change
+is caught before it can reach production rather than during a deploy. Every
+check is static except the Headscale one, which runs the pinned image with no
+network access against files from the checkout.
 
 | Check | Tool | Catches |
 |---|---|---|
@@ -118,6 +119,7 @@ production rather than during a deploy.
 | Ansible | `ansible-lint` | Broken syntax, missing FQCN, non-idempotent commands, unset file modes |
 | OpenTofu | `tofu validate` / `tofu fmt` | Invalid or unformatted configuration for `tower` |
 | Actions | `zizmor` | Workflow-level privilege footguns |
+| Headscale | `headscale configtest` / `policy check` (`ci/headscale-check.sh`) | Config keys the pinned image rejects (which would crash-loop the container on tower), invalid policy |
 
 ### Running the checks locally
 
@@ -125,7 +127,7 @@ production rather than during a deploy.
 ci/validate.sh
 ```
 
-Needs `ansible-lint`, `yamllint`, `zizmor` and `tofu` on `PATH`. The script
+Needs `ansible-lint`, `yamllint`, `zizmor`, `tofu` and `docker` on `PATH`. The script
 runs the same checks as CI, so failures reproduce locally.
 
 ### The container security contract is not enforced
@@ -147,7 +149,7 @@ twenty.crm worker in another.
 ### Why the validation workflow holds no secrets
 
 `validate.yml` runs on `pull_request`, so it is configured to hold no
-credentials at all — the checks are entirely static analysis:
+credentials at all — the checks only need the checkout:
 
 - It references no `secrets.*` and no `environment:`, so the job runs with no
   access to repository or environment secrets regardless of who opened the
@@ -158,8 +160,13 @@ credentials at all — the checks are entirely static analysis:
 - Third-party actions are pinned to a full commit SHA, fixing the code that
   runs with this job's token.
 
-All four checks are required status checks on `main`, so a pull request cannot
-merge until they pass. If a check is retired or renamed, remove it from the
+The yamllint, ansible-lint, OpenTofu and workflow-lint checks are required
+status checks on `main`, so a pull request cannot merge until they pass. Add
+`Headscale config` to that list too, so that a Renovate bump that breaks the
+config cannot merge. On a pull request that touches none of its inputs (the
+Headscale stack directory, `ci/headscale-check.sh`, `validate.yml`) it skips
+the check but still reports success, so requiring it does not block other
+pull requests. If a check is retired or renamed, remove it from the
 `required_status_checks.contexts` list in the same pull request — otherwise the
 merge blocks waiting on a check that no longer reports.
 

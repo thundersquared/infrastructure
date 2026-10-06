@@ -1,0 +1,21 @@
+// Tailnet access policy for tower's Headscale (HuJSON: comments and trailing
+// commas are allowed).
+//
+// This is deliberately equivalent to having no policy at all: with no "acls"
+// or "grants" section, Headscale lets every node reach every other node on
+// every port. It is committed so that tightening access is a reviewed change
+// to this file rather than an edit on the server, and so CI can check it with
+// `headscale policy check` on every pull request.
+//
+// A deploy that changes this file restarts headscale, which reloads it.
+//
+// To restrict access, add grants. Once any "grants" (or "acls") key exists,
+// everything not granted is denied — an empty "grants": [] blocks all traffic.
+// Example: members may only reach each other over SSH and SMB:
+//
+//   "grants": [
+//     { "src": ["autogroup:member"], "dst": ["autogroup:member"], "ip": ["tcp:22", "tcp:445"] },
+//   ],
+//
+// Syntax: https://tailscale.com/docs/features/access-control/grants
+{}

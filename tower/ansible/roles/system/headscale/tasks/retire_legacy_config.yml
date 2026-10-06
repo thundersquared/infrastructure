@@ -1,0 +1,24 @@
+---
+# Run from the playbook's post_tasks, after system/containers. Before this role
+# existed, the config was hand-written at the stack root and bind-mounted as a
+# single file. Renaming it while a container still mounts it breaks that
+# container's next start (dockerd recreates the missing path as an empty
+# directory), so rename it only once the running container no longer
+# references it. It is kept, under a name nothing mounts, for comparison.
+
+- name: Inspect the headscale container
+  community.docker.docker_container_info:
+    name: "{{ headscale_container_name }}"
+  register: headscale_container
+
+- name: Retire the hand-written headscale config
+  ansible.builtin.command:
+    argv:
+      - mv
+      - "{{ headscale_legacy_config }}"
+      - "{{ headscale_legacy_config }}.pre-git"
+    creates: "{{ headscale_legacy_config }}.pre-git"
+    removes: "{{ headscale_legacy_config }}"
+  when:
+    - headscale_container.exists
+    - headscale_legacy_config not in (headscale_container.container.Mounts | map(attribute='Source') | list)

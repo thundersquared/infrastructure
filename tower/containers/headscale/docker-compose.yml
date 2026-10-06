@@ -4,14 +4,31 @@ services:
     image: headscale/headscale:v0.29.4@sha256:8833f828b414c0907b7e5c71da76473216fe17cce0818a166b536ec552c0903f
     command: serve
     restart: unless-stopped
+    # HEADSCALE_SERVER_URL and HEADSCALE_TLS_LETSENCRYPT_HOSTNAME, written by
+    # the system/headscale role so the hostname stays out of git.
+    env_file:
+      - .env
+    # Published on all interfaces on purpose: this is the tailnet's public
+    # control plane + DERP relay (443/tcp) and STUN endpoint (3478/udp).
     ports:
       - "443:443/tcp"
       - "3478:3478/udp"
     volumes:
+      # config.yaml + policy.hujson, committed next to this file.
+      - ./config:/etc/headscale:ro
+      # Keys, SQLite DB and ACME cache. Not in git; snapshotted by the
+      # system/headscale role before every deploy.
       - /opt/containers/headscale/data:/var/lib/headscale
-      - /opt/containers/headscale/config.yaml:/etc/headscale/config.yaml:ro
+    # Headscale writes only to its data volume and the unix socket directory.
+    read_only: true
     tmpfs:
       - /var/run/headscale
+    healthcheck:
+      test: ["CMD", "headscale", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     cap_drop:
       - ALL
     cap_add:

@@ -125,6 +125,56 @@ jobs:
       - name: Check formatting
         run: tofu fmt -check -recursive -diff
 
+  headscale:
+    name: Headscale config
+    runs-on: ubuntu-latest
+    steps:
+      # Depth 2: on pull_request the checkout is GitHub's test merge commit,
+      # and the diff below needs its first parent (the base branch).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      # Only pull requests that touch what the check reads run it: the config
+      # and policy, the compose file (it pins the image, so Renovate bumps
+      # count), the script, and this workflow. The job still runs and reports
+      # success otherwise, so it can stay a required status check; a
+      # workflow-level `paths:` filter would leave it pending instead. Merge
+      # queue and manual runs always check.
+      - name: Detect Headscale changes
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != pull_request ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # The test merge commit's first parent is the base branch, so this
+          # is exactly what merging the pull request would change.
+          changed=$(git diff --name-only HEAD^1 HEAD -- \
+            tower/containers/headscale \
+            ci/headscale-check.sh \
+            .github/workflows/validate.yml)
+          if [ -n "$changed" ]; then
+            printf 'Changed:\n%s\n' "$changed"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Headscale config, image or check changes; skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Runs the image pinned in tower/containers/headscale/docker-compose.yml
+      # against the committed config and policy, so a Renovate bump that drops
+      # a config key fails here rather than crash-looping on tower.
+      #
+      # The image reference comes from the PR, like the galaxy sources above.
+      # The job holds no credentials and the container gets no network.
+      - name: Check config and policy with the pinned image
+        if: steps.changes.outputs.run == 'true'
+        run: ci/headscale-check.sh
+
   workflows:
     name: Workflow lint
     runs-on: ubuntu-latest
