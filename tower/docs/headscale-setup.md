@@ -88,6 +88,10 @@ docker compose exec headscale headscale users create <user>
 docker compose exec headscale headscale users list            # note the ID
 ```
 
+On v0.29.x, restart headscale after creating or renaming a user (`docker compose restart headscale`): packet filters for
+the policy's `autogroup:self` grant are not recomputed for the new user until then. Fixed upstream in
+[#3501](https://github.com/juanfont/headscale/pull/3501), due in 0.30.0.
+
 ### 2. Create a pre-auth key per node
 
 `--user` takes the numeric **ID** from `users list`, not the name. Prefer one single-use, short-lived key per node over a
@@ -112,8 +116,9 @@ On merge, the deploy copies the files and recreates the container, which reloads
 written into `.env` (`CONFIG_SHA256`), so a retry after an interrupted deploy still recreates it, even when the files on
 tower are already up to date.
 
-`policy.hujson` is currently allow-all, which is exactly what Headscale does with no policy at all. The file explains how
-to restrict it; any `"grants"` key switches the tailnet to deny-by-default.
+`policy.hujson` is deny-by-default: each user reaches their own devices and the `infrastructure` user's nodes, nobody
+reaches another person's devices, and every user may use exit nodes. The file explains each grant. Check what a node
+actually received with `tailscale debug netmap` (its `PacketFilter`).
 
 ---
 

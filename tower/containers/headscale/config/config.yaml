@@ -1,4 +1,7 @@
 ---
+# Ansible managed: deployed from tower/containers/headscale/config/ in git and
+# mounted read-only. Edits on tower are overwritten by the next deploy.
+#
 # Headscale server configuration for tower.
 #
 # Ansible copies this directory to /opt/containers/headscale/config/ and the

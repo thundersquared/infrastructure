@@ -135,8 +135,16 @@ tailnet unless you also set `TS_SOCKS5_SERVER` or `TS_OUTBOUND_HTTP_PROXY_LISTEN
 
 `tailscaled` accepts everything that arrives on `tailscale0` in its own firewall chain, ahead of UFW. A host on the
 tailnet therefore exposes every port it listens on outside loopback to every node the policy allows. The committed
-policy (`tower/containers/headscale/config/policy.hujson`) is allow-all. Ports bound to `127.0.0.1`, as this repo's
-convention requires, stay unreachable. Tighten access with grants in the policy rather than per-host rules.
+policy (`tower/containers/headscale/config/policy.hujson`) lets every user reach their own devices and the nodes of the
+`infrastructure` user, so a server is reachable from every user's devices, and the servers from each other. Ports bound
+to `127.0.0.1`, as this repo's convention requires, stay unreachable. Change access with grants in the policy rather
+than per-host rules.
+
+Register servers under the `infrastructure` user and people's devices under their own user: the policy decides access
+by user, so a server registered under a person's user is visible only to that person.
+
+Exit nodes are the exception. Every user may use exit nodes (`autogroup:internet`), so an approved exit node is offered
+to every user whoever owns it, including a person's own device. Only approve exit nodes that everyone may use.
 
 ### Verify the node is registered
 
