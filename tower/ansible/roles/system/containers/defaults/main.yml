@@ -9,3 +9,6 @@ docker_stacks:
   headscale:
     env_file: true
     state: present
+  tailscale:
+    env_file: true
+    state: present
