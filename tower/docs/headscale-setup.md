@@ -112,8 +112,9 @@ On merge, the deploy copies the files and recreates the container, which reloads
 written into `.env` (`CONFIG_SHA256`), so a retry after an interrupted deploy still recreates it, even when the files on
 tower are already up to date.
 
-`policy.hujson` is currently allow-all, which is exactly what Headscale does with no policy at all. The file explains how
-to restrict it; any `"grants"` key switches the tailnet to deny-by-default.
+`policy.hujson` is deny-by-default: each user reaches their own devices and the `infrastructure` user's nodes, nobody
+reaches another person's devices, and every user may use exit nodes. The file explains each grant. Check what a node
+actually received with `tailscale debug netmap` (its `PacketFilter`).
 
 ---
 
