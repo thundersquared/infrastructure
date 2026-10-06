@@ -52,7 +52,7 @@ docker_stacks:
     app-infra:
       external: true
   ```
-  The one exception is the `tailscale` stack (every Ansible host and tower): it runs with `network_mode: host`, which
+  The one exception is the `tailscale` stack (mx1, web1, web2, web3; not tower, the control plane): it runs with `network_mode: host`, which
   cannot join a network, so that the host itself is the tailnet node
 
 ## Monitoring (monit)

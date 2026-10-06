@@ -17,7 +17,7 @@ so it must not change later.
 | Way | Use it for |
 |:----|:-----------|
 | [System-level client](#a-system-level-client) | Workstations, laptops, phones, and any host where MagicDNS should work for the host itself |
-| [The `tailscale` container stack](#b-the-tailscale-container-stack) | The Ansible-managed hosts: puts the host on the tailnet without installing packages |
+| [The `tailscale` container stack](#b-the-tailscale-container-stack) | mx1, web1, web2, web3: puts the host on the tailnet without installing packages |
 | [A sidecar container](#c-a-sidecar-for-one-service) | Exposing a single service on the tailnet, as its own node |
 
 Headscale 0.29 rejects clients older than **v1.80.0**. Check with `tailscale version`.
@@ -66,7 +66,8 @@ register …` to approve the device.
 
 ### B. The `tailscale` container stack
 
-Every Ansible host (`mx1`, `web1`, `web2`, `web3`, `tower`) has a `containers/tailscale/` stack. It is listed in
+Every Ansible host other than tower (`mx1`, `web1`, `web2`, `web3`) has a `containers/tailscale/` stack. Tower is the
+control plane and does not join the tailnet as a node. It is listed in
 `docker_stacks` with `env_file: true`, so it is deployed only on hosts where its `.env` exists. It runs
 `ghcr.io/tailscale/tailscale` with host networking, so `tailscale0` and the `100.64.x.x` address belong to the host itself.
 
