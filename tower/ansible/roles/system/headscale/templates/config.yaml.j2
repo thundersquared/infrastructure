@@ -1,8 +1,12 @@
 ---
+{{ ansible_managed | comment }}
+# Rendered by the system/headscale role into /opt/containers/headscale/config/
+# and mounted read-only. Edits on tower are overwritten by the next deploy.
+#
 # Headscale server configuration for tower.
 #
-# Ansible copies this directory to /opt/containers/headscale/config/ and the
-# compose file mounts it read-only at /etc/headscale. It holds no secrets:
+# The compose file mounts the rendered directory at /etc/headscale. It holds no
+# secrets:
 # the Noise/DERP private keys and the SQLite database are generated into
 # /opt/containers/headscale/data on first start and never enter git.
 #
@@ -97,7 +101,7 @@ log:
   level: info
   format: text
 
-# Reloaded on restart or SIGHUP. Edit policy.hujson next to this file.
+# Reloaded on restart or SIGHUP. Edit policy.hujson.j2 next to this template.
 policy:
   mode: file
   path: /etc/headscale/policy.hujson

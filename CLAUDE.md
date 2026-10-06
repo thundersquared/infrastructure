@@ -150,12 +150,13 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is
 `tofu validate` / `tofu fmt` for `tower`, a zizmor audit of the validation
 workflow, and `ci/headscale-check.sh`, which runs the headscale image pinned in
 `tower/containers/headscale/docker-compose.yml` (`configtest`, `policy check`)
-against the committed config and policy and needs docker. Run it before pushing;
+against the rendered config and policy templates and needs docker. Run it before pushing;
 the same failures otherwise surface as a red PR.
 
-Headscale's config and policy live in git at
-`tower/containers/headscale/config/` and are mounted read-only. Never tell
-anyone to edit them on the node. Operations, upgrades, restore, and why its
+Headscale's config and policy are templates in the `system/headscale` role
+(`tower/ansible/roles/system/headscale/templates/`), rendered into
+`/opt/containers/headscale/config/` and mounted read-only. Never tell anyone
+to edit them on the node. Operations, upgrades, restore, and why its
 users and nodes are not in OpenTofu: `tower/docs/headscale-setup.md`.
 
 Configs live in `.yamllint` and `.ansible-lint`. Two things to know when

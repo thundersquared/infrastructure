@@ -14,7 +14,8 @@ services:
       - "443:443/tcp"
       - "3478:3478/udp"
     volumes:
-      # config.yaml + policy.hujson, committed next to this file.
+      # config.yaml + policy.hujson, rendered by the system/headscale role
+      # from its templates/.
       - ./config:/etc/headscale:ro
       # Keys, SQLite DB and ACME cache. Not in git; snapshotted by the
       # system/headscale role before every deploy.

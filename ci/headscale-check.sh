@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Check tower's committed Headscale config and policy with the exact image the
+# Check tower's Headscale config and policy templates with the exact image the
 # compose file pins.
 #
 # Headscale refuses to start on keys its deprecation list marks as removed
 # (`dns_config` in 0.23, `randomize_client_port` in 0.29) and on invalid
 # values, and `docker compose up -d` still reports success when the container
 # then crash-loops, so the deploy cannot catch it. Running the pinned image
-# against the committed files here can. On a Renovate image bump, this is what
+# against the rendered templates here can. On a Renovate image bump, this is what
 # fails when the new release removed a key the config still uses. Other
 # renamed or dropped keys are ignored without a warning (old configs' unread
 # `ip_prefixes` left no prefix configured, which only failed indirectly), so
@@ -16,6 +16,10 @@
 # it arrives through the stack's .env (HEADSCALE_SERVER_URL and
 # HEADSCALE_TLS_LETSENCRYPT_HOSTNAME). This check supplies a placeholder the
 # same way, and fails if a hostname is committed into the file instead.
+#
+# The config and policy are templates in the system/headscale role. Their only
+# Jinja is the `ansible_managed` header, so this renders them by dropping that
+# line, and fails if any other Jinja appears (it would need a real renderer).
 #
 # Needs docker. The container gets no network and a throwaway data directory.
 #
@@ -33,9 +37,22 @@ if [ -z "$image" ]; then
   exit 1
 fi
 
-config="$stack/config/config.yaml"
+templates=tower/ansible/roles/system/headscale/templates
+rendered=$(mktemp -d)
+trap 'rm -rf -- "$rendered"' EXIT
+for f in config.yaml policy.hujson; do
+  grep -vE '^\{\{ ansible_managed \| comment(\(.*\))? \}\}$' "$templates/$f.j2" > "$rendered/$f"
+  if grep -nE '\{\{|\{%|\{#' "$rendered/$f"; then
+    echo "$templates/$f.j2 has Jinja beyond the ansible_managed header; render it properly here first" >&2
+    exit 1
+  fi
+done
+chmod 0755 "$rendered"
+chmod 0644 "$rendered"/*
+
+config="$rendered/config.yaml"
 if grep -nE '^[[:space:]]*(server_url|tls_letsencrypt_hostname)[[:space:]]*:' "$config"; then
-  echo "$config sets the hostname; it must come from the stack's .env (see the file header)" >&2
+  echo "$templates/config.yaml.j2 sets the hostname; it must come from the stack's .env (see the file header)" >&2
   exit 1
 fi
 
@@ -54,7 +71,7 @@ headscale() {
     -e HEADSCALE_SERVER_URL="https://$placeholder" \
     -e HEADSCALE_TLS_LETSENCRYPT_HOSTNAME="$placeholder" \
     "${env[@]}" \
-    -v "$PWD/$stack/config:/etc/headscale:ro" \
+    -v "$rendered:/etc/headscale:ro" \
     "$image" "$@"
 }
 
