@@ -33,7 +33,7 @@ services:
       - n8n
 
   n8n:
-    image: ghcr.io/thundersquared/n8n:2.41.6@sha256:762c4e81ae3f35cdada6671104ff241a984d77cc8e3120466e3d98c505c7e4ab
+    image: ghcr.io/thundersquared/n8n:2.41.7@sha256:d00156cc41316d8164fa849969bb2aa5e6ca1249f83c88043d83531aa72ff411
     restart: unless-stopped
     cap_drop:
       - ALL
