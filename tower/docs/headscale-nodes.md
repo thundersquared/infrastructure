@@ -4,7 +4,9 @@ Nodes are machines running the standard Tailscale client against tower's Headsca
 live in Headscale's database, not in this repository. List them on tower with `headscale nodes list` (see
 [headscale-setup.md](headscale-setup.md)).
 
-Headscale assigns each node an address from `100.64.0.0/10` (plus one from `fd7a:115c:a1e0::/48`) at registration.
+Headscale assigns each node an address from `100.69.0.0/16` (plus one from `fd7a:115c:a1e0::/48`) at registration. Nodes
+registered before the prefix changed from `100.64.0.0/10` keep their old `100.64.x.x` address until they are registered
+again (delete the node on tower, then `tailscale logout` and `tailscale up` with a new key).
 
 ---
 
@@ -69,7 +71,7 @@ register …` to approve the device.
 Every Ansible host other than tower (`mx1`, `web1`, `web2`, `web3`) has a `containers/tailscale/` stack. Tower is the
 control plane and does not join the tailnet as a node. It is listed in
 `docker_stacks` with `env_file: true`, so it is deployed only on hosts where its `.env` exists. It runs
-`ghcr.io/tailscale/tailscale` with host networking, so `tailscale0` and the `100.64.x.x` address belong to the host itself.
+`ghcr.io/tailscale/tailscale` with host networking, so `tailscale0` and the `100.69.x.x` address belong to the host itself.
 
 1. On the host, create the `.env` from the committed example and fill in the key, the login server and optionally a
    node name:
@@ -154,7 +156,7 @@ On tower, from `/opt/containers/headscale/`:
 docker compose exec headscale headscale nodes list
 ```
 
-The node should be listed with a `100.64.x.x` address and show as online.
+The node should be listed with a `100.69.x.x` address and show as online.
 
 ---
 

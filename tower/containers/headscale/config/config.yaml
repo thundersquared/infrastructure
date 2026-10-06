@@ -44,8 +44,13 @@ disable_check_updates: true
 noise:
   private_key_path: /var/lib/headscale/noise_private.key
 
+# 100.69.0.0/16 is a subset of 100.64.0.0/10, the range Tailscale clients
+# treat as the tailnet (headscale warns only about prefixes outside it).
+# Changing a prefix does not renumber existing nodes: headscale allocates from
+# it only for new ones, and `nodes backfillips` only fills a missing family.
+# Re-register a node to move it into the current prefix.
 prefixes:
-  v4: 100.64.0.0/10
+  v4: 100.69.0.0/16
   v6: fd7a:115c:a1e0::/48
   allocation: sequential
 
