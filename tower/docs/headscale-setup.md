@@ -88,6 +88,10 @@ docker compose exec headscale headscale users create <user>
 docker compose exec headscale headscale users list            # note the ID
 ```
 
+On v0.29.x, restart headscale after creating or renaming a user (`docker compose restart headscale`): packet filters for
+the policy's `autogroup:self` grant are not recomputed for the new user until then. Fixed upstream in
+[#3501](https://github.com/juanfont/headscale/pull/3501), due in 0.30.0.
+
 ### 2. Create a pre-auth key per node
 
 `--user` takes the numeric **ID** from `users list`, not the name. Prefer one single-use, short-lived key per node over a

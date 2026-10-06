@@ -143,6 +143,9 @@ than per-host rules.
 Register servers under the `infrastructure` user and people's devices under their own user: the policy decides access
 by user, so a server registered under a person's user is visible only to that person.
 
+Exit nodes are the exception. Every user may use exit nodes (`autogroup:internet`), so an approved exit node is offered
+to every user whoever owns it, including a person's own device. Only approve exit nodes that everyone may use.
+
 ### Verify the node is registered
 
 On tower, from `/opt/containers/headscale/`:

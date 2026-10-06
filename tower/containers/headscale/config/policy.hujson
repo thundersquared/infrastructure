@@ -21,7 +21,9 @@
 // Syntax: https://tailscale.com/docs/features/access-control/grants
 {
   "grants": [
-    // Own devices, for every user, infrastructure included.
+    // Own devices, for every user, infrastructure included. On v0.29.x,
+    // restart headscale after creating or renaming a user, or this rule's
+    // filters are not recomputed for them (fixed upstream in #3501, 0.30.0).
     {
       "src": ["autogroup:member"],
       "dst": ["autogroup:self"],
