@@ -48,43 +48,34 @@
     quiet: true
   when: headscale_hostname | length > 0
 
-# Headscale's config and policy are templates in this role, rendered into the
-# directory the compose file mounts read-only at /etc/headscale.
-- name: Ensure the headscale config directory exists
-  ansible.builtin.file:
-    path: "{{ headscale_config_dir }}"
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-
-- name: Render the headscale config and policy
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ headscale_config_dir }}/{{ item }}"
-    owner: root
-    group: root
-    mode: "0644"
-  loop: "{{ headscale_config_files }}"
-
-# Fingerprint of the rendered config, written into .env below. Headscale reads
-# config.yaml and policy.hujson only at start, and a change to a bind-mounted
-# file does not make compose recreate the container; only the shared "Restart
-# containers" handler would apply it. If a run dies before handlers fire, the
-# retry renders nothing new and never notifies, leaving the old policy loaded.
-# A changed environment does make `compose up` recreate, so this converges on
-# every run regardless of handlers.
-- name: Fingerprint the rendered headscale config
-  ansible.builtin.stat:
-    path: "{{ headscale_config_dir }}/{{ item }}"
+# Fingerprint of the committed config/ directory, written into .env below.
+# Headscale reads config.yaml and policy.hujson only at start, and a change to
+# a bind-mounted file does not make compose recreate the container; only the
+# shared "Restart containers" handler would apply it. If a run dies before
+# handlers fire, the retry copies nothing new and never notifies, leaving the
+# old policy loaded. A changed environment does make `compose up` recreate,
+# so this converges on every run regardless of handlers.
+- name: Fingerprint the committed headscale config
+  ansible.builtin.find:
+    paths: "{{ headscale_config_src }}"
     get_checksum: true
-    checksum_algorithm: sha256
-  loop: "{{ headscale_config_files }}"
-  register: headscale_config_stat
+  delegate_to: localhost
+  become: false
+  register: headscale_config_files
 
 - name: Write the headscale .env
-  ansible.builtin.template:
-    src: headscale.env.j2
+  ansible.builtin.copy:
+    content: |
+      HEADSCALE_SERVER_URL=https://{{ headscale_hostname }}
+      HEADSCALE_TLS_LETSENCRYPT_HOSTNAME={{ headscale_hostname }}
+      {% if headscale_acme_email | length > 0 %}
+      HEADSCALE_ACME_EMAIL={{ headscale_acme_email }}
+      {% endif %}
+      {% if headscale_dns_base_domain | length > 0 %}
+      HEADSCALE_DNS_MAGIC_DNS=true
+      HEADSCALE_DNS_BASE_DOMAIN={{ headscale_dns_base_domain }}
+      {% endif %}
+      CONFIG_SHA256={{ headscale_config_files.files | sort(attribute='path') | map(attribute='checksum') | join(',') | hash('sha256') }}
     dest: "{{ headscale_stack_dir }}/.env"
     owner: root
     group: root

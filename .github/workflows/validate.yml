@@ -155,7 +155,6 @@ jobs:
           # is exactly what merging the pull request would change.
           changed=$(git diff --name-only HEAD^1 HEAD -- \
             tower/containers/headscale \
-            tower/ansible/roles/system/headscale/templates \
             ci/headscale-check.sh \
             .github/workflows/validate.yml)
           if [ -n "$changed" ]; then
@@ -167,7 +166,7 @@ jobs:
           fi
 
       # Runs the image pinned in tower/containers/headscale/docker-compose.yml
-      # against the config and policy templates, so a Renovate bump that drops
+      # against the committed config and policy, so a Renovate bump that drops
       # a config key fails here rather than crash-looping on tower.
       #
       # The image reference comes from the PR, like the galaxy sources above.

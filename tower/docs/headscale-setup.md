@@ -20,7 +20,7 @@ Who manages what:
 |---|---|---|
 | VM, security list (`443/tcp`, `3478/udp`), DNS record | `tower/terraform/` | OpenTofu |
 | Compose stack | `tower/containers/headscale/docker-compose.yml` | Ansible (`system/containers`) |
-| Server config and access policy | `tower/ansible/roles/system/headscale/templates/` | Git → Ansible template, checked by CI |
+| Server config and access policy | `tower/containers/headscale/config/` | Git → Ansible, checked by CI |
 | Hostname, ACME email, MagicDNS domains (`/opt/containers/headscale/.env`) | `TOWER_HOSTNAME`, `TOWER_ACME_EMAIL`, `TAILNET_*` secrets | Ansible (`system/headscale`) |
 | Pre-deploy snapshots, data dir permissions | `tower/ansible/roles/system/headscale/` | Ansible |
 | Keys, SQLite DB, ACME cache | `/opt/containers/headscale/data/` on tower | Headscale (never in git) |
@@ -108,14 +108,13 @@ anything; already-registered nodes are unaffected by key expiry.
 
 ## Changing the config or the policy
 
-Edit `config.yaml.j2` or `policy.hujson.j2` in `tower/ansible/roles/system/headscale/templates/` in a pull request.
-The **Headscale config** CI job renders them and runs the pinned image's `headscale configtest` and `headscale policy
-check` against the result. A bad policy also stops Headscale from starting, so a red check here means "this would have
-taken the tailnet down".
+Edit `config/config.yaml` or `config/policy.hujson` in a pull request. The **Headscale config** CI job runs the pinned
+image's `headscale configtest` and `headscale policy check` against them. A bad policy also stops Headscale from
+starting, so a red check here means "this would have taken the tailnet down".
 
-On merge, the deploy renders them into `/opt/containers/headscale/config/` and recreates the container, which reloads
-both. A fingerprint of the rendered files is written into `.env` (`CONFIG_SHA256`), so a retry after an interrupted
-deploy still recreates it, even when the files on tower are already up to date.
+On merge, the deploy copies the files and recreates the container, which reloads both. A fingerprint of `config/` is
+written into `.env` (`CONFIG_SHA256`), so a retry after an interrupted deploy still recreates it, even when the files on
+tower are already up to date.
 
 `policy.hujson` is deny-by-default: each user reaches their own devices and the `infrastructure` user's nodes, nobody
 reaches another person's devices, and every user may use exit nodes. The file explains each grant. Check what a node

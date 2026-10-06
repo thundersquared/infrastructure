@@ -18,12 +18,9 @@ headscale_container_name: headscale-headscale-1
 # Where the config was hand-written before it moved to git (bind-mounted as a
 # single file by the old compose). See tasks/retire_legacy_config.yml.
 headscale_legacy_config: "{{ headscale_stack_dir }}/config.yaml"
-# Rendered from this role's templates/ and mounted read-only at /etc/headscale;
-# fingerprinted into .env so a config or policy change recreates the container.
-headscale_config_dir: "{{ headscale_stack_dir }}/config"
-headscale_config_files:
-  - config.yaml
-  - policy.hujson
+# The committed config directory on the controller, fingerprinted into .env so
+# a config or policy change always recreates the container.
+headscale_config_src: "{{ playbook_dir }}/../containers/headscale/config"
 headscale_data_dir: "{{ headscale_stack_dir }}/data"
 headscale_backup_dir: "{{ headscale_stack_dir }}/backups"
 # Snapshots kept on the node. Deploys run at least twice a day (the

@@ -1,7 +1,3 @@
-{{ ansible_managed | comment('c') }}
-// Rendered by the system/headscale role into /opt/containers/headscale/config/
-// and mounted read-only. Edits on tower are overwritten by the next deploy.
-//
 // Tailnet access policy for tower's Headscale (HuJSON: comments and trailing
 // commas are allowed). Checked in CI with `headscale policy check`; a deploy
 // that changes this file restarts headscale, which reloads it.
