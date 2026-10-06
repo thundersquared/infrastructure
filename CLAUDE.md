@@ -52,6 +52,8 @@ docker_stacks:
     app-infra:
       external: true
   ```
+  The one exception is the `tailscale` stack (mx1, web1, web2, web3; not tower, the control plane): it runs with `network_mode: host`, which
+  cannot join a network, so that the host itself is the tailnet node
 
 ## Monitoring (monit)
 
@@ -97,7 +99,7 @@ security_opt:
 
 **When to add `cap_add` back** (always pair with `cap_drop: [ALL]`):
 - `NET_BIND_SERVICE` — container binds a privileged port (< 1024) directly, e.g. SMTP (25, 465, 587), IMAP (993), HTTPS (443)
-- `NET_ADMIN` — VPN/network management (e.g. a WireGuard or Tailscale *client* container; not headscale, which is only a control server and needs just `NET_BIND_SERVICE`)
+- `NET_ADMIN` — VPN/network management (e.g. a WireGuard or Tailscale *client* container; not headscale, which is only a control server and needs just `NET_BIND_SERVICE`). The kernel-mode `tailscale` stack also needs `NET_RAW`: tailscaled's iptables/nftables rules fail with "Permission denied" without it
 - `SYS_NICE` — real-time scheduling (e.g. MySQL)
 - `CHOWN` — init/setup containers that `chown` volume paths on startup
 
@@ -132,6 +134,8 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is
 > deliberately publish a port on all interfaces: the MX (it exists to receive
 > SMTP), headscale (tailnet control plane + DERP on 443/tcp, STUN on
 > 3478/udp), frankenphp (terminates ACME HTTP-01). Anything else must bind `127.0.0.1`.
+> The `tailscale` stack publishes nothing but uses host networking, so its
+> WireGuard socket (41641/udp) listens on the host's interfaces like a host daemon.
 
 ## Adding a Service
 

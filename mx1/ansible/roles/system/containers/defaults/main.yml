@@ -3,3 +3,6 @@ docker_stacks:
   stalwart:
     env_file: true
     state: present
+  tailscale:
+    env_file: true
+    state: present

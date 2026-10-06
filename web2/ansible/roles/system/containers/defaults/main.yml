@@ -9,3 +9,6 @@ docker_stacks:
   hypebun-web:
     env_file: true
     state: present
+  tailscale:
+    env_file: true
+    state: present
