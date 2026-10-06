@@ -44,9 +44,18 @@ disable_check_updates: true
 noise:
   private_key_path: /var/lib/headscale/noise_private.key
 
+# Both prefixes are subsets of the ranges Tailscale clients treat as the
+# tailnet, 100.64.0.0/10 and fd7a:115c:a1e0::/48; headscale warns about
+# anything outside them. The v6 /64 avoids the blocks Tailscale reserves inside
+# the /48 (tsaddr): ::53 (MagicDNS), :b1a::/64 (4via6), :ab12:...::/104
+# (4-to-6) and :efe3::/64 (ephemeral IPv6-only nodes).
+#
+# Changing a prefix does not renumber existing nodes: headscale allocates from
+# it only for new ones, and `nodes backfillips` only fills a missing family.
+# Re-register a node to move it into the current prefixes.
 prefixes:
-  v4: 100.64.0.0/10
-  v6: fd7a:115c:a1e0::/48
+  v4: 100.69.0.0/16
+  v6: fd7a:115c:a1e0:69::/64
   allocation: sequential
 
 # Self-hosted relay only: no Tailscale-operated DERP servers in the map. If

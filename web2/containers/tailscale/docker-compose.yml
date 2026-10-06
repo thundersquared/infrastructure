@@ -1,16 +1,4 @@
 ---
-# Ansible managed: deployed from web2/containers/tailscale/ in git. Edits on the
-# host are overwritten by the next deploy; .env and ./state are not managed.
-#
-# Tailscale client that joins this host to tower's Headscale tailnet.
-# Opt-in per host: deployed only once .env exists (copy .env.example).
-# Setup and the system-level alternative: tower/docs/headscale-nodes.md.
-#
-# network_mode: host puts tailscale0 and the 100.64.x.x address on the host
-# itself, so the host (not just this container) is a tailnet node. That is
-# also why there is no app-infra network: host networking cannot join one.
-# Nothing is published; tailscaled's WireGuard socket (41641/udp by default)
-# listens on the host's interfaces like any host daemon.
 services:
   tailscale:
     image: ghcr.io/tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065
