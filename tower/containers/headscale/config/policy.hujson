@@ -1,21 +1,43 @@
 // Tailnet access policy for tower's Headscale (HuJSON: comments and trailing
-// commas are allowed).
+// commas are allowed). Checked in CI with `headscale policy check`; a deploy
+// that changes this file restarts headscale, which reloads it.
 //
-// This is deliberately equivalent to having no policy at all: with no "acls"
-// or "grants" section, Headscale lets every node reach every other node on
-// every port. It is committed so that tightening access is a reviewed change
-// to this file rather than an edit on the server, and so CI can check it with
-// `headscale policy check` on every pull request.
+// Once any "grants" exist, everything not granted is denied. A node only sees
+// the peers it may reach or that may reach it.
 //
-// A deploy that changes this file restarts headscale, which reloads it.
+// People's devices are registered under their own Headscale user; servers
+// (the containers/tailscale stack, home servers) under the shared
+// "infrastructure" user. The rules below give:
 //
-// To restrict access, add grants. Once any "grants" (or "acls") key exists,
-// everything not granted is denied — an empty "grants": [] blocks all traffic.
-// Example: members may only reach each other over SSH and SMB:
+//   - every user: their own devices, and the infrastructure nodes
+//   - infrastructure nodes: each other (they are all one user, so this is the
+//     autogroup:self rule); they cannot open connections to people's devices,
+//     but replies to connections those devices open are allowed
+//   - nobody: another person's devices
 //
-//   "grants": [
-//     { "src": ["autogroup:member"], "dst": ["autogroup:member"], "ip": ["tcp:22", "tcp:445"] },
-//   ],
+// No user names are listed here (the repo is public): autogroup:member is
+// every user, so a new user gets the same access as soon as it exists.
 //
 // Syntax: https://tailscale.com/docs/features/access-control/grants
-{}
+{
+  "grants": [
+    // Own devices, for every user, infrastructure included.
+    {
+      "src": ["autogroup:member"],
+      "dst": ["autogroup:self"],
+      "ip": ["*"],
+    },
+    // People reach the servers.
+    {
+      "src": ["autogroup:member"],
+      "dst": ["infrastructure@"],
+      "ip": ["*"],
+    },
+    // Exit nodes: once grants exist, using one needs autogroup:internet.
+    {
+      "src": ["autogroup:member"],
+      "dst": ["autogroup:internet"],
+      "ip": ["*"],
+    },
+  ],
+}
