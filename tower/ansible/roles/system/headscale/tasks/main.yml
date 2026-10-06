@@ -66,6 +66,7 @@
 - name: Write the headscale .env
   ansible.builtin.copy:
     content: |
+      # Ansible managed: written by the system/headscale role. Edits are overwritten.
       HEADSCALE_SERVER_URL=https://{{ headscale_hostname }}
       HEADSCALE_TLS_LETSENCRYPT_HOSTNAME={{ headscale_hostname }}
       {% if headscale_acme_email | length > 0 %}

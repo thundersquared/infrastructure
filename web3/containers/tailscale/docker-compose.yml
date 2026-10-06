@@ -1,4 +1,7 @@
 ---
+# Ansible managed: deployed from web3/containers/tailscale/ in git. Edits on the
+# host are overwritten by the next deploy; .env and ./state are not managed.
+#
 # Tailscale client that joins this host to tower's Headscale tailnet.
 # Opt-in per host: deployed only once .env exists (copy .env.example).
 # Setup and the system-level alternative: tower/docs/headscale-nodes.md.
