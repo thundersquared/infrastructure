@@ -8,6 +8,9 @@
 # it never has to be committed. system/containers deploys the stack only when
 # that file exists (env_file: true in docker_stacks).
 
+- name: Open the host firewall for headscale
+  ansible.builtin.include_tasks: firewall.yml
+
 - name: Ensure sqlite3 is installed
   ansible.builtin.package:
     name: sqlite3

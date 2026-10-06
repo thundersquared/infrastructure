@@ -62,12 +62,15 @@ After the deploy, verify from **outside** tower:
 
 ```bash
 curl -fsS https://<tower-hostname>/health     # {"status":"pass"}; also proves the Let's Encrypt cert is valid
+curl -6 -fsS https://<tower-hostname>/health  # the same over IPv6 (the AAAA record and the dual-stack network)
 ```
 
-From a node: `tailscale netcheck` must report `UDP: true` and `IPv4: yes, <address>`. The mapped address comes from
+From a node: `tailscale netcheck` must report `UDP: true` and `IPv4: yes, <address>`, and on a node with IPv6, `IPv6: yes, <address>`
+with that node's own public IPv6 address. The mapped address comes from
 tower's STUN server, which proves `3478/udp` is reachable. A `tower` region latency on its own does not: netcheck
-measures it over HTTPS when STUN fails. If either check fails while the container is healthy, check the host firewall: OCI's Ubuntu images can ship
-iptables rules that reject inbound traffic other than SSH, on top of the security list.
+measures it over HTTPS when STUN fails. If either check fails while the container is healthy, check the host firewall. OCI's Ubuntu image rejects inbound
+IPv4 other than SSH; the system/headscale role inserts ACCEPT rules for 443/tcp and 3478/udp ahead of that REJECT, at
+runtime and in `/etc/iptables/rules.v4` (`sudo iptables -S INPUT` should list them, commented `headscale`).
 
 ---
 
@@ -278,6 +281,3 @@ OpenTofu changes worth making for Headscale, none applied here:
 
 - **Off-host backups.** An `oci_core_volume_backup_policy` assigned to the boot volume would protect the data directory
   against losing the VM. The free tier includes five volume backups.
-- **No `AAAA` record yet.** The instance has IPv6, but the `app-infra` network on tower is IPv4-only. Docker's userland
-  proxy would make STUN report the wrong address to IPv6 clients. Enable IPv6 on that network (or use host networking for
-  this container) before publishing an `AAAA` record.

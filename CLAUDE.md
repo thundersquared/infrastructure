@@ -52,8 +52,10 @@ docker_stacks:
     app-infra:
       external: true
   ```
-  The one exception is the `tailscale` stack (mx1, web1, web2, web3; not tower, the control plane): it runs with `network_mode: host`, which
-  cannot join a network, so that the host itself is the tailnet node
+  The exceptions are the `tailscale` stack (mx1, web1, web2, web3; not tower, the control plane), which runs with
+  `network_mode: host` so that the host itself is the tailnet node, and `headscale` on tower, the control plane, which
+  also uses host networking so it listens on IPv4 and IPv6 without Docker NAT (STUN needs the client's real source
+  address)
 
 ## Monitoring (monit)
 
@@ -132,7 +134,7 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is
 > worker in one stack and an ordinary hardened twenty.crm worker in another, so
 > "the worker is exempt" is not a safe rule of thumb. And three services
 > deliberately publish a port on all interfaces: the MX (it exists to receive
-> SMTP), headscale (tailnet control plane + DERP on 443/tcp, STUN on
+> SMTP), headscale (host networking: tailnet control plane + DERP on 443/tcp, STUN on
 > 3478/udp), frankenphp (terminates ACME HTTP-01). Anything else must bind `127.0.0.1`.
 > The `tailscale` stack publishes nothing but uses host networking, so its
 > WireGuard socket (41641/udp) listens on the host's interfaces like a host daemon.
