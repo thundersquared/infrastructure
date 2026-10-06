@@ -42,12 +42,9 @@
       # Headscale refuses a base domain that is server_url's host or a parent of it.
       - headscale_dns_base_domain | length == 0 or headscale_hostname != headscale_dns_base_domain
       - headscale_dns_base_domain | length == 0 or not headscale_hostname.endswith('.' ~ headscale_dns_base_domain)
-      - headscale_dns_search_domains | reject('match', '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$') | list | length == 0
-      - headscale_dns_search_domains | length == 0 or headscale_dns_base_domain | length > 0
     fail_msg: >-
-      TOWER_ACME_EMAIL must be an email address; TAILNET_BASE_DOMAIN and every
-      TAILNET_SEARCH_DOMAINS entry must be bare lower-case FQDNs; the base domain
-      must not be tower's hostname or a parent of it; search domains need a base domain.
+      TOWER_ACME_EMAIL must be an email address; TAILNET_BASE_DOMAIN must be a
+      bare lower-case FQDN that is not tower's hostname or a parent of it.
     quiet: true
   when: headscale_hostname | length > 0
 
@@ -77,10 +74,6 @@
       {% if headscale_dns_base_domain | length > 0 %}
       HEADSCALE_DNS_MAGIC_DNS=true
       HEADSCALE_DNS_BASE_DOMAIN={{ headscale_dns_base_domain }}
-      {% if headscale_dns_search_domains | length > 0 %}
-      HEADSCALE_DNS_SEARCH_DOMAINS={{ headscale_dns_search_domains | join(' ') }}
-      HEADSCALE_DNS_NAMESERVERS_SPLIT={{ dict(headscale_dns_search_domains | product([headscale_dns_split_nameservers])) | to_json(separators=[',', ':']) }}
-      {% endif %}
       {% endif %}
       CONFIG_SHA256={{ headscale_config_files.files | sort(attribute='path') | map(attribute='checksum') | join(',') | hash('sha256') }}
     dest: "{{ headscale_stack_dir }}/.env"

@@ -13,8 +13,6 @@
 #                              HEADSCALE_TLS_LETSENCRYPT_HOSTNAME=<hostname>
 #   TOWER_ACME_EMAIL        -> HEADSCALE_ACME_EMAIL (optional)
 #   TAILNET_BASE_DOMAIN     -> MagicDNS on, HEADSCALE_DNS_BASE_DOMAIN (optional)
-#   TAILNET_SEARCH_DOMAINS  -> HEADSCALE_DNS_SEARCH_DOMAINS, plus split
-#                              nameservers for each (optional)
 # Without the hostname headscale refuses to start (server_url must be
 # https://...).
 #
@@ -113,11 +111,11 @@ policy:
 # name outside the tailnet, and nothing replaces them with ours. A node opts
 # out of MagicDNS entirely with `tailscale set --accept-dns=false`.
 #
-# Search domains get split nameservers (the role writes the map): on Linux
-# with systemd-resolved a search domain also routes its queries to
-# 100.100.100.100, which needs somewhere to forward them, or every name under
-# it fails with SERVFAIL. global stays empty: with override_local_dns false
-# the client only uses it as a fallback while an exit node is in use.
+# No search domains and no split or global nameservers. A public search
+# domain would need split nameservers: on Linux with systemd-resolved it also
+# routes its queries to 100.100.100.100, which otherwise has nowhere to
+# forward them, so every name under it would fail with SERVFAIL. global would
+# only be used as a fallback while an exit node is in use.
 dns:
   magic_dns: false
   base_domain: ""

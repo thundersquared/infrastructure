@@ -11,14 +11,6 @@ headscale_hostname: "{{ lookup('env', 'TOWER_HOSTNAME') }}"
 headscale_acme_email: "{{ lookup('env', 'TOWER_ACME_EMAIL') }}"
 # MagicDNS base domain, e.g. "tailnet.internal". Setting it turns MagicDNS on.
 headscale_dns_base_domain: "{{ lookup('env', 'TAILNET_BASE_DOMAIN') }}"
-# Space-separated extra search domains (only used with a base domain). Each
-# one also gets headscale_dns_split_nameservers, see config.yaml.
-headscale_dns_search_domains: "{{ lookup('env', 'TAILNET_SEARCH_DOMAINS').split() }}"
-headscale_dns_split_nameservers:
-  - 1.1.1.1
-  - 9.9.9.9
-  - 2606:4700:4700::1111
-  - 2620:fe::fe
 
 headscale_stack_dir: /opt/containers/headscale
 # Compose names it <project>-<service>-<index>; the project is the stack dir.

@@ -84,7 +84,6 @@ In your GitHub repository → **Settings** → **Environments** → **tower** (c
 | `TOWER_HOSTNAME` | Tower's public FQDN, bare (no `https://`). Used as the DNS record name and as Headscale's server URL. Kept out of the repo because it is public; see [headscale-setup.md](headscale-setup.md) |
 | `TOWER_ACME_EMAIL` | Optional. Contact address for tower's Let's Encrypt account |
 | `TAILNET_BASE_DOMAIN` | Optional. Turns MagicDNS on: nodes become `<node>.<base domain>`. Use a name nothing public resolves, such as one under `.internal`; it must not be tower's hostname or a parent of it. See [headscale-setup.md](headscale-setup.md#magicdns) |
-| `TAILNET_SEARCH_DOMAINS` | Optional, needs `TAILNET_BASE_DOMAIN`. Space-separated (not comma-separated) extra search domains pushed to nodes; each gets split nameservers |
 
 ---
 

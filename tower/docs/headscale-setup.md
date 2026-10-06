@@ -120,9 +120,9 @@ to restrict it; any `"grants"` key switches the tailnet to deny-by-default.
 ## MagicDNS
 
 MagicDNS is off until the `TAILNET_BASE_DOMAIN` secret is set. With it, the role switches it on through `.env`, and every
-node becomes `<node>.<base domain>`. Each `TAILNET_SEARCH_DOMAINS` entry is pushed to nodes as a search domain, with
-1.1.1.1, 9.9.9.9 and their IPv6 addresses as its split nameservers (`headscale_dns_split_nameservers` in the role
-defaults). The role refuses a base domain that is tower's hostname or a parent of it: Headscale would refuse to start.
+node becomes `<node>.<base domain>`. The base domain is the only search domain pushed to nodes; there are no split or
+global nameservers. The role refuses a base domain that is tower's hostname or a parent of it: Headscale would refuse
+to start.
 
 `override_local_dns` stays `false`. Nodes keep their own resolvers for everything outside the tailnet, and no global
 nameservers are pushed (with this setting the client would use them only while an exit node is in use).
@@ -140,14 +140,11 @@ What a node with it on does, per the Tailscale client source:
   are forwarded to the original nameservers. A clean stop or `--accept-dns=false` restores the file. After a crash it
   stays pointed at 100.100.100.100 until tailscaled starts again (or `tailscaled --cleanup` runs), so lookups fail in
   between.
-- **Linux with systemd-resolved:** split DNS. Only the tailnet domain and the search domains go to Tailscale; the
-  search domains resolve through the split nameservers.
+- **Linux with systemd-resolved:** split DNS. Only names under the base domain go to Tailscale.
 - **macOS app:** takes over all DNS and forwards names outside the tailnet to the Mac's own resolvers.
-- **iOS:** because the search domains have split nameservers, it also takes over all DNS and forwards everything else
-  to the phone's resolvers.
+- **iOS:** scoped split DNS. Only names under the base domain go to Tailscale.
 
-Short names try the tailnet first: a node named `web1` wins over `web1.<search domain>`. MagicDNS answers A records
-only; to get AAAA records for dual-stack nodes, grant the `magicdns-aaaa` attribute in `policy.hujson` (`nodeAttrs`).
+Short names resolve to tailnet nodes (`web1` → `web1.<base domain>`). MagicDNS answers A records only; to get AAAA records for dual-stack nodes, grant the `magicdns-aaaa` attribute in `policy.hujson` (`nodeAttrs`).
 
 ---
 
