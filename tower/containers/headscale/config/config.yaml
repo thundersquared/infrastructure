@@ -25,10 +25,10 @@
 # any other renamed or dropped key is silently ignored.
 # https://github.com/juanfont/headscale/blob/v0.29.4/config-example.yaml
 
-# Control plane, Noise and embedded DERP are all served on 443 inside the
-# container. Metrics and gRPC stay on the container's loopback; the CLI talks
-# to the unix socket instead.
-listen_addr: 0.0.0.0:443
+# Control plane, Noise and embedded DERP are all served on 443, on both IPv4
+# and IPv6 ([::] is dual-stack). The container uses host networking, so metrics
+# and gRPC stay on the host's loopback; the CLI talks to the unix socket.
+listen_addr: "[::]:443"
 metrics_listen_addr: 127.0.0.1:9090
 grpc_listen_addr: 127.0.0.1:50443
 grpc_allow_insecure: false
@@ -73,7 +73,7 @@ derp:
     region_name: eu-1
     # Only nodes registered on this server may relay through it.
     verify_clients: true
-    stun_listen_addr: 0.0.0.0:3478
+    stun_listen_addr: "[::]:3478"
     private_key_path: /var/lib/headscale/derp_server_private.key
     automatically_add_embedded_derp_region: true
   urls: []

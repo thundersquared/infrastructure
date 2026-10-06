@@ -8,11 +8,12 @@ services:
     # the system/headscale role so the hostname stays out of git.
     env_file:
       - .env
-    # Published on all interfaces on purpose: this is the tailnet's public
-    # control plane + DERP relay (443/tcp) and STUN endpoint (3478/udp).
-    ports:
-      - "443:443/tcp"
-      - "3478:3478/udp"
+    # Host networking: this is the tailnet's public control plane + DERP relay
+    # (443/tcp) and STUN endpoint (3478/udp), listening on [::] for IPv4 and
+    # IPv6 with no Docker NAT in between. STUN must see each client's real
+    # source address, which Docker's userland proxy hides for IPv6. Metrics
+    # and gRPC stay on the host's loopback (config.yaml).
+    network_mode: host
     volumes:
       # config.yaml + policy.hujson, committed next to this file.
       - ./config:/etc/headscale:ro
@@ -35,9 +36,3 @@ services:
       - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
-    networks:
-      - app-infra
-
-networks:
-  app-infra:
-    external: true
