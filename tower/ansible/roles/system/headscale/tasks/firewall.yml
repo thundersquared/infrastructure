@@ -1,0 +1,38 @@
+---
+# headscale runs with host networking, so 443/tcp and 3478/udp reach it
+# through the host's INPUT chain. OCI's Ubuntu image ships an IPv4 rule set
+# that rejects everything after SSH (`-A INPUT -j REJECT`), restored at boot
+# from /etc/iptables/rules.v4. Allow both ports now, and add the same rules to
+# that file ahead of the REJECT so they survive a reboot. The file is edited
+# rather than regenerated with iptables-save, which would also persist
+# Docker's chains. IPv6 needs nothing: the image's ip6tables INPUT policy is
+# ACCEPT.
+- name: Allow headscale through the IPv4 firewall
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: "{{ item.protocol }}"
+    destination_port: "{{ item.port }}"
+    comment: "{{ item.comment }}"
+    jump: ACCEPT
+    action: insert
+  loop: "{{ headscale_firewall_ports }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.protocol }}"
+
+- name: Check for persisted IPv4 firewall rules
+  ansible.builtin.stat:
+    path: "{{ headscale_iptables_rules_v4 }}"
+  register: headscale_rules_v4
+
+- name: Persist the headscale firewall rules
+  ansible.builtin.lineinfile:
+    path: "{{ headscale_iptables_rules_v4 }}"
+    line: >-
+      -A INPUT -p {{ item.protocol }} -m {{ item.protocol }} --dport {{ item.port }}
+      -m comment --comment "{{ item.comment }}" -j ACCEPT
+    insertbefore: '^-A INPUT -j REJECT'
+    firstmatch: true
+  loop: "{{ headscale_firewall_ports }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.protocol }}"
+  when: headscale_rules_v4.stat.exists

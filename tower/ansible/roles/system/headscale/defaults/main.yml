@@ -27,3 +27,11 @@ headscale_backup_dir: "{{ headscale_stack_dir }}/backups"
 # scheduled Ansible run, plus the one chained after the scheduled OpenTofu
 # apply), so 14 covers roughly a week. Must be at least 1.
 headscale_backup_keep: 14
+
+# headscale uses host networking; these ports are opened in the host's IPv4
+# INPUT chain and in the rules file OCI's image restores at boot
+# (tasks/firewall.yml). Keep in step with listen_addr / stun_listen_addr.
+headscale_firewall_ports:
+  - {protocol: tcp, port: 443, comment: "headscale control plane and DERP"}
+  - {protocol: udp, port: 3478, comment: "headscale STUN"}
+headscale_iptables_rules_v4: /etc/iptables/rules.v4
