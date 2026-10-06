@@ -4,9 +4,9 @@ Nodes are machines running the standard Tailscale client against tower's Headsca
 live in Headscale's database, not in this repository. List them on tower with `headscale nodes list` (see
 [headscale-setup.md](headscale-setup.md)).
 
-Headscale assigns each node an address from `100.69.0.0/16` (plus one from `fd7a:115c:a1e0::/48`) at registration. Nodes
-registered before the prefix changed from `100.64.0.0/10` keep their old `100.64.x.x` address until they are registered
-again (delete the node on tower, then `tailscale logout` and `tailscale up` with a new key).
+Headscale assigns each node an address from `100.69.0.0/16` (plus one from `fd7a:115c:a1e0:69::/64`) at registration. Nodes
+registered before the prefixes changed (from `100.64.0.0/10` and `fd7a:115c:a1e0::/48`) keep their old addresses until
+they are registered again (delete the node on tower, then `tailscale logout` and `tailscale up` with a new key).
 
 ---
 

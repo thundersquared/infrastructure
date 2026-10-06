@@ -4,7 +4,7 @@
 
 Tower runs [Headscale](https://github.com/juanfont/headscale), a self-hosted implementation of the Tailscale control
 server, with the embedded DERP relay enabled. Nodes run the standard Tailscale client pointed at
-`https://<tower-hostname>`. Node addresses come from `100.69.0.0/16` and `fd7a:115c:a1e0::/48`.
+`https://<tower-hostname>`. Node addresses come from `100.69.0.0/16` and `fd7a:115c:a1e0:69::/64`.
 
 This repository is public, so tower's hostname is not in its files. It lives in one GitHub environment secret,
 `TOWER_HOSTNAME` (environment `tower`, see [setup.md](setup.md#environment-secrets-tower)), as a bare FQDN with no scheme.
