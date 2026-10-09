@@ -30,6 +30,16 @@
       "addLabels": ["github-actions"]
     },
     {
+      "description": "Group Mailflow backend and frontend image updates in one PR.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "ghcr.io/maathimself/mailflow-backend",
+        "ghcr.io/maathimself/mailflow-frontend"
+      ],
+      "groupName": "Mailflow",
+      "separateMajorMinor": false
+    },
+    {
       "matchDatasources": ["terraform-provider"],
       "registryUrls": ["https://registry.opentofu.org"]
     },
