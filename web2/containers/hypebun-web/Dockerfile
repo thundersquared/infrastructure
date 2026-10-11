@@ -3,7 +3,7 @@
 # The base dunglas/frankenphp image ships only a minimal PHP extension set
 # (PDO + mysqlnd, no mysqli/gd/etc). AltumCode requires mysqli (core DB layer),
 # gd (captcha/image processing) and the common web extensions below.
-FROM dunglas/frankenphp:1.13.0-php8.5@sha256:2a9c6663f73ad1e401909634206bd25e13bed5b94d86eefa3b5ec64c985b4595
+FROM dunglas/frankenphp:1.13.1-php8.5@sha256:a052ae7cccd4a025eca17767e7acac57a4fc660a4f3dfc790be9b9cd5182d6e6
 
 # docker-php-extension-installer is bundled in the base image.
 RUN install-php-extensions \
