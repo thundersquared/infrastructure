@@ -149,6 +149,7 @@ jobs:
           packages: -r requirements.txt ansible-lint==26.9.0
 
       - name: Cache galaxy requirements
+        id: galaxy-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.ansible
@@ -165,10 +166,17 @@ jobs:
       # key has no restore-keys fallback, so a changed requirements.yml always
       # starts from an empty cache (roles are not re-fetched on version bump).
       #
+      # Skipped on a cache hit. With no restore-keys every hit is exact, and
+      # actions/cache saves only when the job succeeds, so a hit already holds
+      # everything these files pin. Caches saved by a pull request are visible
+      # only to that pull request, so this spares a PR's later pushes the
+      # Galaxy round trips, not its first.
+      #
       # These are resolved from the PR's requirements.yml, so a PR can point
       # that at an arbitrary source. The job holds no credentials, so the
       # exposure is limited to a throwaway runner.
       - name: Install collections and roles
+        if: steps.galaxy-cache.outputs.cache-hit != 'true'
         run: |
           for host in mx1 web1 web2 web3 tower mirror; do
             if [ -f "$host/ansible/requirements.yml" ]; then
