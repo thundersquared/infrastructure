@@ -44,6 +44,16 @@ exclude_paths:
   - "*.json"
   - "*.lock.hcl"
   - "**/files/**"
+  # Each host's Compose stacks, OpenTofu tree and docs. ansible-lint applied
+  # only its yaml rules here, which duplicate yamllint, and its loader rejects
+  # valid Compose tags such as !reset and !override. Anchored to the top
+  # level, so roles/system/containers/ is still linted. validate.yml skips
+  # ansible-lint for pull requests confined to these three trees (plus
+  # Markdown), so keep its ansible pathspecs in step with these entries.
+  # Do not mirror .github/ there: the ansible-lint job itself lives in it.
+  - "*/containers/"
+  - "*/terraform/"
+  - "*/docs/"
 
 warn_list:
   - experimental
