@@ -40,6 +40,16 @@
       "separateMajorMinor": false
     },
     {
+      "description": "Group n8n and its task runners image updates in one PR so their versions stay in step.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "ghcr.io/thundersquared/n8n",
+        "n8nio/runners"
+      ],
+      "groupName": "n8n",
+      "separateMajorMinor": false
+    },
+    {
       "matchDatasources": ["terraform-provider"],
       "registryUrls": ["https://registry.opentofu.org"]
     },
