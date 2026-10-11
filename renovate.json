@@ -70,6 +70,24 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/tbphp/gpt-load"],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-rc\\.(?<build>\\d+)$"
+    },
+    {
+      "description": "Automerge patch and digest updates for these images. A merge deploys straight to the hosts and CI does not start the new image, so think before adding data stores or services that migrate a schema on start. Never add headscale/headscale (see its rule above).",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "cloudflare/cloudflared",
+        "ghcr.io/thundersquared/authentik",
+        "ghcr.io/tbphp/gpt-load",
+        "valkey/valkey",
+        "ghcr.io/thundersquared/twentycrm",
+        "ghcr.io/maathimself/mailflow-frontend",
+        "ghcr.io/maathimself/mailflow-backend",
+        "ghcr.io/tailscale/tailscale",
+        "ghcr.io/thundersquared/n8n",
+        "n8nio/runners"
+      ],
+      "matchUpdateTypes": ["patch", "digest", "pinDigest"],
+      "automerge": true
     }
   ],
   "customManagers": [
