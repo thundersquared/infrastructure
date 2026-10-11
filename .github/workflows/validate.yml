@@ -17,6 +17,23 @@
 #
 # If a check ever needs a secret, do not add it here. Put it in a separate
 # workflow triggered on `push` to a protected branch.
+#
+# Only the checks a pull request can affect run. Every job starts its own
+# runner however short it is, and most pull requests are Renovate image bumps,
+# opened in bursts, that touch nothing but a host's containers/ directory. So
+# the yamllint job, which always runs, also works out from the diff which
+# other checks the change can affect, and each of those jobs waits for it and
+# runs only if needed. A job skipped by its `if:` still reports success, so all
+# of them can stay required status checks; a workflow-level `paths:` filter
+# would leave them pending instead. Merge queue and manual runs check
+# everything.
+#
+# The dependent jobs use `!cancelled()` so they still run when yamllint fails,
+# and compare against 'false' rather than 'true' so that a missing output runs
+# the check instead of skipping it: a skipped check counts as a pass.
+#
+# Each job's timeout-minutes is several times its slowest run, so a hung
+# download stops there instead of holding a runner for the six-hour default.
 
 name: Validate
 
@@ -40,10 +57,75 @@ jobs:
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ansible: ${{ steps.changes.outputs.ansible }}
+      tofu: ${{ steps.changes.outputs.tofu }}
+      headscale: ${{ steps.changes.outputs.headscale }}
+      workflows: ${{ steps.changes.outputs.workflows }}
     steps:
+      # Depth 2: on pull_request the checkout is GitHub's test merge commit,
+      # and the diff below needs its first parent (the base branch).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 2
+
+      # Each check's pathspecs list what it reads, except ansible-lint's,
+      # which list what it may skip. When a check starts reading a new path,
+      # add it here, or pull requests that change only that path will skip
+      # the check and pass.
+      - name: Detect which checks the change affects
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != pull_request ]; then
+            for check in ansible tofu headscale workflows; do
+              echo "$check=true"
+            done | tee -a "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The test merge commit's first parent is the base branch, so this
+          # is exactly what merging the pull request would change.
+          # --no-renames counts both sides of a move: a task file moved out of
+          # ansible/ is still an ansible change. Pathspecs rather than a regex
+          # over --name-only, which quotes paths with unusual characters.
+          git diff --name-only --no-renames HEAD^1 HEAD --
+          echo
+
+          # touches PATHSPEC...: does the change touch any of these paths? A
+          # git error (exit 128) counts as touched, so the check runs.
+          touches() {
+            if git diff --quiet --no-renames HEAD^1 HEAD -- "$@"; then
+              echo false
+            else
+              echo true
+            fi
+          }
+
+          {
+            # ansible-lint reads nearly the whole tree, so it is skipped only
+            # when every changed path is Markdown or under a host's Compose
+            # stacks, OpenTofu tree or docs, three trees .ansible-lint
+            # excludes. Keep these in step with those three entries, but
+            # never add .github/: this job and its setup action live there.
+            echo "ansible=$(touches . \
+              ':(exclude,glob)*/containers/**' \
+              ':(exclude,glob)*/terraform/**' \
+              ':(exclude,glob)*/docs/**' \
+              ':(exclude,glob)**/*.md')"
+            # This workflow pins tofu_version.
+            echo "tofu=$(touches tower/terraform .github/workflows/validate.yml)"
+            # The config and policy, the compose file (it pins the image, so
+            # Renovate bumps count), the script, and this workflow.
+            echo "headscale=$(touches tower/containers/headscale \
+              ci/headscale-check.sh .github/workflows/validate.yml)"
+            # This workflow, the composite action it uses, and zizmor's
+            # config (zizmor.yml or zizmor.yaml, at the root or in .github/).
+            echo "workflows=$(touches .github zizmor.yml zizmor.yaml)"
+          } | tee -a "$GITHUB_OUTPUT"
 
       - uses: $/.github/actions/setup-lint-env
         with:
@@ -54,7 +136,10 @@ jobs:
 
   ansible:
     name: ansible-lint
+    needs: yamllint
+    if: ${{ !cancelled() && needs.yamllint.outputs.ansible != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -69,6 +154,7 @@ jobs:
           packages: -r requirements.txt ansible-lint==26.9.0
 
       - name: Cache galaxy requirements
+        id: galaxy-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.ansible
@@ -85,10 +171,17 @@ jobs:
       # key has no restore-keys fallback, so a changed requirements.yml always
       # starts from an empty cache (roles are not re-fetched on version bump).
       #
+      # Skipped on a cache hit. With no restore-keys every hit is exact, and
+      # actions/cache saves only when the job succeeds, so a hit already holds
+      # everything these files pin. Caches saved by a pull request are visible
+      # only to that pull request, so this spares a PR's later pushes the
+      # Galaxy round trips, not its first.
+      #
       # These are resolved from the PR's requirements.yml, so a PR can point
       # that at an arbitrary source. The job holds no credentials, so the
       # exposure is limited to a throwaway runner.
       - name: Install collections and roles
+        if: steps.galaxy-cache.outputs.cache-hit != 'true'
         run: |
           for host in mx1 web1 web2 web3 tower mirror; do
             if [ -f "$host/ansible/requirements.yml" ]; then
@@ -101,7 +194,10 @@ jobs:
 
   tofu:
     name: OpenTofu
+    needs: yamllint
+    if: ${{ !cancelled() && needs.yamllint.outputs.tofu != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: tower/terraform
@@ -127,43 +223,14 @@ jobs:
 
   headscale:
     name: Headscale config
+    needs: yamllint
+    if: ${{ !cancelled() && needs.yamllint.outputs.headscale != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      # Depth 2: on pull_request the checkout is GitHub's test merge commit,
-      # and the diff below needs its first parent (the base branch).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 2
-
-      # Only pull requests that touch what the check reads run it: the config
-      # and policy, the compose file (it pins the image, so Renovate bumps
-      # count), the script, and this workflow. The job still runs and reports
-      # success otherwise, so it can stay a required status check; a
-      # workflow-level `paths:` filter would leave it pending instead. Merge
-      # queue and manual runs always check.
-      - name: Detect Headscale changes
-        id: changes
-        env:
-          EVENT: ${{ github.event_name }}
-        run: |
-          if [ "$EVENT" != pull_request ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # The test merge commit's first parent is the base branch, so this
-          # is exactly what merging the pull request would change.
-          changed=$(git diff --name-only HEAD^1 HEAD -- \
-            tower/containers/headscale \
-            ci/headscale-check.sh \
-            .github/workflows/validate.yml)
-          if [ -n "$changed" ]; then
-            printf 'Changed:\n%s\n' "$changed"
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No Headscale config, image or check changes; skipping."
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
 
       # Runs the image pinned in tower/containers/headscale/docker-compose.yml
       # against the committed config and policy, so a Renovate bump that drops
@@ -172,12 +239,14 @@ jobs:
       # The image reference comes from the PR, like the galaxy sources above.
       # The job holds no credentials and the container gets no network.
       - name: Check config and policy with the pinned image
-        if: steps.changes.outputs.run == 'true'
         run: ci/headscale-check.sh
 
   workflows:
     name: Workflow lint
+    needs: yamllint
+    if: ${{ !cancelled() && needs.yamllint.outputs.workflows != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

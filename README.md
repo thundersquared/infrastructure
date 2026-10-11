@@ -163,10 +163,13 @@ credentials at all — the checks only need the checkout:
 The yamllint, ansible-lint, OpenTofu and workflow-lint checks are required
 status checks on `main`, so a pull request cannot merge until they pass. Add
 `Headscale config` to that list too, so that a Renovate bump that breaks the
-config cannot merge. On a pull request that touches none of its inputs (the
-Headscale stack directory, `ci/headscale-check.sh`, `validate.yml`) it skips
-the check but still reports success, so requiring it does not block other
-pull requests. If a check is retired or renamed, remove it from the
+config cannot merge. Every check except yamllint is skipped on a pull request
+that cannot affect it (the path lists are in the yamllint job's "Detect which
+checks the change affects" step), and a skipped job still reports success, so
+requiring them does not block other pull requests. A Renovate image bump
+touches nothing but a host's `containers/` directory, so it runs yamllint
+alone, plus the Headscale check when the image is Headscale's. If a check is
+retired or renamed, remove it from the
 `required_status_checks.contexts` list in the same pull request — otherwise the
 merge blocks waiting on a check that no longer reports.
 

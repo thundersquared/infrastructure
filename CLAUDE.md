@@ -155,6 +155,16 @@ workflow, and `ci/headscale-check.sh`, which runs the headscale image pinned in
 against the committed config and policy and needs docker. Run it before pushing;
 the same failures otherwise surface as a red PR.
 
+In CI only yamllint runs on every pull request. The other checks run when the
+diff touches what they read, per the pathspecs in the "Detect which checks the
+change affects" step of `validate.yml`. When a check starts reading a new path,
+add it there: otherwise a PR that changes only that path skips the check, and a
+skipped check counts as passed. ansible-lint's list works the other way round:
+it names what ansible-lint may skip, three of the trees `.ansible-lint`
+excludes (`*/containers/`, `*/terraform/`, `*/docs/`) plus Markdown. Keep
+those in step, but never mirror `.github/`, which `.ansible-lint` also
+excludes but which defines the ansible-lint job.
+
 Headscale's config and policy live in git at
 `tower/containers/headscale/config/` and are mounted read-only. Never tell
 anyone to edit them on the node. Operations, upgrades, restore, and why its
