@@ -31,6 +31,9 @@
 # The dependent jobs use `!cancelled()` so they still run when yamllint fails,
 # and compare against 'false' rather than 'true' so that a missing output runs
 # the check instead of skipping it: a skipped check counts as a pass.
+#
+# Each job's timeout-minutes is several times its slowest run, so a hung
+# download stops there instead of holding a runner for the six-hour default.
 
 name: Validate
 
@@ -54,6 +57,7 @@ jobs:
   yamllint:
     name: yamllint
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       ansible: ${{ steps.changes.outputs.ansible }}
       tofu: ${{ steps.changes.outputs.tofu }}
@@ -135,6 +139,7 @@ jobs:
     needs: yamllint
     if: ${{ !cancelled() && needs.yamllint.outputs.ansible != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -192,6 +197,7 @@ jobs:
     needs: yamllint
     if: ${{ !cancelled() && needs.yamllint.outputs.tofu != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: tower/terraform
@@ -220,6 +226,7 @@ jobs:
     needs: yamllint
     if: ${{ !cancelled() && needs.yamllint.outputs.headscale != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -239,6 +246,7 @@ jobs:
     needs: yamllint
     if: ${{ !cancelled() && needs.yamllint.outputs.workflows != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
