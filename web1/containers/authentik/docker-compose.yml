@@ -17,7 +17,7 @@ services:
       - authentik
 
   server:
-    image: ghcr.io/thundersquared/authentik:2026.8.3@sha256:fff7d71ca95ad16f29e888086d74549cc9f335eb0cc8a31e94d994fa38eff369
+    image: ghcr.io/thundersquared/authentik:2026.8.4@sha256:2b9064477e3bf60b8c7f7eb85ec7fb608b243125c18a964925fdd09e9b5eb280
     restart: unless-stopped
     cap_drop:
       - ALL
@@ -40,7 +40,7 @@ services:
       - app-infra
 
   worker:
-    image: ghcr.io/thundersquared/authentik:2026.8.3@sha256:fff7d71ca95ad16f29e888086d74549cc9f335eb0cc8a31e94d994fa38eff369
+    image: ghcr.io/thundersquared/authentik:2026.8.4@sha256:2b9064477e3bf60b8c7f7eb85ec7fb608b243125c18a964925fdd09e9b5eb280
     restart: unless-stopped
     command: worker
     user: root
