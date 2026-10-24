@@ -1,0 +1,56 @@
+---
+- name: Fetch latest Envoy release info
+  uri:
+    url: https://api.github.com/repos/envoyproxy/envoy/releases/latest
+    return_content: yes
+  register: envoy_release
+  when: envoy_version is not defined
+
+- name: Set Envoy version
+  set_fact:
+    envoy_target_version: "{{ envoy_version | default(envoy_release.json.tag_name) }}"
+
+- name: Download and install Envoy binary
+  get_url:
+    url: "https://github.com/envoyproxy/envoy/releases/download/{{ envoy_target_version }}/envoy-{{ envoy_target_version | regex_replace('^v', '') }}-linux-x86_64"
+    dest: /usr/local/bin/envoy
+    mode: '0755'
+
+- name: Create Envoy config directory
+  file:
+    path: /etc/envoy
+    state: directory
+    mode: '0755'
+
+- name: Create Envoy systemd service
+  copy:
+    dest: /etc/systemd/system/envoy.service
+    content: |
+      [Unit]
+      Description=Envoy Proxy
+      After=network.target
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+      Restart=always
+      User=root
+      Group=root
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable Envoy service
+  systemd:
+    name: envoy
+    enabled: yes
+
+- name: Start Envoy service
+  systemd:
+    name: envoy
+    state: started
