@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Start the Docker daemon (.amp/services.yaml) that ci/headscale-check.sh
+# needs. Ensure starts only what is missing, so this is safe on every wake.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+amp orb services ensure

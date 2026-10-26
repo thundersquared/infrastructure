@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Run the Docker daemon for the `docker` orb service (.amp/services.yaml).
+#
+# On an orb booted with systemd this is plain `sudo dockerd`. Container-based
+# orb providers have no systemd and keep /var/lib/docker on overlayfs, so the
+# image's daemon.json (systemd cgroup driver and slice) cannot start
+# containers there, and overlayfs layers cannot stack on overlayfs. Those
+# orbs get a copy of daemon.json with cgroupfs and, where needed, vfs storage.
+set -euo pipefail
+
+if [ -d /run/systemd/system ]; then
+  exec sudo dockerd
+fi
+
+storage=null
+if [ "$(stat -fc %T /var/lib/docker 2>/dev/null || stat -fc %T /var/lib)" = overlayfs ]; then
+  storage='"vfs"'
+fi
+
+src=/etc/docker/daemon.json
+[ -f "$src" ] || src=<(echo '{}')
+config=/tmp/amp-dockerd.json
+jq --argjson storage "$storage" '
+  del(.["cgroup-parent"])
+  | .["exec-opts"] = ((.["exec-opts"] // []) | map(select(startswith("native.cgroupdriver=") | not)) + ["native.cgroupdriver=cgroupfs"])
+  | if $storage then .["storage-driver"] = $storage else . end
+' "$src" >"$config"
+
+exec sudo dockerd --config-file "$config"

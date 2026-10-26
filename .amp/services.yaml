@@ -1,0 +1,6 @@
+---
+# Long-running orb services, started by `amp orb services ensure` (which
+# .agents/resume runs). ci/headscale-check.sh needs the Docker daemon.
+services:
+  docker:
+    command: .agents/dockerd

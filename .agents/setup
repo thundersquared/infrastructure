@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Prepare an Amp orb so ci/validate.sh runs without installing anything:
+# the Python that .python-version pins with the deploys' requirements.txt and
+# the linters validate.yml pins, the Galaxy roles and collections, OpenTofu at
+# the version CI uses, and the OpenTofu providers. The Docker daemon that the
+# headscale check needs is a supervised service in .amp/services.yaml.
+#
+# Versions are read from the files CI reads, so Renovate bumps reach orbs
+# without editing this script. Safe to run again; a warm run installs nothing.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+repo_root=$PWD
+# Outside the checkout: yamllint and ansible-lint walk the whole tree and
+# would lint every YAML file in an in-repo .venv.
+venv="$HOME/.venvs/infrastructure"
+
+step() {
+  local label=$1 start=$SECONDS
+  shift
+  printf '\n==> %s\n' "$label"
+  "$@"
+  printf '<== %s (%ss)\n' "$label" "$((SECONDS - start))"
+}
+
+python_venv() {
+  local want have
+  want=$(<.python-version)
+  have=$("$venv/bin/python" -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])' 2>/dev/null || true)
+  if [[ "$have." != "$want."* ]]; then
+    # uv downloads a managed Python when the system one does not match.
+    uv venv --clear --python "$want" "$venv"
+  fi
+}
+
+# requirements.txt plus the exact linter pins from validate.yml, installed
+# together so ansible-lint uses the ansible-core the deploys pin.
+python_packages() {
+  local pins
+  mapfile -t pins < <(sed -n 's/^ *packages: *//p' .github/workflows/validate.yml | tr ' ' '\n' | grep '==')
+  uv pip install --python "$venv/bin/python" -r requirements.txt "${pins[@]}"
+}
+
+# Same loop as the ansible-lint job. Without --force, galaxy skips what is
+# already installed.
+galaxy_requirements() {
+  local req
+  for req in */ansible/requirements.yml; do
+    "$venv/bin/ansible-galaxy" install -r "$req"
+  done
+}
+
+opentofu() {
+  local version arch have tmp
+  version=$(sed -n 's/^ *tofu_version: *"\{0,1\}v\{0,1\}\([0-9.]*\)"\{0,1\}$/\1/p' .github/workflows/validate.yml | head -n1)
+  have=$(tofu version -json 2>/dev/null | sed -n 's/.*"terraform_version": *"\([^"]*\)".*/\1/p' || true)
+  if [ "$have" = "$version" ]; then
+    echo "tofu $version already installed"
+    return
+  fi
+  arch=$(dpkg --print-architecture)
+  tmp=$(mktemp -d)
+  # shellcheck disable=SC2064 # expand $tmp now; it is local to this function.
+  trap "rm -rf '$tmp'" RETURN
+  local base="https://github.com/opentofu/opentofu/releases/download/v$version"
+  local archive="tofu_${version}_linux_${arch}.tar.gz"
+  curl -fsSL --retry 3 -o "$tmp/$archive" "$base/$archive"
+  curl -fsSL --retry 3 -o "$tmp/SHA256SUMS" "$base/tofu_${version}_SHA256SUMS"
+  (cd "$tmp" && grep " $archive\$" SHA256SUMS | sha256sum -c -)
+  tar -xzf "$tmp/$archive" -C "$tmp" tofu
+  sudo install -m 0755 "$tmp/tofu" /usr/local/bin/tofu
+  tofu version
+}
+
+# Providers for every OpenTofu root, without a backend (no credentials), as
+# ci/validate.sh does. Both roots share a plugin cache, so each provider is
+# downloaded once. -lockfile=readonly: mirror's lock file lacks some zh:
+# hashes, and setup must not leave the checkout modified.
+opentofu_providers() {
+  local dir
+  export TF_PLUGIN_CACHE_DIR="$HOME/.cache/opentofu/plugins"
+  mkdir -p "$TF_PLUGIN_CACHE_DIR"
+  for dir in */terraform; do
+    tofu -chdir="$dir" init -backend=false -lockfile=readonly -input=false -no-color >/dev/null
+    echo "initialised $dir"
+  done
+}
+
+# Put the virtualenv on PATH for login shells started in this checkout, which
+# is how Amp and orb services start.
+shell_profile() {
+  local marker="# infrastructure repo virtualenv"
+  if ! grep -Fqx "$marker" "$HOME/.bash_profile" 2>/dev/null; then
+    cat >>"$HOME/.bash_profile" <<EOF
+
+$marker
+case "\$PWD" in
+  "$repo_root" | "$repo_root"/*)
+    case ":\$PATH:" in
+      *":$venv/bin:"*) ;;
+      *) export PATH="$venv/bin:\$PATH" ;;
+    esac
+    ;;
+esac
+EOF
+  fi
+}
+
+step "Python virtualenv" python_venv
+step "Python packages" python_packages
+step "Ansible Galaxy requirements" galaxy_requirements
+step "OpenTofu" opentofu
+step "OpenTofu providers" opentofu_providers
+step "Shell profile" shell_profile
