@@ -5,7 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: hypebun-frankenphp:1.12.4-php8.5
+    # Build on every deploy. Compose otherwise reuses the existing local image
+    # and never picks up a Renovate bump of the Dockerfile's FROM. The build
+    # cache makes an unchanged Dockerfile a no-op that keeps the container
+    # running. The tag carries no version: the Dockerfile owns that.
+    pull_policy: build
+    image: hypebun-frankenphp:local
     container_name: hypebun-web
     restart: unless-stopped
     # Keep rotation explicit; daemon defaults apply only at container creation.

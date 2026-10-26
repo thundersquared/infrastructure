@@ -8,7 +8,7 @@ php-fpm + 3-node DB cluster + MaxScale/ProxySQL).
 
 | Service      | Image                                    | Role                                                        |
 |--------------|------------------------------------------|-------------------------------------------------------------|
-| `frankenphp` | built from `Dockerfile` (FrankenPHP 1.12.4 / PHP 8.5) | Caddy + PHP in-process; serves prod, test and user domains. |
+| `frankenphp` | built from `Dockerfile` (FrankenPHP / PHP 8.5) | Caddy + PHP in-process; serves prod, test and user domains. |
 | `db`         | `mariadb:12.3.2`                         | Single MySQL-compatible database.                           |
 
 Both join the external `app-infra` network. PHP runs in **classic** (per-request)
@@ -20,8 +20,9 @@ The base `dunglas/frankenphp` image ships a minimal extension set (PDO + mysqlnd
 only). AltumCode requires `mysqli` (its core DB layer) and `gd` (captcha / image
 processing), so `frankenphp` is built from the local `Dockerfile`, which adds:
 `mysqli`, `pdo_mysql`, `gd`, `intl`, `zip`, `exif`, `bcmath`, `gmp`, `opcache`.
-Compose builds it automatically; the resulting image is tagged
-`hypebun-frankenphp:1.12.4-php8.5`.
+The service sets `pull_policy: build`, so every deploy rebuilds it (a cache hit
+when the Dockerfile is unchanged) and a Renovate bump of the base image reaches the
+running container. The resulting image is tagged `hypebun-frankenphp:local`.
 
 ### Environments (shared ports)
 
