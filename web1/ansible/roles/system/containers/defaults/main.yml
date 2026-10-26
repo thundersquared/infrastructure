@@ -3,9 +3,6 @@ docker_stacks:
   mailflow:
     env_file: true
     state: present
-  roundcube:
-    env_file: true
-    state: present
   calcom:
     env_file: true
     state: present

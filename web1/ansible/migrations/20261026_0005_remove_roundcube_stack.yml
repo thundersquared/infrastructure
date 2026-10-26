@@ -1,0 +1,22 @@
+---
+# Migration: 20261026_0005_remove_roundcube_stack
+# Description: Remove the retired roundcube webmail stack
+# Problem: dropping a stack from docker_stacks and containers/ leaves its
+#   container and /opt/containers/roundcube behind on the host
+# Solution: compose down the old project, then delete its directory
+
+- name: Check for roundcube compose project
+  ansible.builtin.stat:
+    path: /opt/containers/roundcube/docker-compose.yml
+  register: roundcube_compose
+
+- name: Remove roundcube containers
+  community.docker.docker_compose_v2:
+    project_src: /opt/containers/roundcube
+    state: absent
+  when: roundcube_compose.stat.exists
+
+- name: Remove roundcube project directory
+  ansible.builtin.file:
+    path: /opt/containers/roundcube
+    state: absent
