@@ -110,7 +110,7 @@
       ansible.builtin.replace:
         path: /etc/nginx/nginx.conf
         regexp: "^(\\s*)client_max_body_size\\s+\\S+\\s*;"
-        replace: "\\g<1>client_max_body_size 128M;"
+        replace: "\\g<1>client_max_body_size 4G;"
       notify: Reload nginx
       become: true
 
