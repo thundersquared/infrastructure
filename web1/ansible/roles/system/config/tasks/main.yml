@@ -99,6 +99,21 @@
         mode: "0644"
       become: true
 
+- name: Nginx Upload Limit
+  # CloudPanel's vhost templates do not set client_max_body_size, so the http-level value in
+  # /etc/nginx/nginx.conf applies to every site. Editing the templates instead would only reach
+  # new sites and is lost on upgrade, when `clpctl vhost-templates:import` replaces them.
+  # PHP has its own per-site limits (post_max_size, upload_max_filesize; 64M by default) under
+  # Site → Settings → PHP Settings in CloudPanel.
+  block:
+    - name: Raise client_max_body_size
+      ansible.builtin.replace:
+        path: /etc/nginx/nginx.conf
+        regexp: "^(\\s*)client_max_body_size\\s+\\S+\\s*;"
+        replace: "\\g<1>client_max_body_size 128M;"
+      notify: Reload nginx
+      become: true
+
 - name: Nginx Compression
   # CloudPanel pre-loads brotli via /etc/nginx/modules-enabled/50-mod-ngx-brotli.conf
   # but ships nginx.conf with gzip only. The brotli `on`, `brotli_static on`,
