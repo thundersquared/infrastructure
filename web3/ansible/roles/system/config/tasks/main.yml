@@ -85,6 +85,20 @@
       notify: Restart logrotate.timer
       become: true
 
+- name: Shell Environment
+  # CloudPanel creates site users with `useradd -k` from its own skeletons under
+  # /home/clp/htdocs/app/files/resources/etc/skel/, not /etc/skel, and recopies them on
+  # every CloudPanel upgrade. /etc/profile.d reaches existing and future users instead.
+  block:
+    - name: Add Composer global binaries to PATH
+      ansible.builtin.copy:
+        src: files/profile.d/composer.sh
+        dest: /etc/profile.d/composer.sh
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
 - name: Nginx Compression
   # CloudPanel pre-loads brotli via /etc/nginx/modules-enabled/50-mod-ngx-brotli.conf
   # but ships nginx.conf with gzip only. The brotli `on`, `brotli_static on`,
