@@ -39,7 +39,7 @@ services:
     command: sh -c "chown -R 100:101 /logs /fleet /vulndb"
 
   fleet:
-    image: ghcr.io/thundersquared/fleet:4.93.2@sha256:a91e3866ae409defad80905c2eb5c4c04c601fa34bcd844eb1bffe2ecb3146c6
+    image: ghcr.io/thundersquared/fleet:4.94.0@sha256:b4f9abdb8f4b3fe7d51bb73f5e54ebdd893c72582b87690c738a246b1e933eb9
     cap_drop:
       - ALL
     security_opt:
