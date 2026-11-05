@@ -1,7 +1,7 @@
 ---
 services:
   gpt-load:
-    image: ghcr.io/tbphp/gpt-load:2.0.0-rc.61@sha256:58be7255849997216761a811bbaa8648f120558de9d7b2b376c2269699ee524d # yamllint disable-line rule:line-length
+    image: ghcr.io/tbphp/gpt-load:2.0.0-rc.62@sha256:82a19068d0b32a80ff7e9b3a010e8d381b4d088e2765e585838a7be1bbecffb3 # yamllint disable-line rule:line-length
     restart: unless-stopped
     init: true
     cap_drop:
