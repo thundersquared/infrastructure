@@ -4,7 +4,7 @@
 # terminated by the host reverse proxy), bundled Caddy profile dropped.
 services:
   frontend:
-    image: ghcr.io/maathimself/mailflow-frontend:4.1.2@sha256:6b9b03a53663c0d9dfeace31c4f056a4437b40783b34c755d2dd76f7fedd5a16  # yamllint disable-line rule:line-length
+    image: ghcr.io/maathimself/mailflow-frontend:4.3.1@sha256:3c8a42715cec8726bd370f4e724d630a4f2271ca95d25dcf92fa34956a9803f6  # yamllint disable-line rule:line-length
     container_name: mailflow-frontend
     restart: unless-stopped
     cap_drop:
@@ -44,7 +44,7 @@ services:
       - app-infra
 
   backend:
-    image: ghcr.io/maathimself/mailflow-backend:4.1.2@sha256:1f70c4de94ad1c9604717dfbb737ddafc844ba6e20f76084c1c483580d3fe7be  # yamllint disable-line rule:line-length
+    image: ghcr.io/maathimself/mailflow-backend:4.3.1@sha256:36d35701354936797edb92b30ad6a998d52fcad03dace08e758a5bdd2a86e943  # yamllint disable-line rule:line-length
     container_name: mailflow-backend
     restart: unless-stopped
     cap_drop:
