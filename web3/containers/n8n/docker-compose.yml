@@ -74,7 +74,7 @@ services:
   # three tags in step. The certificates are issued for the service names
   # sandbox-api and sandbox-runner-1, so do not rename these services.
   sandbox-certs:
-    image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.14.0@sha256:bca5e76d828306c0e319e946cfd0f4ff22941ce9e61bb5fcc118a1cce59c180d  # yamllint disable-line rule:line-length
+    image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.15.0@sha256:6c8f4545ef77261ec0351e926b7197b003d330c443c0a7afd46063bdd397f504  # yamllint disable-line rule:line-length
     user: "0:0"
     restart: "no"
     cap_drop:
@@ -100,7 +100,7 @@ services:
       - sandbox_tls:/tls
 
   sandbox-api:
-    image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.14.0@sha256:bca5e76d828306c0e319e946cfd0f4ff22941ce9e61bb5fcc118a1cce59c180d  # yamllint disable-line rule:line-length
+    image: ghcr.io/n8n-io/n8n-sandbox-service-api:1.15.0@sha256:6c8f4545ef77261ec0351e926b7197b003d330c443c0a7afd46063bdd397f504  # yamllint disable-line rule:line-length
     restart: unless-stopped
     cap_drop:
       - ALL
@@ -135,7 +135,7 @@ services:
   # Privileged Docker-in-Docker: equivalent to root on the host. Never publish
   # its ports. Exempt from cap_drop/no-new-privileges (see CLAUDE.md).
   sandbox-runner-1:
-    image: ghcr.io/n8n-io/n8n-sandbox-service-runner-dind:1.14.0@sha256:e7ffb6dbfaa831861fe03b66ff9ae7d4f8c8541fa60738c58c12c059c806f6a4  # yamllint disable-line rule:line-length
+    image: ghcr.io/n8n-io/n8n-sandbox-service-runner-dind:1.15.0@sha256:d6d2cdc163250d749d9442176264a05b65adca44660af541d1f0966b393b0806  # yamllint disable-line rule:line-length
     restart: unless-stopped
     privileged: true
     depends_on:
@@ -149,7 +149,7 @@ services:
       SANDBOX_RUNNER_HTTP_BASE_URL: https://sandbox-runner-1:8080
       SANDBOX_RUNNER_CONTROL_GRPC_LISTEN_ADDR: ":9091"
       SANDBOX_RUNNER_CONTROL_GRPC_ADVERTISE_ADDR: sandbox-runner-1:9091
-      SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE: ghcr.io/n8n-io/n8n-sandbox-service-sandbox:1.14.0@sha256:f138f039255b60802778beb274ece7b72bdd30b0ec22c943136736866f61dccb  # yamllint disable-line rule:line-length
+      SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE: ghcr.io/n8n-io/n8n-sandbox-service-sandbox:1.15.0@sha256:d5084349964e4fc68071482e771ed361e34536144e2b9a9fb42298fed0dcd489  # yamllint disable-line rule:line-length
       SANDBOX_RUNNER_REGISTRATION_GRPC_CA_FILE: /tls/runner/ca.crt
       SANDBOX_RUNNER_REGISTRATION_GRPC_CERT_FILE: /tls/runner/grpc-client.crt
       SANDBOX_RUNNER_REGISTRATION_GRPC_KEY_FILE: /tls/runner/grpc-client.key
