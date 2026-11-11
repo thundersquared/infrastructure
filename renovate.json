@@ -50,6 +50,17 @@
       "separateMajorMinor": false
     },
     {
+      "description": "Group the n8n sandbox service images in one PR: the API, runner and sandbox images ship as one release and are only supported together.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "ghcr.io/n8n-io/n8n-sandbox-service-api",
+        "ghcr.io/n8n-io/n8n-sandbox-service-runner-dind",
+        "ghcr.io/n8n-io/n8n-sandbox-service-sandbox"
+      ],
+      "groupName": "n8n sandbox service",
+      "separateMajorMinor": false
+    },
+    {
       "matchDatasources": ["terraform-provider"],
       "registryUrls": ["https://registry.opentofu.org"]
     },
@@ -110,6 +121,13 @@
       "depNameTemplate": "opentofu/opentofu",
       "packageNameTemplate": "opentofu/opentofu",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Track the sandbox image the n8n sandbox runner pulls. It is set through SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE, which the docker-compose manager does not read, and must stay on the same release as the sandbox API and runner images.",
+      "managerFilePatterns": ["/(^|/)docker-compose\\.ya?ml$/"],
+      "matchStrings": ["SANDBOX_RUNNER_DOCKER_SANDBOX_IMAGE:\\s*(?<depName>[^:\\s]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)"],
+      "datasourceTemplate": "docker"
     }
   ],
   "hostRules": [

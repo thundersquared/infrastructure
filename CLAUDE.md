@@ -121,6 +121,8 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is
 **Containers exempt from `cap_drop`** (do not add):
 - `watchtower` — requires Docker socket management
 - `authentik worker` — runs as `root` with Docker socket for blueprint management
+- `sandbox-runner-1` (web3 n8n stack) — `privileged: true` Docker-in-Docker that runs n8n Assistant's sandboxes;
+  `no-new-privileges` would be inherited by the sandboxes it starts. Never publish its ports
 - Any init container whose sole job is `chown` (needs `CAP_CHOWN`; dropping all caps breaks it)
 - **All data store images** (PostgreSQL, MySQL, Redis, KeyDB, Valkey, OpenSearch, Meilisearch) — their entrypoints start as `root` and use `gosu` to drop to the database user, which requires `CAP_SETUID`/`CAP_SETGID`. Both `cap_drop: [ALL]` and `no-new-privileges:true` break this pattern and prevent the container from starting.
 
