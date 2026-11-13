@@ -1,7 +1,7 @@
 ---
 services:
   database:
-    image: postgres:18-alpine@sha256:1018733457011bf88d81db98cf43aac6d5150afc18787dbe204771fedf80ff95
+    image: postgres:18.7-alpine3.23@sha256:e6014245dccbc0f28b07dac8e3f793c94a18420f78690e9db547957514a524f1
     restart: unless-stopped
     volumes:
       - database:/var/lib/postgresql/data

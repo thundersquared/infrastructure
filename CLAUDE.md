@@ -45,7 +45,7 @@ docker_stacks:
 - **No `version:` key** in `docker-compose.yml` (deprecated in Compose V2)
 - **Always bind ports to localhost**: `127.0.0.1:<port>:<port>`; use incremental ports (3001, 3002, ...) per host
 - **Prefer `.env` files** over inline `environment:` blocks; set `env_file: - .env` in compose
-- **Fixed image tags** — no `latest`; prefer `-alpine` variants; use `postgres:18-alpine` for new PostgreSQL stacks
+- **Fixed image tags** — no `latest`; prefer `-alpine` variants; new PostgreSQL stacks pin the same full tag as the existing ones (e.g. `postgres:18.7-alpine3.23`), not `postgres:18-alpine`
 - **Network declaration** in every compose file:
   ```yaml
   networks:
