@@ -33,7 +33,7 @@ services:
       - n8n
 
   n8n:
-    image: ghcr.io/thundersquared/n8n:2.47.4@sha256:c94c106c8de388404e011d34fffc6a44409e8d76f41a2926e89e585c2fff0888
+    image: ghcr.io/thundersquared/n8n:2.47.5@sha256:ece46b334270f2debaf9f68d029ea37babcbd5f6e25c7b7843dc7edef4cc1836
     restart: unless-stopped
     cap_drop:
       - ALL
@@ -53,7 +53,7 @@ services:
       - app-infra
 
   runner:
-    image: n8nio/runners:2.47.4@sha256:e2aed3c5f1e8e93033584aa835094c919bb9b530f007f5de07f4c94ce90e82b1
+    image: n8nio/runners:2.47.5@sha256:1f53745aaaf08758f86c4653545799b6b77fcae354e037af65b34290c93fe28e
     restart: unless-stopped
     cap_drop:
       - ALL
