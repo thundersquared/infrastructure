@@ -5,11 +5,13 @@
 #   data in /var/lib/postgresql/18/docker instead of /var/lib/postgresql/data.
 #   Changing the image tag alone leaves the database refusing to start
 # Solution: dump the 16 database while authentik is stopped, restore it into a
-#   new authentik_postgres volume with a throwaway 18 container, then let the
-#   containers role start the stack on the new compose file. The 16 volume
-#   (authentik_database) and the dump in /opt/ansible/backups are kept as the
-#   rollback copy; remove them by hand once authentik is verified. If any step
-#   fails, the half-restored volume is removed and the 16 stack is started again
+#   new authentik_postgres volume with a throwaway 18 container, then install
+#   the new compose file and start authentik on 18 here, so the stack is never
+#   left stopped for the roles between migrations and containers. The 16 volume
+#   (authentik_database), its compose file and the dump in /opt/ansible/backups
+#   are kept as the rollback copy; remove them by hand once authentik is
+#   verified. If any step fails, the 16 compose file is put back, the 16 stack
+#   is started again and the half-restored volume is removed
 
 - name: Check for the authentik .env
   ansible.builtin.stat:
@@ -73,6 +75,15 @@
             group: root
             mode: "0700"
 
+        - name: Keep the PostgreSQL 16 compose file
+          ansible.builtin.copy:
+            src: /opt/containers/authentik/docker-compose.yml
+            dest: /opt/ansible/backups/authentik-docker-compose.pg16.yml
+            remote_src: true
+            owner: root
+            group: root
+            mode: "0600"
+
         - name: Upgrade, or start the 16 stack again
           block:
             - name: Stop authentik and start its database
@@ -105,6 +116,15 @@
               ansible.builtin.command:
                 argv: [docker, compose, --project-directory, /opt/containers/authentik, stop]
               changed_when: true
+
+            # With Compose's labels, so it adopts the volume as the stack's
+            # `postgres` volume instead of warning on every `up`.
+            - name: Create the PostgreSQL 18 volume
+              community.docker.docker_volume:
+                name: authentik_postgres
+                labels:
+                  com.docker.compose.project: authentik
+                  com.docker.compose.volume: postgres
 
             - name: Start a PostgreSQL 18 container on authentik_postgres
               community.docker.docker_container:
@@ -141,24 +161,61 @@
                 name: authentik-postgres18-restore
                 state: absent
 
+            # The containers role would install this file too, but only after
+            # other roles: if one of them failed, authentik would stay down.
+            # Both images are already on the host, so no registry login is
+            # needed. The containers role then finds nothing to change.
+            - name: Install the PostgreSQL 18 compose file
+              ansible.builtin.copy:
+                src: "{{ playbook_dir }}/../containers/authentik/docker-compose.yml"
+                dest: /opt/containers/authentik/docker-compose.yml
+                owner: root
+                group: root
+                mode: "0755"
+
+            - name: Start authentik on PostgreSQL 18
+              ansible.builtin.command:
+                argv: [docker, compose, --project-directory, /opt/containers/authentik, up, --detach, --wait, --wait-timeout, "300"]
+              changed_when: true
+
           rescue:
+            # Cleanup must not stop the rollback, so its errors are reported
+            # in the final failure instead.
             - name: Remove the restore container
               community.docker.docker_container:
                 name: authentik-postgres18-restore
                 state: absent
+              register: authentik_cleanup_container
+              ignore_errors: true
 
+            - name: Put back the PostgreSQL 16 compose file
+              ansible.builtin.copy:
+                src: /opt/ansible/backups/authentik-docker-compose.pg16.yml
+                dest: /opt/containers/authentik/docker-compose.yml
+                remote_src: true
+                owner: root
+                group: root
+                mode: "0755"
+
+            - name: Start the PostgreSQL 16 stack again
+              ansible.builtin.command:
+                argv: [docker, compose, --project-directory, /opt/containers/authentik, up, --detach, --wait, --wait-timeout, "300"]
+              changed_when: true
+
+            # After the 16 stack is up, so no container still uses the volume.
             - name: Remove the half-restored PostgreSQL 18 volume
               community.docker.docker_volume:
                 name: authentik_postgres
                 state: absent
-
-            - name: Start the PostgreSQL 16 stack again
-              ansible.builtin.command:
-                argv: [docker, compose, --project-directory, /opt/containers/authentik, start]
-              changed_when: true
+              register: authentik_cleanup_volume
+              ignore_errors: true
 
             - name: Fail the migration
               ansible.builtin.fail:
                 msg: >-
                   The PostgreSQL 18 upgrade failed at "{{ ansible_failed_task.name }}" and authentik
                   was started again on PostgreSQL 16: {{ ansible_failed_result.stderr | default(ansible_failed_result.msg | default('')) }}
+                  {{ 'Removing authentik-postgres18-restore also failed: ' ~ authentik_cleanup_container.msg
+                     if authentik_cleanup_container is failed else '' }}
+                  {{ 'Removing authentik_postgres also failed, remove it by hand before deploying again: '
+                     ~ authentik_cleanup_volume.msg if authentik_cleanup_volume is failed else '' }}
