@@ -1,0 +1,39 @@
+---
+# Migration: 20261115_0005_check_calcom_postgres_volume
+# Description: Make sure calcom's database is in calcom_database before the
+#   compose file mounts that volume at /var/lib/postgresql
+# Background: calcom mounted calcom_database at /var/lib/postgresql/data. The
+#   PostgreSQL 18 images it was created with shipped /var/lib/postgresql/data
+#   as a symlink to `.`, so Docker resolved the mount to /var/lib/postgresql
+#   and the database (PGDATA /var/lib/postgresql/18/docker) landed in
+#   calcom_database, even though `docker inspect` shows the configured path.
+#   Current images no longer have the symlink: with a fresh anonymous volume,
+#   as after `docker compose down` + `up`, calcom_database would be mounted on a
+#   real /data directory, PGDATA would be empty, and the entrypoint would refuse
+#   to start
+# Solution: the compose file now mounts calcom_database at /var/lib/postgresql.
+#   That only finds the database if it is in calcom_database/18/docker, so
+#   fail the deploy, before anything is stopped or changed, when the volume
+#   exists without it. Without the volume there is nothing to keep (new install)
+
+- name: Inspect the calcom_database volume
+  community.docker.docker_volume_info:
+    name: calcom_database
+  register: calcom_volume
+
+- name: Read the PostgreSQL version in calcom_database
+  ansible.builtin.slurp:
+    src: "{{ calcom_volume.volume.Mountpoint }}/18/docker/PG_VERSION"
+  register: calcom_pg_version
+  failed_when: false
+  when: calcom_volume.exists
+
+- name: Require calcom's database in calcom_database
+  ansible.builtin.assert:
+    that: calcom_pg_version.content | default('') | b64decode | trim == '18'
+    fail_msg: >-
+      calcom_database has no PostgreSQL 18 data directory at 18/docker, so the new
+      compose file would start calcom on an empty database. Find the volume that
+      calcom-database-1 really keeps 18/docker in and copy it into calcom_database
+      before deploying.
+  when: calcom_volume.exists
