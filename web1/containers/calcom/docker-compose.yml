@@ -3,8 +3,11 @@ services:
   database:
     image: postgres:18.7-alpine3.23@sha256:60aac580d8dbe3093c097bb1d11f9e62999814d3a1da2c1aaf729c0b7db117f2
     restart: unless-stopped
+    environment:
+      # PG18: version-specific PGDATA; volume mounts at /var/lib/postgresql
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - database:/var/lib/postgresql/data
+      - database:/var/lib/postgresql
     env_file:
       - .env
     healthcheck:
