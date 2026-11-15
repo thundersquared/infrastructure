@@ -1,0 +1,164 @@
+---
+# Migration: 20261115_0006_upgrade_authentik_postgres_to_18
+# Description: Upgrade authentik's PostgreSQL from 16 to 18
+# Problem: PostgreSQL 18 cannot read a 16 data directory, and its image keeps
+#   data in /var/lib/postgresql/18/docker instead of /var/lib/postgresql/data.
+#   Changing the image tag alone leaves the database refusing to start
+# Solution: dump the 16 database while authentik is stopped, restore it into a
+#   new authentik_postgres volume with a throwaway 18 container, then let the
+#   containers role start the stack on the new compose file. The 16 volume
+#   (authentik_database) and the dump in /opt/ansible/backups are kept as the
+#   rollback copy; remove them by hand once authentik is verified. If any step
+#   fails, the half-restored volume is removed and the 16 stack is started again
+
+- name: Check for the authentik .env
+  ansible.builtin.stat:
+    path: /opt/containers/authentik/.env
+  register: authentik_env
+
+- name: Upgrade authentik's database to PostgreSQL 18
+  when: authentik_env.stat.exists
+  block:
+    - name: Inspect the authentik database container
+      community.docker.docker_container_info:
+        name: authentik-database-1
+      register: authentik_db
+
+    - name: Inspect the PostgreSQL 18 volume
+      community.docker.docker_volume_info:
+        name: authentik_postgres
+      register: authentik_pg18_volume
+
+    - name: Find the volume mounted at /var/lib/postgresql
+      ansible.builtin.set_fact:
+        authentik_db_on_18: >-
+          {{ authentik_db.exists and (authentik_db.container.Mounts
+          | selectattr('Destination', 'eq', '/var/lib/postgresql')
+          | selectattr('Name', 'eq', 'authentik_postgres') | list | length > 0) }}
+
+    - name: Refuse to overwrite a PostgreSQL 18 volume authentik does not use yet
+      ansible.builtin.assert:
+        that: authentik_db_on_18 or not authentik_pg18_volume.exists
+        fail_msg: >-
+          authentik_postgres exists, but authentik-database-1 does not use it, so it is
+          left over from an earlier attempt. Inspect it, remove it with
+          `docker volume rm authentik_postgres`, and deploy again.
+
+    - name: Dump, restore and switch to PostgreSQL 18
+      when: not authentik_db_on_18
+      block:
+        - name: Require the authentik database container
+          ansible.builtin.assert:
+            that: authentik_db.exists
+            fail_msg: >-
+              authentik-database-1 does not exist, so there is no running PostgreSQL 16 to
+              dump. Start the 16 stack, or restore the database into authentik_postgres by hand.
+
+        - name: Read the PostgreSQL 18 image from the new compose file
+          ansible.builtin.set_fact:
+            authentik_pg18_image: >-
+              {{ (lookup('ansible.builtin.file', playbook_dir ~ '/../containers/authentik/docker-compose.yml')
+              | from_yaml).services.database.image }}
+            authentik_pg_env: >-
+              {{ dict(authentik_db.container.Config.Env
+              | select('match', '^POSTGRES_(USER|PASSWORD|DB)=')
+              | map('regex_findall', '^([^=]+)=(.*)$') | map('first')) }}
+          no_log: true
+
+        - name: Create the backup directory
+          ansible.builtin.file:
+            path: /opt/ansible/backups
+            state: directory
+            owner: root
+            group: root
+            mode: "0700"
+
+        - name: Upgrade, or start the 16 stack again
+          block:
+            - name: Stop authentik and start its database
+              ansible.builtin.shell: |
+                set -eu
+                cd /opt/containers/authentik
+                docker compose stop server worker
+                docker compose start database
+                for _ in $(seq 60); do
+                  docker compose exec -T database sh -c 'pg_isready -q -U "$POSTGRES_USER" -d "$POSTGRES_DB"' && exit 0
+                  sleep 2
+                done
+                echo "PostgreSQL 16 did not become ready" >&2
+                exit 1
+              changed_when: true
+
+            # The dump is the only copy of the database outside its volume:
+            # PostgreSQL volumes are not in the borg backup.
+            - name: Dump the PostgreSQL 16 database
+              ansible.builtin.shell: |
+                set -eu
+                umask 077
+                cd /opt/containers/authentik
+                docker compose exec -T database sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+                  > /opt/ansible/backups/authentik-postgres16.sql
+                tail -n 5 /opt/ansible/backups/authentik-postgres16.sql | grep -q 'PostgreSQL database dump complete'
+              changed_when: true
+
+            - name: Stop the PostgreSQL 16 database
+              ansible.builtin.command:
+                argv: [docker, compose, --project-directory, /opt/containers/authentik, stop]
+              changed_when: true
+
+            - name: Start a PostgreSQL 18 container on authentik_postgres
+              community.docker.docker_container:
+                name: authentik-postgres18-restore
+                image: "{{ authentik_pg18_image }}"
+                network_mode: none
+                env: "{{ authentik_pg_env | combine({'PGDATA': '/var/lib/postgresql/18/docker'}) }}"
+                volumes:
+                  - authentik_postgres:/var/lib/postgresql
+                state: started
+              no_log: true
+
+            # Over TCP, so the temporary server initdb runs on the socket
+            # does not count as ready.
+            - name: Wait for PostgreSQL 18 to accept connections
+              ansible.builtin.command:
+                argv: [docker, exec, authentik-postgres18-restore, pg_isready, -q, -h, 127.0.0.1]
+              register: authentik_pg18_ready
+              until: authentik_pg18_ready.rc == 0
+              retries: 30
+              delay: 2
+              changed_when: false
+
+            - name: Restore the dump into PostgreSQL 18
+              ansible.builtin.shell: |
+                set -eu
+                docker exec -i authentik-postgres18-restore sh -c \
+                  'psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" && psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c ANALYZE' \
+                  < /opt/ansible/backups/authentik-postgres16.sql
+              changed_when: true
+
+            - name: Remove the restore container
+              community.docker.docker_container:
+                name: authentik-postgres18-restore
+                state: absent
+
+          rescue:
+            - name: Remove the restore container
+              community.docker.docker_container:
+                name: authentik-postgres18-restore
+                state: absent
+
+            - name: Remove the half-restored PostgreSQL 18 volume
+              community.docker.docker_volume:
+                name: authentik_postgres
+                state: absent
+
+            - name: Start the PostgreSQL 16 stack again
+              ansible.builtin.command:
+                argv: [docker, compose, --project-directory, /opt/containers/authentik, start]
+              changed_when: true
+
+            - name: Fail the migration
+              ansible.builtin.fail:
+                msg: >-
+                  The PostgreSQL 18 upgrade failed at "{{ ansible_failed_task.name }}" and authentik
+                  was started again on PostgreSQL 16: {{ ansible_failed_result.stderr | default(ansible_failed_result.msg | default('')) }}

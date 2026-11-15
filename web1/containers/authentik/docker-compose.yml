@@ -1,7 +1,7 @@
 ---
 services:
   database:
-    image: docker.io/library/postgres:16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e
+    image: postgres:18.7-alpine3.23@sha256:60aac580d8dbe3093c097bb1d11f9e62999814d3a1da2c1aaf729c0b7db117f2
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -9,8 +9,11 @@ services:
       interval: 30s
       retries: 5
       timeout: 5s
+    environment:
+      # PG18: version-specific PGDATA; volume mounts at /var/lib/postgresql
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - database:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     env_file:
       - .env
     networks:
@@ -58,7 +61,7 @@ services:
       - authentik
 
 volumes:
-  database:
+  postgres:
     driver: local
 
 networks:
