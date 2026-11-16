@@ -215,6 +215,6 @@ declares no dependencies of its own — so a clean runner would have failed
 web3's n8n and `n8nio/runners` must be pinned to the same version. Renovate
 updates only the n8n image, on the `renovate/n8n` branch;
 `.github/workflows/n8n-sync-runners.yml` then pins the runners to the same tag
-with `ci/n8n-sync-runners.sh` and dispatches Validate on the result. Until it
-has run, `ci/n8n-versions-check.sh` fails the required yamllint check. When
+with `ci/n8n-sync-runners.sh`, pushing with the `N8N_SYNC_TOKEN` secret so the
+push runs Validate like any other. Until it has run, `ci/n8n-versions-check.sh` fails the required yamllint check. When
 bumping n8n by hand, run `ci/n8n-sync-runners.sh` after editing the n8n tag.

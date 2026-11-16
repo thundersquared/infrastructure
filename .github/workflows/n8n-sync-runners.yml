@@ -10,9 +10,15 @@
 #      commits are listed in renovate.json's gitIgnoredAuthors, so Renovate
 #      keeps managing the branch, and recreates the commit by triggering this
 #      workflow again whenever it rebases.
-#   3. A push made with GITHUB_TOKEN starts no workflows, so it dispatches
-#      Validate on the branch itself. Those check runs land on the pushed
-#      commit and satisfy the pull request's required checks.
+#   3. It pushes with the N8N_SYNC_TOKEN secret, not GITHUB_TOKEN: a push made
+#      with GITHUB_TOKEN starts no workflows, and a dispatched Validate run
+#      cannot satisfy the pull request's required checks. With this token the
+#      push runs Validate on pull_request as usual. It also runs this workflow
+#      once more, which finds nothing to change.
+#
+# N8N_SYNC_TOKEN is a fine-grained personal access token (or a GitHub App
+# installation token) limited to this repository, with Contents: read and
+# write.
 #
 # When the runners tag is not on Docker Hub yet, the sync fails and the pull
 # request stays blocked; rerun this workflow once the tag exists.
@@ -25,7 +31,8 @@ on:
       - renovate/n8n
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 concurrency:
   group: n8n-sync-runners-${{ github.ref }}
@@ -36,20 +43,26 @@ jobs:
     name: Pin n8nio/runners to the n8n version
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: write  # push the pinned runners image to this branch
-      actions: write   # dispatch Validate on the pushed commit
     steps:
+      - name: Require N8N_SYNC_TOKEN
+        env:
+          N8N_SYNC_TOKEN: ${{ secrets.N8N_SYNC_TOKEN }}
+        run: |
+          if [ -z "$N8N_SYNC_TOKEN" ]; then
+            echo "::error::The N8N_SYNC_TOKEN secret is not set; see the header of this workflow." >&2
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          token: ${{ secrets.N8N_SYNC_TOKEN }}
           persist-credentials: true  # the commit step pushes with this token
 
       - name: Pin n8nio/runners
         run: ci/n8n-sync-runners.sh
 
-      - name: Commit and dispatch Validate
+      - name: Commit and push
         env:
-          GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.ref_name }}
         run: |
           if git diff --quiet; then
@@ -60,4 +73,3 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -am "chore(deps): pin n8nio/runners to the n8n version"
           git push origin "HEAD:$BRANCH"
-          gh workflow run validate.yml --ref "$BRANCH"
