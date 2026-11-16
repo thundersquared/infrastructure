@@ -17,6 +17,7 @@
   "prHourlyLimit": 0,
   "rangeStrategy": "pin",
   "rebaseWhen": "conflicted",
+  "gitIgnoredAuthors": ["41898282+github-actions[bot]@users.noreply.github.com"],
   "commitBodyTable": true,
   "vulnerabilityAlerts": {
     "labels": ["security"],
@@ -40,14 +41,17 @@
       "separateMajorMinor": false
     },
     {
-      "description": "Group n8n and its task runners image updates in one PR so their versions stay in step.",
+      "description": "n8n updates land on the renovate/n8n branch, where .github/workflows/n8n-sync-runners.yml pins n8nio/runners to the same version. Keep the group name: the workflow triggers on that branch.",
       "matchDatasources": ["docker"],
-      "matchPackageNames": [
-        "ghcr.io/thundersquared/n8n",
-        "n8nio/runners"
-      ],
+      "matchPackageNames": ["ghcr.io/thundersquared/n8n"],
       "groupName": "n8n",
       "separateMajorMinor": false
+    },
+    {
+      "description": "n8nio/runners follows the n8n image and is pinned by n8n-sync-runners.yml, never updated on its own: the runners must run n8n's version, and Docker Hub publishes runners tags (n8n 3.x prereleases) the n8n image does not have.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["n8nio/runners"],
+      "enabled": false
     },
     {
       "description": "Group the n8n sandbox service images in one PR: the API, runner and sandbox images ship as one release and are only supported together.",
@@ -104,8 +108,7 @@
         "ghcr.io/maathimself/mailflow-frontend",
         "ghcr.io/maathimself/mailflow-backend",
         "ghcr.io/tailscale/tailscale",
-        "ghcr.io/thundersquared/n8n",
-        "n8nio/runners"
+        "ghcr.io/thundersquared/n8n"
       ],
       "matchUpdateTypes": ["patch", "digest", "pinDigest"],
       "automerge": true

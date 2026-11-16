@@ -151,12 +151,14 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is
 
 `ci/validate.sh` runs every check that CI runs: yamllint, ansible-lint,
 `tofu validate` / `tofu fmt` for `tower`, a zizmor audit of the validation
-workflow, and `ci/headscale-check.sh`, which runs the headscale image pinned in
+workflow, `ci/n8n-versions-check.sh`, which fails unless web3's n8n and
+`n8nio/runners` images are pinned to the same version, and
+`ci/headscale-check.sh`, which runs the headscale image pinned in
 `tower/containers/headscale/docker-compose.yml` (`configtest`, `policy check`)
 against the committed config and policy and needs docker. Run it before pushing;
 the same failures otherwise surface as a red PR.
 
-In CI only yamllint runs on every pull request. The other checks run when the
+In CI only yamllint and the n8n versions check run on every pull request. The other checks run when the
 diff touches what they read, per the pathspecs in the "Detect which checks the
 change affects" step of `validate.yml`. When a check starts reading a new path,
 add it there: otherwise a PR that changes only that path skips the check, and a
@@ -208,3 +210,11 @@ resolved only as a transitive dependency of `geerlingguy.docker`, which
 declares no dependencies of its own — so a clean runner would have failed
 `ansible-lint`'s syntax check. Keep them listed.
 
+## n8n and its task runners
+
+web3's n8n and `n8nio/runners` must be pinned to the same version. Renovate
+updates only the n8n image, on the `renovate/n8n` branch;
+`.github/workflows/n8n-sync-runners.yml` then pins the runners to the same tag
+with `ci/n8n-sync-runners.sh`, pushing with the `N8N_SYNC_TOKEN` secret so the
+push runs Validate like any other. Until it has run, `ci/n8n-versions-check.sh` fails the required yamllint check. When
+bumping n8n by hand, run `ci/n8n-sync-runners.sh` after editing the n8n tag.
