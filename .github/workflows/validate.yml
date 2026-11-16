@@ -134,6 +134,13 @@ jobs:
       - name: Lint YAML
         run: yamllint --strict --config-file .yamllint .
 
+      # Runs on every pull request, in this required job: Renovate's n8n pull
+      # requests move only the n8n image and must fail here until
+      # n8n-sync-runners.yml has pinned the task runners to the same version.
+      - name: Check n8n and task runners versions match
+        if: ${{ !cancelled() }}
+        run: ci/n8n-versions-check.sh
+
   ansible:
     name: ansible-lint
     needs: yamllint

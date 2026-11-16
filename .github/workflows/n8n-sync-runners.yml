@@ -1,0 +1,63 @@
+---
+# n8n's external task runners must run the same version as n8n. Renovate
+# updates only the n8n image (renovate.json disables n8nio/runners), so this
+# workflow pins n8nio/runners to the same tag on Renovate's n8n branch:
+#
+#   1. Renovate pushes renovate/n8n with a new n8n tag. Until this workflow
+#      has run, ci/n8n-versions-check.sh fails the required yamllint check,
+#      so neither a person nor Renovate's automerge can merge it.
+#   2. This workflow runs ci/n8n-sync-runners.sh and pushes the result. Its
+#      commits are listed in renovate.json's gitIgnoredAuthors, so Renovate
+#      keeps managing the branch, and recreates the commit by triggering this
+#      workflow again whenever it rebases.
+#   3. A push made with GITHUB_TOKEN starts no workflows, so it dispatches
+#      Validate on the branch itself. Those check runs land on the pushed
+#      commit and satisfy the pull request's required checks.
+#
+# When the runners tag is not on Docker Hub yet, the sync fails and the pull
+# request stays blocked; rerun this workflow once the tag exists.
+
+name: Sync n8n task runners
+
+on:
+  push:
+    branches:
+      - renovate/n8n
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: n8n-sync-runners-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Pin n8nio/runners to the n8n version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write  # push the pinned runners image to this branch
+      actions: write   # dispatch Validate on the pushed commit
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true  # the commit step pushes with this token
+
+      - name: Pin n8nio/runners
+        run: ci/n8n-sync-runners.sh
+
+      - name: Commit and dispatch Validate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if git diff --quiet; then
+            echo "n8nio/runners already matches n8n"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "chore(deps): pin n8nio/runners to the n8n version"
+          git push origin "HEAD:$BRANCH"
+          gh workflow run validate.yml --ref "$BRANCH"

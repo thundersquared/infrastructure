@@ -39,6 +39,9 @@ else
   status=1
 fi
 
+# n8n and its task runners pinned to the same version.
+run "n8n versions" ci/n8n-versions-check.sh
+
 # 2. Ansible correctness: syntax-check, FQCN, idempotency, risky permissions.
 if have ansible-lint; then
   run "ansible-lint" ansible-lint --offline
