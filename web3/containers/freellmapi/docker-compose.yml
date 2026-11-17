@@ -1,0 +1,27 @@
+---
+services:
+  freellmapi:
+    image: ghcr.io/tashfeenahmed/freellmapi:v0.16.31@sha256:1d6f948e78f11303d5e66d8ed6370211764dd27e8ae887622d1e9ddeab86e1e6 # yamllint disable-line rule:line-length
+    restart: unless-stopped
+    # Start as node directly: the image's entrypoint otherwise starts as root
+    # and drops privileges with setpriv, which needs SETUID/SETGID.
+    user: node
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:3009:3001"
+    env_file:
+      - .env
+    volumes:
+      - freellmapi-data:/app/server/data
+    networks:
+      - app-infra
+
+volumes:
+  freellmapi-data:
+
+networks:
+  app-infra:
+    external: true

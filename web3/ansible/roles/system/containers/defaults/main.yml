@@ -27,6 +27,9 @@ docker_stacks:
   hermes:
     env_file: true
     state: present
+  freellmapi:
+    env_file: true
+    state: present
   tailscale:
     env_file: true
     state: present
