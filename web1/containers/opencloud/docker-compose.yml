@@ -22,7 +22,7 @@ services:
 
   opencloud:
     # yamllint disable-line rule:line-length
-    image: opencloudeu/opencloud:7.2.6@sha256:196f4137f69fd81ad241c4a17eae13902da6aa70b2567ea7c51ef9ac235f4d96
+    image: opencloudeu/opencloud:9.1.1@sha256:d7d5b547f9e41db24f030d6a6857c4184752b2c875c936952ee0601b6531cd51
     user: "1000:1000"
     entrypoint:
       - /bin/sh
