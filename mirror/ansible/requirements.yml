@@ -8,6 +8,6 @@ collections:
     version: "11.0.0"
 roles:
   - name: geerlingguy.docker
-    version: "8.0.0"
+    version: "8.0.1"
   - name: geerlingguy.certbot
     version: "5.5.0"
