@@ -1,0 +1,6 @@
+---
+reviews:
+  auto_review:
+    # Renovate PRs only bump pinned versions; CI and the automerge rules in renovate.json cover them.
+    ignore_usernames:
+      - "renovate[bot]"
