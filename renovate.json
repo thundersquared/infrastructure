@@ -108,9 +108,28 @@
         "ghcr.io/maathimself/mailflow-frontend",
         "ghcr.io/maathimself/mailflow-backend",
         "ghcr.io/tailscale/tailscale",
-        "ghcr.io/thundersquared/n8n"
+        "ghcr.io/thundersquared/n8n",
+        "ghcr.io/n8n-io/n8n-sandbox-service-api",
+        "ghcr.io/n8n-io/n8n-sandbox-service-runner-dind",
+        "ghcr.io/n8n-io/n8n-sandbox-service-sandbox",
+        "dunglas/frankenphp",
+        "ghcr.io/tashfeenahmed/freellmapi"
       ],
       "matchUpdateTypes": ["patch", "digest", "pinDigest"],
+      "automerge": true
+    },
+    {
+      "description": "Also automerge minor updates for these images. Same caveats as the rule above.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "ghcr.io/maathimself/mailflow-frontend",
+        "ghcr.io/maathimself/mailflow-backend",
+        "ghcr.io/n8n-io/n8n-sandbox-service-api",
+        "ghcr.io/n8n-io/n8n-sandbox-service-runner-dind",
+        "ghcr.io/n8n-io/n8n-sandbox-service-sandbox",
+        "ghcr.io/tashfeenahmed/freellmapi"
+      ],
+      "matchUpdateTypes": ["minor"],
       "automerge": true
     }
   ],
