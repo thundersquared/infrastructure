@@ -152,7 +152,8 @@ Applied to: cloudflared, mailflow frontend + backend, n8n runner. `headscale` is
 `ci/validate.sh` runs every check that CI runs: yamllint, ansible-lint,
 `tofu validate` / `tofu fmt` for `tower`, a zizmor audit of the validation
 workflow, `ci/n8n-versions-check.sh`, which fails unless web3's n8n and
-`n8nio/runners` images are pinned to the same version, and
+`n8nio/runners` images are pinned to the same version and the n8n sandbox
+service API, runner and sandbox images to the same release, and
 `ci/headscale-check.sh`, which runs the headscale image pinned in
 `tower/containers/headscale/docker-compose.yml` (`configtest`, `policy check`)
 against the committed config and policy and needs docker. Run it before pushing;
