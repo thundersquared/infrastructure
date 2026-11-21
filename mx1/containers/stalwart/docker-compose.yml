@@ -63,7 +63,7 @@ services:
       - app-infra
 
   stalwart:
-    image: ghcr.io/thundersquared/stalwart:0.15.5@sha256:a930aca74de3fef2026a04fc2200ba5126d5712d9e52248e863d165acc338e4b
+    image: ghcr.io/thundersquared/stalwart:1.1.1@sha256:3de962c43badc7c8e7bf5c10d04e01796a152980b86be573f32fa22fe76fc11c
     restart: unless-stopped
     cap_drop:
       - ALL
