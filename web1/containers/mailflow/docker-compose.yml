@@ -71,7 +71,7 @@ services:
       - mailflow
 
   postgres:
-    image: postgres:18.7-alpine3.23@sha256:60aac580d8dbe3093c097bb1d11f9e62999814d3a1da2c1aaf729c0b7db117f2
+    image: postgres:19.0-alpine3.23@sha256:8b9e23fd0652e6857367455c41fd6624823995fa120a2f912222d29203ab1b6a
     container_name: mailflow-postgres
     restart: unless-stopped
     env_file:
