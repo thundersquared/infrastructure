@@ -1,7 +1,7 @@
 ---
 services:
   database:
-    image: postgres:18.7-alpine3.23@sha256:339a86bf416979bb4d3d2e30a1f9e096e7302564faff4151b804cf53463059d5
+    image: postgres:19.0-alpine3.23@sha256:40ad7e457013448b5522c6c5d30dccb8248959c41adc0e56c1785be4293bbd67
     restart: unless-stopped
     environment:
       # PG18: version-specific PGDATA; volume mounts at /var/lib/postgresql
