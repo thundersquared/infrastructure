@@ -1,7 +1,7 @@
 ---
 services:
   freellmapi:
-    image: ghcr.io/tashfeenahmed/freellmapi:v0.16.40@sha256:92ce8d67d9bebad75dcc661520f9028527b76655fee327378fe24402af87c9cf # yamllint disable-line rule:line-length
+    image: ghcr.io/tashfeenahmed/freellmapi:v0.16.42@sha256:40450606f6dba126362627d559a4c677a68c1d672850ce0c46329397dd90758a # yamllint disable-line rule:line-length
     restart: unless-stopped
     # Start as node directly: the image's entrypoint otherwise starts as root
     # and drops privileges with setpriv, which needs SETUID/SETGID.
