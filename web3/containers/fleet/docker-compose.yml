@@ -1,7 +1,7 @@
 ---
 services:
   database:
-    image: mysql:8.4@sha256:cd05748e60471137face0ba0a256c9c48669198aee1f12132f413fc91fd8948f
+    image: mysql:26.10@sha256:9092489f49fb59c4ba6c1425c6a59f71f864f24bf4339a5a26b718adc7a8b343
     env_file: .env
     cap_add:
       - SYS_NICE
